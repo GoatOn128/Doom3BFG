@@ -1,0 +1,42 @@
+# external.lua equivalent: external static library.
+Import('env', 'build_objects', 'build_static_library', 'require_sources', 'PROJECT_ROOT')
+import os
+
+external_sources = [
+    'external/miniz/miniz.c',
+    'external/minizip/ioapi.c',
+    'external/minizip/unzip.cpp',
+    'external/minizip/zip.cpp',
+    'external/libbinkdec/src/BinkAudio.cpp',
+    'external/libbinkdec/src/BinkDecoder.cpp',
+    'external/libbinkdec/src/BinkVideo.cpp',
+    'external/libbinkdec/src/BitReader.cpp',
+    'external/libbinkdec/src/FileStream.cpp',
+    'external/libbinkdec/src/HuffmanVLC.cpp',
+    'external/libbinkdec/src/LogError.cpp',
+    'external/libbinkdec/src/Util.cpp',
+    'external/libbinkdec/src/avfft.c',
+    'external/libbinkdec/src/dct.c',
+    'external/libbinkdec/src/dct32.c',
+    'external/libbinkdec/src/fft.c',
+    'external/libbinkdec/src/mdct.c',
+    'external/libbinkdec/src/rdft.c',
+]
+
+missing = [source for source in external_sources
+           if not os.path.isfile(os.path.join(PROJECT_ROOT, source))]
+if missing:
+    print('ERROR: external project source files are missing:\n  ' + '\n  '.join(missing))
+    Exit(2)
+
+external_env = env.Clone()
+external_env.Append(CPPPATH=[
+    'external/miniz', 'external/minizip', 'external/libbinkdec/include'
+])
+# Premake external.lua: warnings('Off').
+external_env.Append(CCFLAGS=['/W0'], CXXFLAGS=['/W0'])
+external_lib, external_objects = build_static_library(
+    'external', external_sources, external_env
+)
+
+Return('external_lib')

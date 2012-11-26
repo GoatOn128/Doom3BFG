@@ -1,0 +1,43 @@
+# d3xp.lua equivalent: Game-D3XP, static by default or gamex86.dll with dll=1.
+import os
+
+Import('env', 'build_objects', 'collect_sources', 'require_sources', 'DLL_BUILD', 'LIB_ROOT', 'BIN_DIR', 'MACHINE_FLAG', 'idlib_lib', '_track_progress')
+
+# Premake d3xp.lua: files({'**'}) with these exclusions.
+d3xp_excludes = [
+    'd3xp/EndLevel.*',
+    'd3xp/menus/MenuWidget_DevList.*',
+    'd3xp/gamesys/Callbacks.cpp',
+]
+d3xp_sources = require_sources(
+    'Game-D3XP', collect_sources(('d3xp',), d3xp_excludes)
+)
+
+game_env = env.Clone()
+game_env.Append(CPPDEFINES=['_D3XP', 'CTF'])
+if DLL_BUILD:
+    # Apply GAME_DLL before compilation (not just at link time).
+    game_env.Append(CPPDEFINES=['GAME_DLL'])
+
+game_objects = build_objects(game_env, 'Game-D3XP', d3xp_sources)
+
+if DLL_BUILD:
+    game_env.Append(SHLINKFLAGS=[
+        MACHINE_FLAG, '/LARGEADDRESSAWARE', '/MANIFEST:NO'
+    ])
+    game_env.Append(LIBS=[
+        'dbghelp', 'glu32', 'iphlpapi', 'odbc32', 'odbccp32',
+        'opengl32', 'winmm', 'wsock32',
+        'xinput', 'dinput8', 'dsound', 'dxguid',
+    ])
+    game_nodes = game_env.SharedLibrary(
+        os.path.join(BIN_DIR, 'gamex86.dll'), game_objects + [idlib_lib]
+    )
+else:
+    game_nodes = game_env.StaticLibrary(
+        os.path.join(LIB_ROOT, 'gamex86'), game_objects
+    )
+
+_track_progress(game_env, game_nodes)
+game_target = game_nodes[0]
+Return('game_target')

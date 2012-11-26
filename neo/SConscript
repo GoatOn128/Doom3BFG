@@ -1,0 +1,48 @@
+# DoomEXE equivalent: Windows GUI application.
+import os
+
+Import('env', 'build_objects', 'collect_sources', 'require_sources', 'BIN_DIR', 'DLL_BUILD', 'MACHINE_FLAG', 'external_lib', 'idlib_lib', 'game_static_lib', '_track_progress')
+
+# premake5.lua: files from the following directories, with explicit exclusions.
+doom_dirs = (
+    'cm', 'framework', 'renderer', 'sound', 'swf', 'sys', 'tools', 'ui'
+)
+doom_excludes = [
+    'framework/Session.cpp',
+    'tools/compilers/roqvq/roq.m',
+    'ui/GameWindow.cpp',
+    'sys/win32/win_stats.*',
+    'sys/win32/win_snd.cpp',
+    'sys/win32/win_gamma.cpp',
+    'renderer/BoundsTrack.cpp',
+]
+doom_all_sources = require_sources(
+    'DoomEXE', collect_sources(doom_dirs, doom_excludes)
+)
+doom_resources = [s for s in doom_all_sources if s.lower().endswith('.rc')]
+doom_sources = [s for s in doom_all_sources if not s.lower().endswith('.rc')]
+
+main_env = env.Clone()
+main_env.Append(LINKFLAGS=[
+    MACHINE_FLAG,
+    '/SUBSYSTEM:WINDOWS',
+    '/STACK:16777216,16777216',
+    '/LARGEADDRESSAWARE',
+])
+main_env.Append(LIBS=[
+    'dbghelp', 'glu32', 'iphlpapi', 'odbc32', 'odbccp32',
+    'opengl32', 'winmm', 'wsock32',
+    'xinput', 'dinput8', 'dsound', 'dxguid',
+])
+
+main_objects = build_objects(main_env, 'DoomEXE', doom_sources)
+main_inputs = list(main_objects) + list(doom_resources) + [external_lib, idlib_lib]
+if not DLL_BUILD:
+    main_inputs.append(game_static_lib)
+
+doom_target_nodes = main_env.Program(
+    os.path.join(BIN_DIR, 'Doom3BFG.exe'), main_inputs
+)
+_track_progress(main_env, doom_target_nodes)
+doom_target = doom_target_nodes[0]
+Return('doom_target')

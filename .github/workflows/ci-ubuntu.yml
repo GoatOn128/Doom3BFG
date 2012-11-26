@@ -1,0 +1,117 @@
+name: build-ubuntu
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# a new commit cancels the superseded run for the same branch
+concurrency:
+  group: build-ubuntu-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.config }}-${{ matrix.hardlink }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # one failing leg cancels the remaining legs of this OS, the other
+      # OS workflow keeps running for redundancy
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest]
+        arch: [x86, x64]
+        config: [debug, release]
+        # the hardlink dimension must exist in the base matrix (empty
+        # string) or the include entries below would merge into the
+        # existing legs instead of adding new ones
+        hardlink: ['']
+        # cache key variant of hardlink: GitHub cache keys cannot
+        # contain commas, so hardlink=game,renderer keys the cache
+        # as game-renderer
+        cachekey: ['']
+        include:
+          # hard-link coverage: the game+renderer pair in one image
+          - os: ubuntu-latest
+            arch: x64
+            config: release
+            hardlink: 'game,renderer'
+            cachekey: 'game-renderer'
+    steps:
+      - uses: actions/checkout@v4
+      - name: clean stale log
+        shell: bash
+        run: rm -f build.log
+      - name: free disk space
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          # the Windows runners run out of disk during full builds
+          rm -rf /c/Android /c/Miniconda3 /c/vcpkg || true
+          df -h /c 2>&1 | tee -a build.log
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: install scons
+        shell: bash
+        run: |
+          set -o pipefail
+          pip install scons 2>&1 | tee -a build.log
+      - name: install linux deps
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -o pipefail
+          sudo dpkg --add-architecture i386 || true
+          sudo apt-get update -qq 2>&1 | tee -a build.log
+          sudo apt-get install -y -qq gcc-multilib g++-multilib 2>&1 | tee -a build.log
+          # GL headers are arch independent, one install covers both legs
+          sudo apt-get install -y -qq libgl-dev libglx-dev 2>&1 | tee -a build.log
+          if [ "${{ matrix.arch }}" = "x86" ]; then
+            sudo apt-get install -y -qq libgl-dev:i386 libx11-dev:i386 libxext-dev:i386 libxxf86dga-dev:i386 libxxf86vm-dev:i386 2>&1 | tee -a build.log
+          else
+            sudo apt-get install -y -qq libx11-dev libxext-dev libxxf86dga-dev libxxf86vm-dev 2>&1 | tee -a build.log
+          fi
+      - name: setup msvc environment
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.arch }}
+      - name: cache scons objects
+        uses: actions/cache@v4
+        with:
+          path: .scons_cache
+          # no restore-keys: falling back to a cache from an older
+          # SConstruct fills the disk with stale objects and slows
+          # the restore down
+          key: scons-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.config }}-${{ matrix.cachekey }}-${{ hashFiles('SConstruct') }}
+      - name: build
+        shell: bash
+        run: |
+          set -o pipefail
+          # -k keeps going so the digest lists every failing file in one run
+          scons arch=${{ matrix.arch }} config=${{ matrix.config }} hardlink=${{ matrix.hardlink }} -j4 -k 2>&1 | tee -a build.log
+      - name: digest
+        if: always()
+        shell: bash
+        env:
+          LEG: ${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.config }}-${{ matrix.hardlink }}
+          STATUS: ${{ job.status }}
+        run: |
+          cp build.log "log-$LEG.log" 2>/dev/null || true
+          python .github/scripts/digest.py || true
+      - name: upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.config }}-${{ matrix.hardlink }}
+          path: |
+            log-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.config }}-${{ matrix.hardlink }}.log
+            digest-fragment-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.config }}-${{ matrix.hardlink }}.md
+            status-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.config }}-${{ matrix.hardlink }}
+          if-no-files-found: ignore
+

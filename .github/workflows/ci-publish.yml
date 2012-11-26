@@ -1,0 +1,140 @@
+name: publish
+
+on:
+  workflow_run:
+    workflows: [format, build-ubuntu, build-windows]
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: read
+
+# only the newest trigger per head commit keeps waiting: superseded
+# publish runs are cancelled instead of holding a runner
+concurrency:
+  group: publish-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    # a cancelled run (superseded by a newer push) must not publish its
+    # partial logs: they race with the live run and corrupt the committed
+    # build.log and build-digest.md. pull_request cycles stay in the
+    # artifacts only
+    if: github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion != 'cancelled'
+    runs-on: ubuntu-latest
+    steps:
+      - name: find sibling runs
+        id: runs
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -eu
+          # The workflow_run event can arrive before the API reports the
+          # run as completed, and the sibling builds may still be running:
+          # poll until all three finished instead of skipping once, so
+          # the last trigger always publishes even on a stale API read.
+          deadline=$(( SECONDS + 2400 ))
+          while :; do
+            fmt=""; ubu=""; win=""; missing=""
+            for wf in ci-format.yml ci-ubuntu.yml ci-windows.yml; do
+              id=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${wf}/runs?head_sha=${HEAD_SHA}&event=push&per_page=1" --jq '.workflow_runs[0].id // empty')
+              if [ -z "$id" ]; then
+                missing="${missing} ${wf}(none)"
+                continue
+              fi
+              status=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${id}" --jq .status)
+              if [ "$status" != "completed" ]; then
+                missing="${missing} ${wf}(${status})"
+                continue
+              fi
+              case "$wf" in
+                ci-format.yml) fmt=$id ;;
+                ci-ubuntu.yml) ubu=$id ;;
+                ci-windows.yml) win=$id ;;
+              esac
+            done
+            if [ -z "$missing" ]; then
+              {
+                echo "run_format=$fmt"
+                echo "run_ubuntu=$ubu"
+                echo "run_windows=$win"
+                echo "skip=false"
+              } >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            if [ "$SECONDS" -ge "$deadline" ]; then
+              echo "timed out waiting for:${missing}"
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "waiting for sibling runs:${missing}"
+            sleep 30
+          done
+      # checkout first: actions/checkout@v4 cleans the workspace as
+      # part of fetching, so artifacts downloaded before it would be
+      # deleted before the assemble step can read them
+      - uses: actions/checkout@v4
+        if: steps.runs.outputs.skip != 'true'
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+      - name: download format logs
+        if: steps.runs.outputs.skip != 'true'
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ steps.runs.outputs.run_format }}
+          github-token: ${{ github.token }}
+          pattern: logs-*
+          merge-multiple: true
+          path: logs
+      - name: download ubuntu logs
+        if: steps.runs.outputs.skip != 'true'
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ steps.runs.outputs.run_ubuntu }}
+          github-token: ${{ github.token }}
+          pattern: logs-*
+          merge-multiple: true
+          path: logs
+      - name: download windows logs
+        if: steps.runs.outputs.skip != 'true'
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ steps.runs.outputs.run_windows }}
+          github-token: ${{ github.token }}
+          pattern: logs-*
+          merge-multiple: true
+          path: logs
+      - name: assemble
+        if: steps.runs.outputs.skip != 'true'
+        env:
+          COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          if ls logs/status-* >/dev/null 2>&1; then
+            python .github/scripts/assemble.py
+          else
+            # every completed build uploads status files: losing them
+            # is a pipeline bug, fail loudly instead of silently
+            # committing nothing
+            echo "no build logs to publish"
+            exit 1
+          fi
+      - name: commit
+        if: steps.runs.outputs.skip != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          touch build-windows.log build-ubuntu.log build-digest.md
+          git add build-windows.log build-ubuntu.log build-digest.md
+          # the merged build.log was replaced by per-platform logs
+          git rm -q --ignore-unmatch build.log
+          git diff --cached --quiet && exit 0
+          git commit -m "CI: publish build logs and digest [skip ci]"
+          if ! git push; then
+            # -X theirs: on a push race the newest output wins instead of
+            # committing conflict markers
+            git pull --rebase -X theirs origin ${{ github.event.workflow_run.head_branch }}
+            git push
+          fi

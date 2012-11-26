@@ -1,0 +1,25 @@
+# idlib.lua equivalent: idLib static library.
+import os
+
+Import('env', 'build_objects', 'collect_sources', 'require_sources', 'LIB_ROOT', '_track_progress')
+
+idlib_sources = require_sources(
+    'idLib', collect_sources(('idlib',))
+)
+
+idlib_env = env.Clone()
+# Premake idlib.lua: defines({'__IDLIB__'}).
+idlib_env.Append(CPPDEFINES=['__IDLIB__'])
+
+# Premake declares pchsource('precompiled.cpp') but pchheader(''). Since the
+# header is empty, no usable PCH is configured; compile precompiled.cpp normally.
+# PCH is disabled altogether, so the two per-file PCH exclusions are naturally
+# respected: geometry/RenderMatrix.cpp and SoftwareCache.cpp.
+idlib_objects = build_objects(idlib_env, 'idLib', idlib_sources)
+idlib_lib_nodes = idlib_env.StaticLibrary(
+    os.path.join(LIB_ROOT, 'idLib'), idlib_objects
+)
+_track_progress(idlib_env, idlib_lib_nodes)
+idlib_lib = idlib_lib_nodes[0]
+
+Return('idlib_lib')
