@@ -16,51 +16,33 @@ concurrency:
 
 jobs:
   build:
-    name: ${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.config }}-${{ matrix.hardlink }}
-    runs-on: ${{ matrix.os }}
+    name: windows-${{ matrix.arch }}-${{ matrix.config }}${{ matrix.dll == '1' && '-dll' || '' }}
+    runs-on: windows-latest
     strategy:
-      # one failing leg cancels the remaining legs of this OS, the other
-      # OS workflow keeps running for redundancy
+      # one failing leg cancels the remaining legs: the digest still
+      # lists every error of the failing leg, and runner time is not
+      # wasted on a doomed build
       fail-fast: true
       matrix:
-        os: [windows-latest]
         arch: [x86, x64]
         config: [debug, release]
-        # the hardlink dimension must exist in the base matrix (empty
-        # string) or the include entries below would merge into the
-        # existing legs instead of adding new ones
-        hardlink: ['']
-        # cache key variant of hardlink: GitHub cache keys cannot
-        # contain commas, so hardlink=game,renderer keys the cache
-        # as game-renderer
-        cachekey: ['']
+        # the dll dimension must exist in the base matrix (empty string)
+        # or the include entry below would merge into the existing legs
+        # instead of adding a new one
+        dll: ['']
         include:
-          # hard-link coverage: the game+renderer pair exercises a
-          # module and the renderer in one image, cgame and ui get
-          # their own legs because only one of game/cgame/ui can be
-          # linked into the executable
-          - os: windows-latest
-            arch: x64
+          # dll=1 links Game-D3XP as bin/base/gamex86.dll instead of a
+          # static library: a distinct define set (__DOOM_DLL__) and a
+          # distinct link path worth their own leg
+          - arch: x64
             config: release
-            hardlink: 'game,renderer'
-            cachekey: 'game-renderer'
-          - os: windows-latest
-            arch: x64
-            config: release
-            hardlink: 'cgame'
-            cachekey: 'cgame'
-          - os: windows-latest
-            arch: x64
-            config: release
-            hardlink: 'ui'
-            cachekey: 'ui'
+            dll: '1'
     steps:
       - uses: actions/checkout@v4
       - name: clean stale log
         shell: bash
         run: rm -f build.log
       - name: free disk space
-        if: runner.os == 'Windows'
         shell: bash
         run: |
           # the Windows runners run out of disk during full builds
@@ -74,23 +56,7 @@ jobs:
         run: |
           set -o pipefail
           pip install scons 2>&1 | tee -a build.log
-      - name: install linux deps
-        if: runner.os == 'Linux'
-        shell: bash
-        run: |
-          set -o pipefail
-          sudo dpkg --add-architecture i386 || true
-          sudo apt-get update -qq 2>&1 | tee -a build.log
-          sudo apt-get install -y -qq gcc-multilib g++-multilib 2>&1 | tee -a build.log
-          # GL headers are arch independent, one install covers both legs
-          sudo apt-get install -y -qq libgl-dev libglx-dev 2>&1 | tee -a build.log
-          if [ "${{ matrix.arch }}" = "x86" ]; then
-            sudo apt-get install -y -qq libx11-dev:i386 libxext-dev:i386 libxxf86dga-dev:i386 libxxf86vm-dev:i386 2>&1 | tee -a build.log
-          else
-            sudo apt-get install -y -qq libx11-dev libxext-dev libxxf86dga-dev libxxf86vm-dev 2>&1 | tee -a build.log
-          fi
       - name: setup msvc environment
-        if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: ${{ matrix.arch }}
@@ -101,18 +67,18 @@ jobs:
           # no restore-keys: falling back to a cache from an older
           # SConstruct fills the disk with stale objects and slows
           # the restore down
-          key: scons-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.config }}-${{ matrix.cachekey }}-${{ hashFiles('SConstruct') }}
+          key: scons-windows-${{ matrix.arch }}-${{ matrix.config }}${{ matrix.dll == '1' && '-dll' || '' }}-${{ hashFiles('SConstruct') }}
       - name: build
         shell: bash
         run: |
           set -o pipefail
           # -k keeps going so the digest lists every failing file in one run
-          scons arch=${{ matrix.arch }} config=${{ matrix.config }} hardlink=${{ matrix.hardlink }} -j4 -k 2>&1 | tee -a build.log
+          scons arch=${{ matrix.arch }} config=${{ matrix.config }} dll=${{ matrix.dll }} -j4 -k 2>&1 | tee -a build.log
       - name: digest
         if: always()
         shell: bash
         env:
-          LEG: ${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.config }}-${{ matrix.hardlink }}
+          LEG: windows-${{ matrix.arch }}-${{ matrix.config }}${{ matrix.dll == '1' && '-dll' || '' }}
           STATUS: ${{ job.status }}
         run: |
           cp build.log "log-$LEG.log" 2>/dev/null || true
@@ -121,9 +87,9 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: logs-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.config }}-${{ matrix.hardlink }}
+          name: logs-windows-${{ matrix.arch }}-${{ matrix.config }}${{ matrix.dll == '1' && '-dll' || '' }}
           path: |
-            log-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.config }}-${{ matrix.hardlink }}.log
-            digest-fragment-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.config }}-${{ matrix.hardlink }}.md
-            status-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.config }}-${{ matrix.hardlink }}
+            log-windows-${{ matrix.arch }}-${{ matrix.config }}${{ matrix.dll == '1' && '-dll' || '' }}.log
+            digest-fragment-windows-${{ matrix.arch }}-${{ matrix.config }}${{ matrix.dll == '1' && '-dll' || '' }}.md
+            status-windows-${{ matrix.arch }}-${{ matrix.config }}${{ matrix.dll == '1' && '-dll' || '' }}
           if-no-files-found: ignore

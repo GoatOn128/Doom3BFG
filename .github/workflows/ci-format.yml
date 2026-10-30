@@ -35,24 +35,28 @@ jobs:
         run: |
           # run per file: a crash on one file must not abort the whole tree
           echo "diag format: begin, uncrustify=$( command -v uncrustify || echo missing )" >> build.log
-          find src -regextype posix-extended -path src/third-party -prune -o -type f ! -name qasm.h ! -name bg_pmove.c -regex '.*\.(c|h|cpp|hpp)$' -print > files.txt
+          # neo/external is bundled third-party code: never formatted
+          find neo -regextype posix-extended -path neo/external -prune -o -type f -regex '.*\.(c|h|cpp|hpp)$' -print > files.txt
           while read -r f; do
             uncrustify -c uncrustify.cfg --replace --no-backup "$f" >> build.log 2>&1 || echo "UNCRUSTIFY_FAILED: $f" >> build.log
           done < files.txt
           rm -f files.txt
           echo "diag format: end" >> build.log
       - name: commit formatting
+        # on pull_request events the checkout is the ephemeral merge ref:
+        # report through the digest instead of failing on a push
+        if: github.event_name == 'push'
         shell: bash
         run: |
           echo "diag commit-formatting: begin" >> build.log
           git status --short >> build.log 2>&1 || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if ! git diff --quiet -- src; then
+          if ! git diff --quiet -- neo; then
             # only formatted sources belong in the tree, never the local
             # build.log or stray uncrustify scratch files
-            find src -name '*.uncrustify' -delete
-            git add src
+            find neo -name '*.uncrustify' -delete
+            git add neo
             git commit -m "uncrustify: format tree [skip ci]"
             # the checkout is detached, so the refspec must name the
             # branch explicitly; -X theirs: on a push race the newest

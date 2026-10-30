@@ -2,7 +2,7 @@ name: publish
 
 on:
   workflow_run:
-    workflows: [format, build-ubuntu, build-windows]
+    workflows: [format, build-windows]
     types: [completed]
 
 permissions:
@@ -34,12 +34,12 @@ jobs:
           set -eu
           # The workflow_run event can arrive before the API reports the
           # run as completed, and the sibling builds may still be running:
-          # poll until all three finished instead of skipping once, so
+          # poll until both finished instead of skipping once, so
           # the last trigger always publishes even on a stale API read.
           deadline=$(( SECONDS + 2400 ))
           while :; do
-            fmt=""; ubu=""; win=""; missing=""
-            for wf in ci-format.yml ci-ubuntu.yml ci-windows.yml; do
+            fmt=""; win=""; missing=""
+            for wf in ci-format.yml ci-windows.yml; do
               id=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${wf}/runs?head_sha=${HEAD_SHA}&event=push&per_page=1" --jq '.workflow_runs[0].id // empty')
               if [ -z "$id" ]; then
                 missing="${missing} ${wf}(none)"
@@ -52,14 +52,12 @@ jobs:
               fi
               case "$wf" in
                 ci-format.yml) fmt=$id ;;
-                ci-ubuntu.yml) ubu=$id ;;
                 ci-windows.yml) win=$id ;;
               esac
             done
             if [ -z "$missing" ]; then
               {
                 echo "run_format=$fmt"
-                echo "run_ubuntu=$ubu"
                 echo "run_windows=$win"
                 echo "skip=false"
               } >> "$GITHUB_OUTPUT"
@@ -85,15 +83,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           run-id: ${{ steps.runs.outputs.run_format }}
-          github-token: ${{ github.token }}
-          pattern: logs-*
-          merge-multiple: true
-          path: logs
-      - name: download ubuntu logs
-        if: steps.runs.outputs.skip != 'true'
-        uses: actions/download-artifact@v4
-        with:
-          run-id: ${{ steps.runs.outputs.run_ubuntu }}
           github-token: ${{ github.token }}
           pattern: logs-*
           merge-multiple: true
@@ -126,8 +115,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          touch build-windows.log build-ubuntu.log build-digest.md
-          git add build-windows.log build-ubuntu.log build-digest.md
+          touch build-windows.log build-digest.md
+          git add build-windows.log build-digest.md
           # the merged build.log was replaced by per-platform logs
           git rm -q --ignore-unmatch build.log
           git diff --cached --quiet && exit 0
