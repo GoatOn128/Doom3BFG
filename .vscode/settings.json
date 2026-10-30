@@ -18,12 +18,4 @@
     "C_Cpp.errorSquiggles": "enabled",
     "C_Cpp.intelliSenseEngine": "default",
     "editor.formatOnSave": false,
-    "[c]": {
-        "editor.defaultFormatter": "zachflower.uncrustify"
-    },
-    "[cpp]": {
-        "editor.defaultFormatter": "zachflower.uncrustify"
-    },
-    "uncrustify.configPath.windows": "${workspaceFolder}/uncrustify.cfg",
-    "uncrustify.configPath.linux": "${workspaceFolder}/uncrustify.cfg"
 }

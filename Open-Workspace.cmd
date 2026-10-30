@@ -1,23 +1,42 @@
 @echo off
-set "WORKSPACE=%~dp0.code-workspace"
+setlocal EnableExtensions
+
+set "SCRIPT_DIR=%~dp0"
+set "PROJECT_ROOT="
+
+if exist "%SCRIPT_DIR%SCons" if exist "%SCRIPT_DIR%.vscode\settings.json" set "PROJECT_ROOT=%SCRIPT_DIR%"
+
+if not defined PROJECT_ROOT if exist "%SCRIPT_DIR%..\neo\SCons" if exist "%SCRIPT_DIR%..\.vscode\settings.json" for %%I in ("%SCRIPT_DIR%..") do set "PROJECT_ROOT=%%~fI"
+
+if not defined PROJECT_ROOT if exist "%SCRIPT_DIR%..\..\neo\SCons" if exist "%SCRIPT_DIR%..\..\.vscode\settings.json" for %%I in ("%SCRIPT_DIR%..\..") do set "PROJECT_ROOT=%%~fI"
+
+if not defined PROJECT_ROOT (
+    echo ERROR: Could not locate the project root.
+    echo Put this launcher beside code\CMakeLists.txt,
+    echo with the .vscode folder beside it.
+    pause
+    exit /b 1
+)
+
+for %%I in ("%PROJECT_ROOT%") do set "PROJECT_ROOT=%%~fI"
 
 where code >nul 2>&1
 if not errorlevel 1 (
-    code --new-window "%WORKSPACE%"
+    call code --new-window "%PROJECT_ROOT%"
     exit /b %ERRORLEVEL%
 )
 
 if exist "%LocalAppData%\Programs\Microsoft VS Code\Code.exe" (
-    start "" "%LocalAppData%\Programs\Microsoft VS Code\Code.exe" --new-window "%WORKSPACE%"
+    start "" "%LocalAppData%\Programs\Microsoft VS Code\Code.exe" --new-window "%PROJECT_ROOT%"
     exit /b 0
 )
 if exist "%ProgramFiles%\Microsoft VS Code\Code.exe" (
-    start "" "%ProgramFiles%\Microsoft VS Code\Code.exe" --new-window "%WORKSPACE%"
+    start "" "%ProgramFiles%\Microsoft VS Code\Code.exe" --new-window "%PROJECT_ROOT%"
+    exit /b 0
+)
+if defined ProgramFiles(x86) if exist "%ProgramFiles(x86)%\Microsoft VS Code\Code.exe" (
+    start "" "%ProgramFiles(x86)%\Microsoft VS Code\Code.exe" --new-window "%PROJECT_ROOT%"
     exit /b 0
 )
 
-echo Could not find the VS Code command-line launcher or Code.exe.
-echo Open VS Code and choose File ^> Open Workspace from File..., then select:
-echo "%WORKSPACE%"
-pause
 exit /b 1
