@@ -43,6 +43,21 @@ for s in doom_rc_sources:
         res_target, os.path.join(PROJECT_ROOT, s)))
 _track_progress(main_env, doom_resources)
 
+# The exe must also carry sys/win32/rc/Doom3BFG.manifest as resource 1
+# (RT_MANIFEST): without its Win10/11 supportedOS entry GetVersionEx
+# reports 6.2.9200 on modern Windows and the engine refuses to start.
+# A tiny generated rc references the manifest; doom.rc itself is not
+# modified because its version strings are cp1252-encoded and would be
+# re-encoded by tooling.
+manifest_rc = os.path.join(OBJECT_ROOT, 'DoomEXE', 'doom_manifest.rc')
+os.makedirs(os.path.dirname(manifest_rc), exist_ok=True)
+with open(manifest_rc, 'w') as rc_file:
+    rc_file.write('1 24 "%s"\n' % os.path.join(
+        PROJECT_ROOT, 'sys', 'win32', 'rc', 'Doom3BFG.manifest'))
+doom_resources.extend(main_env.RES(
+    os.path.join(OBJECT_ROOT, 'DoomEXE', 'doom_manifest' + main_env.get('RESSUFFIX', '.res')),
+    manifest_rc))
+
 main_objects = build_objects(main_env, 'DoomEXE', doom_sources)
 main_inputs = list(main_objects) + list(doom_resources) + [external_lib, idlib_lib]
 if not DLL_BUILD:
