@@ -134,9 +134,7 @@ void AppendFormat( idStr & destination, const char * format, ... ) {
 }
 
 bool HasWhiteSpace( const idToken & token ) {
-	return token.whiteSpaceStart_p != nullptr &&
-		   token.whiteSpaceEnd_p != nullptr &&
-		   token.whiteSpaceEnd_p > token.whiteSpaceStart_p;
+	return token.WhiteSpaceBeforeToken() > 0;
 }
 
 void AppendLeadingWhiteSpace( idStr & result, const idToken & token ) {
@@ -332,6 +330,7 @@ attribInfo_t attribsPC[] = {
 	{ "half4", "hcolor", "COLOR", "vofi_Color", 0, AT_PS_IN, 0 },
 	{ "half4", "hcolor0", "COLOR0", "vofi_Color", 0, AT_PS_IN, 0 },
 	{ "half4", "hcolor1", "COLOR1", "vofi_Color", 0, AT_PS_IN, 0 },
+	{ "float2", "texcoord", "TEXCOORD0", "vofi_TexCoord0", 0, AT_VS_OUT | AT_PS_IN, 0 },
 	{ "float4", "texcoord0", "TEXCOORD0", "vofi_TexCoord0", 0, AT_VS_OUT | AT_PS_IN, 0 },
 	{ "float4", "texcoord1", "TEXCOORD1", "vofi_TexCoord1", 0, AT_VS_OUT | AT_PS_IN, 0 },
 	{ "float4", "texcoord2", "TEXCOORD2", "vofi_TexCoord2", 0, AT_VS_OUT | AT_PS_IN, 0 },
@@ -685,6 +684,10 @@ bool ParseShader( programType_t programType, idParser * source, const idStr * gl
 	bool usesPosition = false;
 	bool usesTexcoord0 = false;
 
+	// uniforms declared at body scope (old-style shader bodies) are moved
+	// here so they stay at global scope in the generated GLSL
+	idStr headerExtra;
+
 	idToken token;
 	if ( !source->ExpectTokenString( "{" ) ) {
 		return false;
@@ -770,6 +773,93 @@ bool ParseShader( programType_t programType, idParser * source, const idStr * gl
 				}
 			} else if ( programType == PROGRAM_TYPE_FRAGMENT && token == "clip" ) {
 				data->hasClip = true;
+			} else if ( token == "struct" ) {
+				// old-style shader bodies declare their own in/out structs;
+				// the attribute sets are derived from the body references
+				// instead, so the declarations are skipped entirely
+				int structDepth = 0;
+				idToken skip;
+				while ( source->ReadToken( &skip ) ) {
+					if ( skip == "{" ) {
+						++structDepth;
+					} else if ( skip == "}" && --structDepth <= 0 ) {
+						break;
+					}
+				}
+				source->CheckTokenString( ";" );
+				continue;
+			} else if ( token == "void" && source->CheckTokenString( "main" ) ) {
+				// old-style bodies wrap the statements in a main function;
+				// the generator writes its own main, so only the parameter
+				// list is skipped here
+				idToken skip;
+				while ( source->ReadToken( &skip ) ) {
+					if ( skip == ")" ) {
+						break;
+					}
+				}
+				continue;
+			} else if ( token == "uniform" ) {
+				// old-style bodies declare the joint matrix uniform block,
+				// the positional samplers, and the user render parms at
+				// body scope; all of them are moved to the header so they
+				// stay at global scope in GLSL
+				idToken next;
+				if ( source->PeekTokenString( "matrices_ubo" ) ) {
+					source->ReadToken( &next );	// matrices_ubo
+					AppendFormat( headerExtra, "uniform matrices_ubo {" );
+					int blockDepth = 0;
+					while ( source->ReadToken( &next ) ) {
+						if ( next == "{" ) {
+							++blockDepth;
+							AppendFormat( headerExtra, " {" );
+						} else if ( next == "}" ) {
+							if ( --blockDepth <= 0 ) {
+								break;
+							}
+							AppendFormat( headerExtra, " }" );
+						} else {
+							AppendFormat( headerExtra, " %s", next.c_str() );
+						}
+					}
+					AppendFormat( headerExtra, " };\n" );
+					source->CheckTokenString( ";" );
+					// this engine's skinned programs declare matrices_ubo;
+					// the TNO hardwareSkinning keyword is never used here
+					data->hasHardwareSkinning = true;
+					continue;
+				}
+				// capture the rest of the declaration; the CG types and the
+				// register annotations are cleaned up by ConvertCG2GLSL
+				AppendFormat( headerExtra, "uniform" );
+				while ( source->ReadToken( &next ) ) {
+					AppendFormat( headerExtra, " %s", next.c_str() );
+					if ( next == ";" ) {
+						break;
+					}
+					if ( next == ":" ) {
+						// a register annotation runs to the end of the
+						// declaration and is dropped
+						source->SkipUntilString( ";" );
+						AppendFormat( headerExtra, ";\n" );
+						break;
+					}
+				}
+				AppendFormat( headerExtra, "\n" );
+				continue;
+			} else {
+				// old-style bodies reference the vector parms by their plain
+				// registry name instead of with a $ prefix
+				const idRenderProgParm * renderParm = renderProgParms.FindParmByName( token.c_str() );
+				if ( renderParm != nullptr && renderParm->GetType() == PT_VECTOR ) {
+					if ( FindParmIndex( uniformParms, renderParm->GetIndex() ) == -1 ) {
+						if ( uniformParms.Num() >= uniformParms.Max() ) {
+							source->Warning( "more than %d render parms used in %s program", uniformParms.Max(), programName );
+							return false;
+						}
+						uniformParms.Append( static_cast< short >( renderParm->GetIndex() ) );
+					}
+				}
 			}
 		}
 
@@ -809,6 +899,8 @@ bool ParseShader( programType_t programType, idParser * source, const idStr * gl
 	} else {
 		shaderInfo->parsed = true;
 		GenerateHeader( programType, globalInclude, data, shaderInfo );
+		// uniforms captured from the body scope go after the shared include
+		shaderInfo->headerString += headerExtra;
 	}
 	return true;
 }

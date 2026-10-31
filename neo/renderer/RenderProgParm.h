@@ -61,6 +61,14 @@ private:
 // list in global.inc.
 static const int RENDERPROG_NUM_BUILTIN_PARMS = 53;
 
+// User parms set through SetRenderParm with a RENDERPARM_USER offset. Must
+// match RENDERPARM_USER and MAX_GLSL_USER_PARMS in RenderProgs.h. Some of
+// the legacy shaders in bin/base/renderprogs reference these directly by
+// name (rpUser0..rpUser7), so they need to be part of the registry even
+// though the decl files never list them as uniform parms.
+static const int RENDERPROG_USER_PARM_BASE = 128;
+static const int RENDERPROG_NUM_USER_PARMS = 8;
+
 // Temporary expression parms used by the parm block parser. The indices
 // continue the TNO numbering just below INVALID_PARM_INDEX (2175), which is
 // defined in ParmBlock.h as "no parm".

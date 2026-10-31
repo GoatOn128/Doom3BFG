@@ -63,8 +63,10 @@ static const char * const s_renderParmNames[RENDERPROG_NUM_BUILTIN_PARMS] = {
 };
 
 // The temporary expression parm names must outlive the registry entries
-// because idRenderProgParm only stores the raw pointer.
+// because idRenderProgParm only stores the raw pointer. The same applies
+// to the user parm names.
 static idStr s_temporaryParmNames[RENDERPROG_NUM_TEMPORARY_PARMS];
+static idStr s_userParmNames[RENDERPROG_NUM_USER_PARMS];
 
 idRenderProgParm::idRenderProgParm( const char * name, parmType_t type, int index ) {
 	this->name = name;
@@ -82,6 +84,12 @@ void idRenderProgParmState::EnsureBuilt() {
 	parms.SetGranularity( 64 );
 	for ( int index = 0; index < RENDERPROG_NUM_BUILTIN_PARMS; index++ ) {
 		parms.Append( idRenderProgParm( s_renderParmNames[index], PT_VECTOR, index ) );
+	}
+	// User parms referenced directly by name in the legacy shaders.
+	for ( int index = 0; index < RENDERPROG_NUM_USER_PARMS; index++ ) {
+		s_userParmNames[index].Format( "rpUser%i", index );
+		parms.Append( idRenderProgParm( s_userParmNames[index].c_str(), PT_VECTOR,
+										RENDERPROG_USER_PARM_BASE + index ) );
 	}
 	// Temporary expression parms used by the parm block parser; their
 	// indices sit just below INVALID_PARM_INDEX.

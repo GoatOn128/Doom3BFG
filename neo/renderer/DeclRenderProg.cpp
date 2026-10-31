@@ -563,6 +563,18 @@ void idDeclRenderProg::UploadTargetCode() {
 			samplerLocations[index] = 0;
 		}
 	}
+	// shaders converted from the legacy .vertex/.pixel files declare their
+	// samplers as samp0..samp15 instead of the named samp_ uniforms; those
+	// shaders select their textures through the fixed joint order of the old
+	// render prog manager, so the units are assigned positionally here
+	const int maxLegacySamplers = 16;
+	for ( int unit = 0; unit < maxLegacySamplers; ++unit ) {
+		const char * samplerName = va( "samp%i", unit );
+		const int location = qglGetUniformLocation( glProgram, samplerName );
+		if ( location != -1 ) {
+			qglUniform1i( location, unit );
+		}
+	}
 }
 
 /*

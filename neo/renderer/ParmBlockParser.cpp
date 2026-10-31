@@ -252,19 +252,9 @@ idParmBlockParser::ParseTerm
 const idRenderProgParm * idParmBlockParser::ParseTerm( idParser & source, idToken * fakeToken ) {
 	idToken token;
 	if ( fakeToken != nullptr ) {
-		// idToken::operator=( const idStr & ) only assigns the text, so the
-		// public fields are copied by hand
-		token = static_cast< const idStr & >( *fakeToken );
-		token.type = fakeToken->type;
-		token.subtype = fakeToken->subtype;
-		token.line = fakeToken->line;
-		token.linesCrossed = fakeToken->linesCrossed;
-		token.flags = fakeToken->flags;
-		token.intvalue = fakeToken->intvalue;
-		token.floatvalue = fakeToken->floatvalue;
-		token.whiteSpaceStart_p = fakeToken->whiteSpaceStart_p;
-		token.whiteSpaceEnd_p = fakeToken->whiteSpaceEnd_p;
-		token.next = fakeToken->next;
+		// the implicit copy assignment copies the whole token, including the
+		// members that are not assignable through the public operators
+		token = *fakeToken;
 	} else {
 		source.ReadToken( &token );
 	}

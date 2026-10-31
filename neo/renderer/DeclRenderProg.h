@@ -103,6 +103,9 @@ public:
 	void					UploadTargetCode();
 	bool					IsUploaded() const { return program != 0; }
 	unsigned int			GetProgram() const { return program; }
+
+	// true when the vertex program declares the joint matrix uniform block
+	bool					UsesJoints() const { return data.hasHardwareSkinning; }
 	int						GetVertexUniformLocation( int index ) const { return vertexUniformLocations[index]; }
 	int						GetFragmentUniformLocation( int index ) const { return fragmentUniformLocations[index]; }
 	int						GetSamplerUniformLocation( int index ) const { return samplerLocations[index]; }
