@@ -14,6 +14,8 @@ uniform register list in global.inc, so the existing shader base keeps
 working while the renderprog system is migrated.
 */
 
+#include "idlib/containers/List.h"
+
 class idImage;
 class idDeclRenderProg;
 

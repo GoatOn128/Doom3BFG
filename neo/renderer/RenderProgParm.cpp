@@ -1,4 +1,6 @@
-#include "idlib/Lib.h"
+#include "precompiled.h"
+#pragma hdrstop
+
 #include "RenderProgParm.h"
 
 // The built-in vector parms, in register order. The index of each entry is

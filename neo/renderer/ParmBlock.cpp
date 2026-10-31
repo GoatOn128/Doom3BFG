@@ -1,6 +1,7 @@
-#include <cstring>
+#include "precompiled.h"
+#pragma hdrstop
 
-#include "idlib/Lib.h"
+#include <cstring>
 #include "ParmBlock.h"
 
 /*
@@ -164,7 +165,7 @@ void idParmBlock::Append( const idParmBlock & other ) {
 }
 
 void idParmBlock::RemoveRedundantOperations() {
-	if ( ops.Num() == 0 ) {
+	if ( ops.Num() == 0 || ops.Num() > 256 ) {
 		return;
 	}
 	// An operation is redundant when no later operation reads the parm it
