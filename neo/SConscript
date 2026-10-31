@@ -1,7 +1,7 @@
 # DoomEXE equivalent: Windows GUI application.
 import os
 
-Import('env', 'build_objects', 'collect_sources', 'require_sources', 'BIN_DIR', 'DLL_BUILD', 'GUI_LINKFLAGS', 'external_lib', 'idlib_lib', 'game_static_lib', '_track_progress', 'PROJECT_ROOT')
+Import('env', 'build_objects', 'collect_sources', 'require_sources', 'BIN_DIR', 'DLL_BUILD', 'GUI_LINKFLAGS', 'external_lib', 'idlib_lib', 'game_static_lib', '_track_progress', 'PROJECT_ROOT', 'OBJECT_ROOT')
 
 # premake5.lua: files from the following directories, with explicit exclusions.
 doom_dirs = (
@@ -19,9 +19,10 @@ doom_excludes = [
 doom_all_sources = require_sources(
     'DoomEXE', collect_sources(doom_dirs, doom_excludes)
 )
-# Source paths are relative to neo/, so absolutize the resources
-# before they reach the linker.
-doom_resources = [os.path.join(PROJECT_ROOT, s) for s in doom_all_sources if s.lower().endswith('.rc')]
+# Source paths are relative to neo/. The .rc resource scripts must be
+# compiled by the resource compiler into linkable .res objects; the
+# raw .rc files must not reach the linker (fatal error LNK1107).
+doom_rc_sources = [s for s in doom_all_sources if s.lower().endswith('.rc')]
 doom_sources = [s for s in doom_all_sources if not s.lower().endswith('.rc')]
 
 main_env = env.Clone()
@@ -31,6 +32,16 @@ main_env.Append(LIBS=[
     'opengl32', 'winmm', 'wsock32',
     'xinput', 'dinput8', 'dsound', 'dxguid',
 ])
+
+# Compile the .rc resources with the resource compiler (rc.exe, or
+# windres for gcc) into the object tree, mirroring build_objects' layout.
+doom_resources = []
+for s in doom_rc_sources:
+    res_target = os.path.join(
+        OBJECT_ROOT, 'DoomEXE', s + main_env.get('RESSUFFIX', '.res'))
+    doom_resources.extend(main_env.RES(
+        res_target, os.path.join(PROJECT_ROOT, s)))
+_track_progress(main_env, doom_resources)
 
 main_objects = build_objects(main_env, 'DoomEXE', doom_sources)
 main_inputs = list(main_objects) + list(doom_resources) + [external_lib, idlib_lib]
