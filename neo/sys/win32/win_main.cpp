@@ -1165,7 +1165,10 @@ void Sys_Init() {
 	if ( !GetVersionEx( (LPOSVERSIONINFO)&win32.osversion ) )
 		Sys_Error( "Couldn't get OS info" );
 
-	if ( win32.osversion.dwMajorVersion < 7 ) {
+	// Windows 7 is NT 6.1, so no supported Windows reports a major version
+	// below 6. GetVersionEx only reports 10.x on Windows 10/11 when the
+	// exe manifest declares the Win10 compatibility GUID.
+	if ( win32.osversion.dwMajorVersion < 6 || ( win32.osversion.dwMajorVersion == 6 && win32.osversion.dwMinorVersion < 1 ) ) {
 		Sys_Error( GAME_NAME " requires Windows 7 SP1 or greater" );
 	}
 

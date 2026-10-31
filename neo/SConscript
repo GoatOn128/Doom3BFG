@@ -1,7 +1,7 @@
 # DoomEXE equivalent: Windows GUI application.
 import os
 
-Import('env', 'build_objects', 'collect_sources', 'require_sources', 'BIN_DIR', 'DLL_BUILD', 'MACHINE_FLAG', 'external_lib', 'idlib_lib', 'game_static_lib', '_track_progress')
+Import('env', 'build_objects', 'collect_sources', 'require_sources', 'BIN_DIR', 'DLL_BUILD', 'GUI_LINKFLAGS', 'external_lib', 'idlib_lib', 'game_static_lib', '_track_progress', 'PROJECT_ROOT', 'OBJECT_ROOT')
 
 # premake5.lua: files from the following directories, with explicit exclusions.
 doom_dirs = (
@@ -19,21 +19,49 @@ doom_excludes = [
 doom_all_sources = require_sources(
     'DoomEXE', collect_sources(doom_dirs, doom_excludes)
 )
-doom_resources = [s for s in doom_all_sources if s.lower().endswith('.rc')]
+# Source paths are relative to neo/. The .rc resource scripts must be
+# compiled by the resource compiler into linkable .res objects; the
+# raw .rc files must not reach the linker (fatal error LNK1107).
+doom_rc_sources = [s for s in doom_all_sources if s.lower().endswith('.rc')]
 doom_sources = [s for s in doom_all_sources if not s.lower().endswith('.rc')]
 
 main_env = env.Clone()
-main_env.Append(LINKFLAGS=[
-    MACHINE_FLAG,
-    '/SUBSYSTEM:WINDOWS',
-    '/STACK:16777216,16777216',
-    '/LARGEADDRESSAWARE',
-])
+main_env.Append(LINKFLAGS=GUI_LINKFLAGS)
 main_env.Append(LIBS=[
-    'dbghelp', 'glu32', 'iphlpapi', 'odbc32', 'odbccp32',
-    'opengl32', 'winmm', 'wsock32',
+    'dbghelp', 'gdi32', 'glu32', 'iphlpapi', 'odbc32', 'odbccp32',
+    'opengl32', 'user32', 'winmm', 'wsock32',
     'xinput', 'dinput8', 'dsound', 'dxguid',
 ])
+
+# Compile the .rc resources with the resource compiler (rc.exe, or
+# windres for gcc) into the object tree, mirroring build_objects' layout.
+doom_resources = []
+for s in doom_rc_sources:
+    res_target = os.path.join(
+        OBJECT_ROOT, 'DoomEXE', s + main_env.get('RESSUFFIX', '.res'))
+    doom_resources.extend(main_env.RES(
+        res_target, os.path.join(PROJECT_ROOT, s)))
+_track_progress(main_env, doom_resources)
+
+# The exe must also carry sys/win32/rc/Doom3BFG.manifest as resource 1
+# (RT_MANIFEST): without its Win10/11 supportedOS entry GetVersionEx
+# reports 6.2.9200 on modern Windows and the engine refuses to start.
+# A tiny generated rc references the manifest; doom.rc itself is not
+# modified because its version strings are cp1252-encoded and would be
+# re-encoded by tooling.
+manifest_rc = os.path.join(OBJECT_ROOT, 'DoomEXE', 'doom_manifest.rc')
+os.makedirs(os.path.dirname(manifest_rc), exist_ok=True)
+manifest_path = os.path.join(
+    PROJECT_ROOT, 'sys', 'win32', 'rc', 'Doom3BFG.manifest')
+# rc scripts run C-style escapes on quoted strings, so a path with
+# ...\neo\... or ...\rc\... would collapse into control characters
+# (error RC2135: file not found). Double every backslash, matching the
+# res\\doom.ico reference in doom.rc.
+with open(manifest_rc, 'w') as rc_file:
+    rc_file.write('1 24 "%s"\n' % manifest_path.replace(os.sep, os.sep * 2))
+doom_resources.extend(main_env.RES(
+    os.path.join(OBJECT_ROOT, 'DoomEXE', 'doom_manifest' + main_env.get('RESSUFFIX', '.res')),
+    manifest_rc))
 
 main_objects = build_objects(main_env, 'DoomEXE', doom_sources)
 main_inputs = list(main_objects) + list(doom_resources) + [external_lib, idlib_lib]

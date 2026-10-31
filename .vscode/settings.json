@@ -1,5 +1,9 @@
 {
     "terminal.integrated.profiles.windows": {
+        "Command Prompt": {
+            "path": "${env:windir}\\System32\\cmd.exe",
+            "icon": "terminal-cmd"
+        },
         "VS 2026 Developer Command Prompt (x64)": {
             "path": "${env:windir}\\System32\\cmd.exe",
             "args": [
@@ -10,20 +14,22 @@
         }
     },
     "terminal.integrated.cwd": "${workspaceFolder}",
-    "terminal.integrated.defaultProfile.windows": "VS 2026 Developer Command Prompt (x64)",
+    "terminal.integrated.defaultProfile.windows": "Command Prompt",
     "terminal.integrated.scrollback": 10000,
     "terminal.integrated.enablePersistentSessions": true,
+    "search.exclude": {
+        "**/build": true,
+        "**/bin": true,
+        "**/.scons_cache": true
+    },
+    "files.watcherExclude": {
+        "**/build/**": true,
+        "**/bin/**": true,
+        "**/.scons_cache/**": true
+    },
     "C_Cpp.default.cStandard": "c11",
     "C_Cpp.default.cppStandard": "c++17",
     "C_Cpp.errorSquiggles": "enabled",
     "C_Cpp.intelliSenseEngine": "default",
-    "editor.formatOnSave": false,
-    "[c]": {
-        "editor.defaultFormatter": "zachflower.uncrustify"
-    },
-    "[cpp]": {
-        "editor.defaultFormatter": "zachflower.uncrustify"
-    },
-    "uncrustify.configPath.windows": "${workspaceFolder}/uncrustify.cfg",
-    "uncrustify.configPath.linux": "${workspaceFolder}/uncrustify.cfg"
+    "editor.formatOnSave": false
 }
