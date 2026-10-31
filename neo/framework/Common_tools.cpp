@@ -37,7 +37,7 @@ bool			com_editorActive;		//  true if an editor has focus
 #ifdef _WIN32
 HWND			com_hwndMsg = NULL;
 bool			com_outputMsg = false;
-unsigned int	com_msgID = -1;
+unsigned int	com_msgID = 0xFFFFFFFFu;
 #endif
 
 #ifdef _WIN32

@@ -774,7 +774,6 @@ void idCommonLocal::RenderVideo( const char * path ) {
 	material->ResetCinematicTime( Sys_Milliseconds() );
 
 	int cinematicLength = material->CinematicLength();
-	int	mouseEvents[MAX_MOUSE_EVENTS][2];
 
 	bool escapeEvent = false;
 	while ( ( Sys_Milliseconds() <= ( material->GetCinematicStartTime() + cinematicLength ) ) && material->CinematicIsPlaying() ) {
