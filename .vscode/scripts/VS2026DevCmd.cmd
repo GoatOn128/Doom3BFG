@@ -1,4 +1,5 @@
 @echo off
+setlocal enableextensions
 rem Initialize the Visual Studio 2026 (18.x) developer environment.
 rem This script deliberately avoids FOR /F ('command') parsing: the default
 rem vswhere path contains "Program Files (x86)", whose parentheses can break
@@ -20,20 +21,24 @@ set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
 set "VSINSTALL_FILE=%TEMP%\VSDevCmd_%RANDOM%_%RANDOM%.txt"
 set "VSINSTALL="
 
-rem Parse the arguments before the Visual Studio lookup: the gcc
-rem toolchain does not use Visual Studio at all and branches out early.
+rem Parse and validate the raw arguments before the Visual Studio lookup:
+rem the gcc toolchain skips Visual Studio entirely. The checks run on
+rem %1 and %2 directly so a stale or mangled variable cannot trip them.
 set "BUILD_ARCH=%~1"
 set "BUILD_CONFIG=%~2"
 set "BUILD_JOBS=%~3"
 set "BUILD_DLL=%~4"
 set "BUILD_TOOLCHAIN=%~5"
 if not defined BUILD_TOOLCHAIN set "BUILD_TOOLCHAIN=msvc"
-if not "%~1"=="" if /i not "%BUILD_ARCH%"=="x86" if /i not "%BUILD_ARCH%"=="x64" goto bad_arch
-if not "%~1"=="" if /i not "%BUILD_CONFIG%"=="debug" if /i not "%BUILD_CONFIG%"=="release" if /i not "%BUILD_CONFIG%"=="retail" if /i not "%BUILD_CONFIG%"=="clean" goto bad_config
 if not defined BUILD_JOBS set "BUILD_JOBS=8"
-if not "%~1"=="" if defined BUILD_DLL if /i not "%BUILD_DLL%"=="dll" goto bad_dll
+if "%~1"=="" goto parse_done
+if /i not "%~1"=="x86" if /i not "%~1"=="x64" goto bad_arch
+if /i not "%~2"=="debug" if /i not "%~2"=="release" if /i not "%~2"=="retail" if /i not "%~2"=="clean" goto bad_config
+if defined BUILD_DLL if /i not "%BUILD_DLL%"=="dll" goto bad_dll
 if /i not "%BUILD_TOOLCHAIN%"=="msvc" if /i not "%BUILD_TOOLCHAIN%"=="clang" if /i not "%BUILD_TOOLCHAIN%"=="gcc" goto bad_toolchain
-if /i "%BUILD_TOOLCHAIN%"=="gcc" if not "%~1"=="" goto gcc_build
+if /i "%BUILD_TOOLCHAIN%"=="gcc" goto gcc_build
+
+:parse_done
 
 if not exist "%VSWHERE%" goto no_vswhere
 
@@ -160,19 +165,19 @@ echo [VSDevCmd] ERROR: VsDevCmd.bat was not found: "%VSDEVCMD%"
 exit /b 1
 
 :bad_arch
-echo [VSDevCmd] ERROR: Architecture must be x86 or x64.
+echo [VSDevCmd] ERROR: Architecture must be x86 or x64. Received: "%~1"
 exit /b 2
 
 :bad_config
-echo [VSDevCmd] ERROR: Configuration must be debug, release, retail, or clean.
+echo [VSDevCmd] ERROR: Configuration must be debug, release, retail, or clean. Received: "%~2"
 exit /b 2
 
 :bad_dll
-echo [VSDevCmd] ERROR: The fourth argument must be dll or empty.
+echo [VSDevCmd] ERROR: The fourth argument must be dll or empty. Received: "%~4"
 exit /b 2
 
 :bad_toolchain
-echo [VSDevCmd] ERROR: Toolchain must be msvc, clang, or gcc.
+echo [VSDevCmd] ERROR: Toolchain must be msvc, clang, or gcc. Received: "%~5"
 exit /b 2
 
 :cd_failed
