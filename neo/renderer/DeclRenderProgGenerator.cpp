@@ -259,7 +259,10 @@ void ParseInOutStruct( parser_t * source, int attribType, idList<inOutVariable_t
 			if ( ( attribsPC[index].flags & attribType ) != 0 &&
 				 variable.nameGLSL.Cmp( attribsPC[index].semantic ) == 0 ) {
 				variable.nameGLSL = attribsPC[index].glsl;
-				isBuiltIn = ( attribsPC[index].flags & AT_PS_INOUT ) != 0;
+				// a built-in like gl_FragCoord is provided by the driver and
+				// must not be declared as a user in or out variable
+				isBuiltIn = ( attribsPC[index].flags & AT_PS_INOUT ) != 0 ||
+					idStr::Cmpn( attribsPC[index].glsl, "gl_", 3 ) == 0;
 				break;
 			}
 		}
