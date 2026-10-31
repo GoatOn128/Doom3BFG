@@ -5,13 +5,15 @@
 #include "DeclRenderProgGenerator.h"
 #include "ParmBlockParser.h"
 #include "idlib/Parser.h"
+#include "tr_local.h"
 
 /*
-Adapted from the Wolfenstein: The New Order idDeclRenderProg and decl render
-prog generator reconstructed under references/wolfnto-reversedengineered
-(declrenderprog.cpp, declrenderproggenerator.cpp). That material is decompiled
-proprietary code and is not GPL-compatible; this is a re-implementation on
-this engine's idlib.
+Adapted from the Wolfenstein: The New Order idDeclRenderProg, decl render
+prog generator, and GL upload path reconstructed under
+references/wolfnto-reversedengineered (declrenderprog.cpp,
+declrenderproggenerator.cpp, declrenderprog_ogl_pc.cpp). That material is
+decompiled proprietary code and is not GPL-compatible; this is a
+re-implementation on this engine's idlib.
 
 The decl parses the inherit, parms, state, flags, interaction, and
 hlsl_vp/hlsl_fp blocks. The parms block is parsed by idParmBlockParser and
@@ -24,6 +26,14 @@ this engine's idParser has no include stack, so renderprogs/global.inc is
 read raw and embedded verbatim, which keeps its #define macros intact for
 the GLSL compiler to expand.
 */
+
+/*
+====================
+r_dumpGeneratedGLSL
+====================
+*/
+idCVar r_dumpGeneratedGLSL( "r_dumpGeneratedGLSL", "0", CVAR_BOOL,
+	"dump the GLSL generated for renderprog decls into generated/glsl" );
 
 /*
 ====================
@@ -128,6 +138,11 @@ void idDeclRenderProg::Clear() {
 	hasDerived = false;
 	vertexConstructInfo.Clear();
 	fragmentConstructInfo.Clear();
+	// the GL program is released by FreeData; a re-parse keeps it valid
+	// until the decl manager frees the decl
+	vertexUniformLocations.Clear();
+	fragmentUniformLocations.Clear();
+	samplerLocations.Clear();
 	versions.Clear();
 	versions.Append( this );
 	versions.Append( this );
@@ -140,6 +155,10 @@ idDeclRenderProg::FreeData
 =================
 */
 void idDeclRenderProg::FreeData() {
+	if ( program != 0 ) {
+		qglDeleteProgram( program );
+		program = 0;
+	}
 	Clear();
 }
 
@@ -352,4 +371,208 @@ bool idDeclRenderProg::ProgUsesParm( const idRenderProgParm * parm ) const {
 		}
 	}
 	return false;
+}
+
+/*
+=================
+CompileGLSL
+
+Adapted from the Wolfenstein: The New Order GLSL compile path
+(declrenderprog_ogl_pc.cpp). Compiles one stage of the generated code and
+prints the numbered source lines when the driver reports a problem.
+=================
+*/
+static unsigned int CompileGLSL( const idStr & programGLSL, bool isVertexProgram,
+								const char * name, const char * fileName ) {
+	const GLuint shader = qglCreateShader( isVertexProgram ? GL_VERTEX_SHADER : GL_FRAGMENT_SHADER );
+	if ( shader == 0 ) {
+		return 0;
+	}
+
+	const char * source = programGLSL.c_str();
+	qglShaderSource( shader, 1, &source, nullptr );
+	qglCompileShader( shader );
+
+	int infoLogLength = 0;
+	qglGetShaderiv( shader, GL_INFO_LOG_LENGTH, &infoLogLength );
+	if ( infoLogLength > 1 ) {
+		idTempArray<char> infoLog( infoLogLength );
+		int charsWritten = 0;
+		qglGetShaderInfoLog( shader, infoLogLength, &charsWritten, infoLog.Ptr() );
+
+		// catch the strings the ATI and Intel drivers output on success
+		if ( strstr( infoLog.Ptr(), "successfully compiled to run on hardware" ) == nullptr &&
+			 strstr( infoLog.Ptr(), "No errors." ) == nullptr ) {
+			idLib::Printf( "While compiling %s program %s from %s\n",
+						   isVertexProgram ? "vertex" : "fragment", name, fileName );
+			idLib::Printf( "-----------------\n" );
+			int lineNumber = 1;
+			const char * lineStart = source;
+			while ( *lineStart != '\0' ) {
+				const char * lineEnd = strchr( lineStart, '\n' );
+				if ( lineEnd == nullptr ) {
+					idLib::Printf( "%3d: %s\n", lineNumber, lineStart );
+					break;
+				}
+				idLib::Printf( "%3d: %.*s\n", lineNumber,
+							   static_cast< int >( lineEnd - lineStart ), lineStart );
+				lineStart = lineEnd + 1;
+				++lineNumber;
+			}
+			idLib::Printf( "-----------------\n" );
+			idLib::Printf( "%s\n", infoLog.Ptr() );
+		}
+	}
+
+	int compiled = GL_FALSE;
+	qglGetShaderiv( shader, GL_COMPILE_STATUS, &compiled );
+	if ( compiled == GL_FALSE ) {
+		qglDeleteShader( shader );
+		return 0;
+	}
+	return shader;
+}
+
+/*
+=================
+idDeclRenderProg::UploadTargetCode
+
+Adapted from the Wolfenstein: The New Order UploadTargetCode
+(declrenderprog_ogl_pc.cpp): compiles both stages, links the program, binds
+the attribute and fragment data locations from the attrib table, and
+resolves the uniform and sampler locations. The TNO precompiled program
+binary cache is dropped.
+=================
+*/
+void idDeclRenderProg::UploadTargetCode() {
+	if ( data.vertexCode.IsEmpty() || data.fragmentCode.IsEmpty() ) {
+		idLib::Warning( "renderprog %s has no generated shader code to upload", GetName() );
+		return;
+	}
+
+	if ( r_dumpGeneratedGLSL.GetBool() && fileSystem != nullptr ) {
+		idStr vertexName( "generated/glsl/" );
+		vertexName += GetName();
+		vertexName += "_vertex.glsl";
+		fileSystem->WriteFile( vertexName.c_str(), data.vertexCode.c_str(), data.vertexCode.Length() );
+		idStr fragmentName( "generated/glsl/" );
+		fragmentName += GetName();
+		fragmentName += "_fragment.glsl";
+		fileSystem->WriteFile( fragmentName.c_str(), data.fragmentCode.c_str(), data.fragmentCode.Length() );
+	}
+
+	const unsigned int vertexShader = CompileGLSL( data.vertexCode, true, GetName(), GetFileName() );
+	const unsigned int fragmentShader = CompileGLSL( data.fragmentCode, false, GetName(), GetFileName() );
+	if ( vertexShader == 0 || fragmentShader == 0 ) {
+		if ( vertexShader != 0 ) {
+			qglDeleteShader( vertexShader );
+		}
+		if ( fragmentShader != 0 ) {
+			qglDeleteShader( fragmentShader );
+		}
+		idLib::Error( "Failed to compile render prog %s from %s", GetName(), GetFileName() );
+		return;
+	}
+
+	const GLuint glProgram = qglCreateProgram();
+	qglAttachShader( glProgram, vertexShader );
+	qglAttachShader( glProgram, fragmentShader );
+
+	// bind the vertex attribute locations to the PC attribute indices
+	for ( int index = 0; attribsPC[index].glsl != nullptr; ++index ) {
+		if ( ( attribsPC[index].flags & AT_VS_IN ) != 0 ) {
+			qglBindAttribLocation( glProgram, attribsPC[index].bind, attribsPC[index].glsl );
+		}
+	}
+
+	// bind the fragment outputs to color numbers; gl_* built-ins like
+	// gl_FragDepth are assigned by the driver and must not be bound
+	for ( int index = 0; attribsPC[index].glsl != nullptr; ++index ) {
+		if ( ( attribsPC[index].flags & AT_PS_OUT ) != 0 &&
+			 idStr::Cmpn( attribsPC[index].glsl, "gl_", 3 ) != 0 ) {
+			qglBindFragDataLocation( glProgram, attribsPC[index].bind, attribsPC[index].glsl );
+		}
+	}
+
+	qglLinkProgram( glProgram );
+
+	// the shaders are part of the program now; the names can be released
+	qglDeleteShader( vertexShader );
+	qglDeleteShader( fragmentShader );
+
+	int infoLogLength = 0;
+	qglGetProgramiv( glProgram, GL_INFO_LOG_LENGTH, &infoLogLength );
+	if ( infoLogLength > 1 ) {
+		idTempArray<char> infoLog( infoLogLength );
+		int charsWritten = 0;
+		qglGetProgramInfoLog( glProgram, infoLogLength, &charsWritten, infoLog.Ptr() );
+
+		// catch the strings the ATI and Intel drivers output on success
+		if ( strstr( infoLog.Ptr(), "Vertex shader(s) linked, fragment shader(s) linked." ) == nullptr &&
+			 strstr( infoLog.Ptr(), "No errors." ) == nullptr ) {
+			idLib::Printf( "While linking render prog %s from %s\n%s\n", GetName(), GetFileName(), infoLog.Ptr() );
+		}
+	}
+
+	int linked = GL_FALSE;
+	qglGetProgramiv( glProgram, GL_LINK_STATUS, &linked );
+	if ( linked == GL_FALSE ) {
+		qglDeleteProgram( glProgram );
+		idLib::Error( "Failed to link render prog %s from %s", GetName(), GetFileName() );
+		return;
+	}
+
+	program = glProgram;
+
+	// resolve the uniform locations; the GLSL compiler strips uniforms the
+	// program does not use, so a location of -1 is normal and stored as 0
+	vertexUniformLocations.SetNum( data.vertexParms.Num() );
+	for ( int index = 0; index < data.vertexParms.Num(); ++index ) {
+		const char * parmName = renderProgParms.GetParmNameForIndex( data.vertexParms[index] );
+		const int location = ( parmName != nullptr ) ? qglGetUniformLocation( glProgram, parmName ) : -1;
+		vertexUniformLocations[index] = location + 1;
+	}
+	fragmentUniformLocations.SetNum( data.fragmentParms.Num() );
+	for ( int index = 0; index < data.fragmentParms.Num(); ++index ) {
+		const char * parmName = renderProgParms.GetParmNameForIndex( data.fragmentParms[index] );
+		const int location = ( parmName != nullptr ) ? qglGetUniformLocation( glProgram, parmName ) : -1;
+		fragmentUniformLocations[index] = location + 1;
+	}
+
+	// the joints uniform block of skinned programs binds to binding point 0
+	GLint blockIndex = qglGetUniformBlockIndex( glProgram, "matrices_ubo" );
+	if ( blockIndex != -1 ) {
+		qglUniformBlockBinding( glProgram, blockIndex, 0 );
+	}
+
+	// assign the texture units once; a sampler the driver stripped keeps
+	// location 0 and is skipped when committing textures
+	samplerLocations.SetNum( data.textureParms.Num() );
+	qglUseProgram( glProgram );
+	for ( int index = 0; index < data.textureParms.Num(); ++index ) {
+		idStr samplerName( "samp_" );
+		const char * parmName = renderProgParms.GetParmNameForIndex( data.textureParms[index] );
+		if ( parmName != nullptr ) {
+			samplerName += parmName;
+			const int location = qglGetUniformLocation( glProgram, samplerName.c_str() );
+			samplerLocations[index] = location + 1;
+			if ( location != -1 ) {
+				qglUniform1i( location, index );
+			}
+		} else {
+			samplerLocations[index] = 0;
+		}
+	}
+}
+
+/*
+=================
+idDeclRenderProg::EnsureUploaded
+=================
+*/
+void idDeclRenderProg::EnsureUploaded() {
+	if ( program != 0 ) {
+		return;
+	}
+	UploadTargetCode();
 }

@@ -89,7 +89,10 @@ enum vertexMask_t {
 	VERTEX_MASK_COLOR2		= BIT( PC_ATTRIB_INDEX_COLOR2 ),
 };
 
-attribInfo_t attribsPC[] = {
+// static: the renderprog decl system defines its own attribsPC with external
+// linkage in DeclRenderProgGenerator.cpp; this copy is only used by the
+// legacy .vertex/.pixel loading path below
+static attribInfo_t attribsPC[] = {
 	// vertex attributes
 	{ "float4",		"position",		"POSITION",		"in_Position",			PC_ATTRIB_INDEX_VERTEX,			AT_VS_IN,		VERTEX_MASK_XYZ },
 	{ "float2",		"texcoord",		"TEXCOORD0",	"in_TexCoord",			PC_ATTRIB_INDEX_ST,				AT_VS_IN,		VERTEX_MASK_ST },
@@ -631,7 +634,10 @@ void ParseInOutStruct( idLexer & src, int attribType, idList< inOutVariable_t > 
 ConvertCG2GLSL
 ========================
 */
-idStr ConvertCG2GLSL( const idStr & in, const char * name, bool isVertexProgram, idStr & uniforms ) {
+// static: the renderprog decl system defines its own ConvertCG2GLSL with
+// external linkage in DeclRenderProgGenerator.cpp; this copy is only used by
+// the legacy .vertex/.pixel loading path below
+static idStr ConvertCG2GLSL( const idStr & in, const char * name, bool isVertexProgram, idStr & uniforms ) {
 	idStr program;
 	program.ReAllocate( in.Length() * 2, false );
 

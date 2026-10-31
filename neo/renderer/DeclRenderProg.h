@@ -87,6 +87,26 @@ public:
 	shaderConstructInfo_t	vertexConstructInfo;
 	shaderConstructInfo_t	fragmentConstructInfo;
 
+	// Uploaded GL state (phase 4). The program handle is a GLuint stored as
+	// an unsigned int so this header does not pull in the GL headers; 0 means
+	// the decl has not been uploaded yet. The location lists hold the GL
+	// uniform location + 1 for each entry of the matching parm list in data,
+	// so 0 means the compiled program does not use that parm.
+	unsigned int			program = 0;
+	idList<int>				vertexUniformLocations;
+	idList<int>				fragmentUniformLocations;
+	idList<int>				samplerLocations;
+
+	// compile and link the generated code into a GL program and resolve all
+	// uniform and sampler locations; safe to call repeatedly
+	void					EnsureUploaded();
+	void					UploadTargetCode();
+	bool					IsUploaded() const { return program != 0; }
+	unsigned int			GetProgram() const { return program; }
+	int						GetVertexUniformLocation( int index ) const { return vertexUniformLocations[index]; }
+	int						GetFragmentUniformLocation( int index ) const { return fragmentUniformLocations[index]; }
+	int						GetSamplerUniformLocation( int index ) const { return samplerLocations[index]; }
+
 private:
 	const idDeclRenderProg *	inheritsFromDecl;
 	unsigned int				vertexProgramChecksum;

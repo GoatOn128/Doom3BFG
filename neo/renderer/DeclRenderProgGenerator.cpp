@@ -298,15 +298,17 @@ select which program sides the row applies to.
 ====================
 */
 attribInfo_t attribsPC[] = {
+	// vertex attributes; the bind index is the PC attribute index the vertex
+	// streams are uploaded to (PC_ATTRIB_INDEX_* in RenderProgs.h) and the
+	// vertex mask is BIT( bind ), matching the VERTEX_MASK_* flags the draw
+	// code uses to pick the vertex declaration
 	{ "float4", "position", "POSITION", "in_Position", 0, AT_VS_IN, 1 },
-	{ "float4", "position1", "POSITION1", "in_Position1", 5, AT_VS_IN, 4096 },
-	{ "float2", "texcoord", "TEXCOORD0", "in_TexCoord", 1, AT_VS_IN, 2 },
-	{ "float2", "texcoord0", "TEXCOORD0", "in_TexCoord", 1, AT_VS_IN, 2 },
-	{ "float2", "texcoord1", "TEXCOORD1", "in_TexCoord1", 4, AT_VS_IN, 1024 },
+	{ "float2", "texcoord", "TEXCOORD0", "in_TexCoord", 8, AT_VS_IN, 256 },
+	{ "float2", "texcoord0", "TEXCOORD0", "in_TexCoord", 8, AT_VS_IN, 256 },
 	{ "float4", "normal", "ATTR2", "in_Normal", 2, AT_VS_IN, 4 },
-	{ "float4", "tangent", "ATTR9", "in_Tangent", 9, AT_VS_IN, 16 },
+	{ "float4", "tangent", "ATTR9", "in_Tangent", 9, AT_VS_IN, 512 },
 	{ "float4", "color", "COLOR", "in_Color", 3, AT_VS_IN, 8 },
-	{ "float4", "morph", "ATTR10", "in_Morph", 10, AT_VS_IN, 128 },
+	{ "float4", "color2", "COLOR1", "in_Color2", 4, AT_VS_IN, 16 },
 	{ "float4", "position", "POSITION", "gl_Position", 0, AT_VS_OUT | AT_PS_INOUT, 0 },
 	{ "float", "clip0", "CLP0", "gl_ClipDistance[0]", 0, AT_VS_OUT, 0 },
 	{ "float", "clip1", "CLP1", "gl_ClipDistance[1]", 0, AT_VS_OUT, 0 },
@@ -323,7 +325,7 @@ attribInfo_t attribsPC[] = {
 	{ "float4", "color1", "COLOR1", "out_FragColor1", 1, AT_PS_OUT, 0 },
 	{ "float4", "color2", "COLOR2", "out_FragColor2", 2, AT_PS_OUT, 0 },
 	{ "float4", "color3", "COLOR3", "out_FragColor3", 3, AT_PS_OUT, 0 },
-	{ "float", "depth", "DEPTH", "out_FragDepth", 4, AT_PS_OUT, 0 },
+	{ "float", "depth", "DEPTH", "gl_FragDepth", 4, AT_PS_OUT | AT_PS_INOUT, 0 },
 	{ "float4", "color", "COLOR", "vofi_Color", 0, AT_VS_OUT | AT_PS_IN, 0 },
 	{ "float4", "color0", "COLOR0", "vofi_Color", 0, AT_VS_OUT | AT_PS_IN, 0 },
 	{ "float4", "color1", "COLOR1", "vofi_Color", 0, AT_VS_OUT | AT_PS_IN, 0 },
