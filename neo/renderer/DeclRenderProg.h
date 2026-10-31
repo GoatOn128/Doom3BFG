@@ -104,6 +104,11 @@ public:
 	bool					IsUploaded() const { return program != 0; }
 	unsigned int			GetProgram() const { return program; }
 
+	// drop the linked GL program but keep the parsed decl data; the program
+	// compiles again on the next EnsureUploaded. Full decl reloads go
+	// through the decl manager (FreeData).
+	void					FreeProgram();
+
 	// true when the vertex program declares the joint matrix uniform block
 	bool					UsesJoints() const { return data.hasHardwareSkinning; }
 	int						GetVertexUniformLocation( int index ) const { return vertexUniformLocations[index]; }

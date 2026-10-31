@@ -579,6 +579,23 @@ void idDeclRenderProg::UploadTargetCode() {
 
 /*
 =================
+idDeclRenderProg::FreeProgram
+=================
+*/
+void idDeclRenderProg::FreeProgram() {
+	if ( program != 0 ) {
+		qglDeleteProgram( program );
+		program = 0;
+	}
+	// the locations belong to the deleted program; the next upload
+	// resolves them again
+	vertexUniformLocations.Clear();
+	fragmentUniformLocations.Clear();
+	samplerLocations.Clear();
+}
+
+/*
+=================
 idDeclRenderProg::EnsureUploaded
 =================
 */
