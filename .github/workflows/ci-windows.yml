@@ -31,7 +31,7 @@ jobs:
         # instead of adding a new one
         dll: ['']
         include:
-          # dll=1 links Game-D3XP as bin/base/gamex86.dll instead of a
+          # dll=1 links Game-D3XP as bin/gamex86.dll instead of a
           # static library: a distinct define set (__DOOM_DLL__) and a
           # distinct link path worth their own leg
           - arch: x64
