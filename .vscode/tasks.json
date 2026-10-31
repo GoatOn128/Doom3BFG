@@ -4,12 +4,12 @@
         {
             "label": "Build (x64 debug)",
             "type": "process",
-            "command": "${env:windir}\\\\System32\\\\cmd.exe",
+            "command": "${env:windir}\\System32\\cmd.exe",
             "args": [
                 "/d",
                 "/s",
                 "/c",
-                "${workspaceFolder}\\\\.vscode\\\\scripts\\\\VS2026DevCmd.cmd",
+                "${workspaceFolder}\\.vscode\\scripts\\VS2026DevCmd.cmd",
                 "x64",
                 "debug",
                 "8",
@@ -30,12 +30,12 @@
         {
             "label": "Build (x64 release)",
             "type": "process",
-            "command": "${env:windir}\\\\System32\\\\cmd.exe",
+            "command": "${env:windir}\\System32\\cmd.exe",
             "args": [
                 "/d",
                 "/s",
                 "/c",
-                "${workspaceFolder}\\\\.vscode\\\\scripts\\\\VS2026DevCmd.cmd",
+                "${workspaceFolder}\\.vscode\\scripts\\VS2026DevCmd.cmd",
                 "x64",
                 "release",
                 "8",
@@ -53,12 +53,12 @@
         {
             "label": "Build (x64 retail)",
             "type": "process",
-            "command": "${env:windir}\\\\System32\\\\cmd.exe",
+            "command": "${env:windir}\\System32\\cmd.exe",
             "args": [
                 "/d",
                 "/s",
                 "/c",
-                "${workspaceFolder}\\\\.vscode\\\\scripts\\\\VS2026DevCmd.cmd",
+                "${workspaceFolder}\\.vscode\\scripts\\VS2026DevCmd.cmd",
                 "x64",
                 "retail",
                 "8",
@@ -76,12 +76,12 @@
         {
             "label": "Build (x86 debug)",
             "type": "process",
-            "command": "${env:windir}\\\\System32\\\\cmd.exe",
+            "command": "${env:windir}\\System32\\cmd.exe",
             "args": [
                 "/d",
                 "/s",
                 "/c",
-                "${workspaceFolder}\\\\.vscode\\\\scripts\\\\VS2026DevCmd.cmd",
+                "${workspaceFolder}\\.vscode\\scripts\\VS2026DevCmd.cmd",
                 "x86",
                 "debug",
                 "8",
@@ -99,12 +99,12 @@
         {
             "label": "Build (x86 release)",
             "type": "process",
-            "command": "${env:windir}\\\\System32\\\\cmd.exe",
+            "command": "${env:windir}\\System32\\cmd.exe",
             "args": [
                 "/d",
                 "/s",
                 "/c",
-                "${workspaceFolder}\\\\.vscode\\\\scripts\\\\VS2026DevCmd.cmd",
+                "${workspaceFolder}\\.vscode\\scripts\\VS2026DevCmd.cmd",
                 "x86",
                 "release",
                 "8",
@@ -122,12 +122,12 @@
         {
             "label": "Build (x86 retail)",
             "type": "process",
-            "command": "${env:windir}\\\\System32\\\\cmd.exe",
+            "command": "${env:windir}\\System32\\cmd.exe",
             "args": [
                 "/d",
                 "/s",
                 "/c",
-                "${workspaceFolder}\\\\.vscode\\\\scripts\\\\VS2026DevCmd.cmd",
+                "${workspaceFolder}\\.vscode\\scripts\\VS2026DevCmd.cmd",
                 "x86",
                 "retail",
                 "8",
@@ -145,12 +145,12 @@
         {
             "label": "Build (x64 release, game dll)",
             "type": "process",
-            "command": "${env:windir}\\\\System32\\\\cmd.exe",
+            "command": "${env:windir}\\System32\\cmd.exe",
             "args": [
                 "/d",
                 "/s",
                 "/c",
-                "${workspaceFolder}\\\\.vscode\\\\scripts\\\\VS2026DevCmd.cmd",
+                "${workspaceFolder}\\.vscode\\scripts\\VS2026DevCmd.cmd",
                 "x64",
                 "release",
                 "8",
@@ -169,12 +169,12 @@
         {
             "label": "Build (x64 debug, clang)",
             "type": "process",
-            "command": "${env:windir}\\\\System32\\\\cmd.exe",
+            "command": "${env:windir}\\System32\\cmd.exe",
             "args": [
                 "/d",
                 "/s",
                 "/c",
-                "${workspaceFolder}\\\\.vscode\\\\scripts\\\\VS2026DevCmd.cmd",
+                "${workspaceFolder}\\.vscode\\scripts\\VS2026DevCmd.cmd",
                 "x64",
                 "debug",
                 "8",
@@ -192,12 +192,12 @@
         {
             "label": "Build (x64 release, clang)",
             "type": "process",
-            "command": "${env:windir}\\\\System32\\\\cmd.exe",
+            "command": "${env:windir}\\System32\\cmd.exe",
             "args": [
                 "/d",
                 "/s",
                 "/c",
-                "${workspaceFolder}\\\\.vscode\\\\scripts\\\\VS2026DevCmd.cmd",
+                "${workspaceFolder}\\.vscode\\scripts\\VS2026DevCmd.cmd",
                 "x64",
                 "release",
                 "8",
@@ -215,12 +215,12 @@
         {
             "label": "Build (x64 debug, gcc)",
             "type": "process",
-            "command": "${env:windir}\\\\System32\\\\cmd.exe",
+            "command": "${env:windir}\\System32\\cmd.exe",
             "args": [
                 "/d",
                 "/s",
                 "/c",
-                "${workspaceFolder}\\\\.vscode\\\\scripts\\\\VS2026DevCmd.cmd",
+                "${workspaceFolder}\\.vscode\\scripts\\VS2026DevCmd.cmd",
                 "x64",
                 "debug",
                 "8",
@@ -241,12 +241,12 @@
         {
             "label": "Build (x64 release, gcc)",
             "type": "process",
-            "command": "${env:windir}\\\\System32\\\\cmd.exe",
+            "command": "${env:windir}\\System32\\cmd.exe",
             "args": [
                 "/d",
                 "/s",
                 "/c",
-                "${workspaceFolder}\\\\.vscode\\\\scripts\\\\VS2026DevCmd.cmd",
+                "${workspaceFolder}\\.vscode\\scripts\\VS2026DevCmd.cmd",
                 "x64",
                 "release",
                 "8",
@@ -267,12 +267,12 @@
         {
             "label": "Clean",
             "type": "process",
-            "command": "${env:windir}\\\\System32\\\\cmd.exe",
+            "command": "${env:windir}\\System32\\cmd.exe",
             "args": [
                 "/d",
                 "/s",
                 "/c",
-                "${workspaceFolder}\\\\.vscode\\\\scripts\\\\VS2026DevCmd.cmd",
+                "${workspaceFolder}\\.vscode\\scripts\\VS2026DevCmd.cmd",
                 "x64",
                 "clean"
             ],
