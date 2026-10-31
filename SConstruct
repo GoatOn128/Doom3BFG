@@ -755,7 +755,12 @@ elif TOOLCHAIN == 'clang':
     debug_ccflags = ['/MTd', '/Z7', '/Od']
     release_ccflags = ['/MT', '/O2', '/Ob2', '/Gy', '/GF', '/Oi']
 else:
-    debug_ccflags = ['/MTd', '/Zi', '/Od']
+    # /Zi writes a shared compiler PDB. Give it a per-build path with /Fd
+    # so parallel cl.exe processes stop dropping vc140.pdb at the repo
+    # root (fatal error C1090 when two compilers race on it), and use /FS
+    # to serialize PDB writes through mspdbsrv.
+    debug_ccflags = ['/MTd', '/Zi', '/FS', '/Od',
+                     '/Fd' + os.path.join(OBJECT_ROOT, 'msvc-compiler.pdb')]
     release_ccflags = ['/MT', '/O2', '/Ob2', '/Gy', '/GF', '/Oi']
 
 if CONFIG == 'debug':

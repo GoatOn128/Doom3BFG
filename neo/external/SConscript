@@ -1,5 +1,6 @@
 # external.lua equivalent: external static library.
-Import('env', 'build_objects', 'build_static_library', 'require_sources', 'PROJECT_ROOT')
+Import('env', 'build_objects', 'build_static_library', 'require_sources',
+       'PROJECT_ROOT', 'TOOLCHAIN')
 import os
 
 external_sources = [
@@ -36,8 +37,19 @@ external_env.Append(CPPPATH=[
     os.path.join(PROJECT_ROOT, 'external/minizip'),
     os.path.join(PROJECT_ROOT, 'external/libbinkdec/include'),
 ])
-# Premake external.lua: warnings('Off').
-external_env.Append(CCFLAGS=['/W0'], CXXFLAGS=['/W0'])
+# Premake external.lua: warnings('Off'). Replace the global warning
+# switch instead of appending, so cl never sees both /W4 and /W0
+# (warning D9025); gcc gets -w instead of MSVC-style /W0.
+if TOOLCHAIN == 'gcc':
+    external_env['CCFLAGS'] = [f for f in external_env['CCFLAGS']
+                               if f not in ('-Wall', '-Wextra')] + ['-w']
+    external_env['CXXFLAGS'] = [f for f in external_env['CXXFLAGS']
+                               if f not in ('-Wall', '-Wextra')] + ['-w']
+else:
+    external_env['CCFLAGS'] = [f for f in external_env['CCFLAGS']
+                               if f != '/W4'] + ['/W0']
+    external_env['CXXFLAGS'] = [f for f in external_env['CXXFLAGS']
+                               if f != '/W4'] + ['/W0']
 external_lib, external_objects = build_static_library(
     'external', external_sources, external_env
 )
