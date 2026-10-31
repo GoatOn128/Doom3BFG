@@ -109,12 +109,12 @@ the first draw that uses it instead of at startup.
 void idRenderProgManager::Init() {
 	common->Printf( "----- Initializing Render Shaders -----\n" );
 
-	// the decl manager registers the renderprog folder only in its Init2(),
-	// which the engine runs after the renderer has already been initialized;
-	// the builtin lookups below would run before the folder was ever scanned
-	// and every decl would come back missing. Registering the folder here
-	// scans it immediately; the later Init2() registration of the same folder
-	// only rescans the files and changes nothing.
+	// the engine initializes the renderer before the decl manager's Init2(),
+	// so the renderprog folder is registered here, before the builtin
+	// lookups below; without an early scan every decl would come back
+	// missing. This stays the only registration: RegisterDeclFolder re-parses
+	// the decl files on every call, and a second registration would re-parse
+	// every renderprog decl again for nothing.
 	declManager->RegisterDeclFolder( "renderprogs", ".renderprog", DECL_RENDERPROG );
 
 	for ( int i = 0; i < MAX_BUILTINS; i++ ) {

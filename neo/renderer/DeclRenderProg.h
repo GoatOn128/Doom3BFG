@@ -91,7 +91,10 @@ public:
 	// an unsigned int so this header does not pull in the GL headers; 0 means
 	// the decl has not been uploaded yet. The location lists hold the GL
 	// uniform location + 1 for each entry of the matching parm list in data,
-	// so 0 means the compiled program does not use that parm.
+	// so 0 means the compiled program does not use that parm. The program and
+	// the location lists are released together when the decl data is cleared,
+	// and EnsureUploaded rebuilds the program whenever the lists no longer
+	// match the current parm lists.
 	unsigned int			program = 0;
 	idList<int>				vertexUniformLocations;
 	idList<int>				fragmentUniformLocations;

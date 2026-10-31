@@ -131,6 +131,10 @@ idDeclRenderProg::Clear
 =================
 */
 void idDeclRenderProg::Clear() {
+	// the GL program and its location lists belong to the parsed data and
+	// are released together; a re-parsed decl rebuilds its program on the
+	// next bind
+	FreeProgram();
 	data.Clear();
 	inheritsFromDecl = nullptr;
 	vertexProgramChecksum = 0;
@@ -138,8 +142,6 @@ void idDeclRenderProg::Clear() {
 	hasDerived = false;
 	vertexConstructInfo.Clear();
 	fragmentConstructInfo.Clear();
-	// the GL program is released by FreeData; a re-parse keeps it valid
-	// until the decl manager frees the decl
 	vertexUniformLocations.Clear();
 	fragmentUniformLocations.Clear();
 	samplerLocations.Clear();
@@ -600,8 +602,18 @@ idDeclRenderProg::EnsureUploaded
 =================
 */
 void idDeclRenderProg::EnsureUploaded() {
-	if ( program != 0 ) {
+	// the program is only valid together with the location lists resolved
+	// for the current parm lists; if the decl data was re-populated after
+	// the last upload the sizes no longer match, and the program is
+	// rebuilt before any draw commits uniforms through stale locations
+	if ( program != 0 &&
+		 vertexUniformLocations.Num() == data.vertexParms.Num() &&
+		 fragmentUniformLocations.Num() == data.fragmentParms.Num() &&
+		 samplerLocations.Num() == data.textureParms.Num() ) {
 		return;
+	}
+	if ( program != 0 ) {
+		FreeProgram();
 	}
 	UploadTargetCode();
 }

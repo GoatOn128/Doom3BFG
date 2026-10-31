@@ -882,7 +882,10 @@ void idDeclManagerLocal::Init() {
 void idDeclManagerLocal::Init2() {
 	RegisterDeclFolder( "skins",			".skin",			DECL_SKIN );
 	RegisterDeclFolder( "sound",			".sndshd",			DECL_SOUND );
-	RegisterDeclFolder( "renderprogs",	".renderprog",			DECL_RENDERPROG );
+	// the renderprogs folder is registered by the render prog manager at
+	// renderer init, before the builtin shaders resolve; it is not
+	// registered here because RegisterDeclFolder re-parses every decl
+	// file on each call, which would re-parse all renderprog decls again
 }
 
 /*
