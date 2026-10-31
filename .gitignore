@@ -302,3 +302,6 @@ healthcheckdb
 
 # CI digest outputs: committed to the repo root by the publish workflow
 !build-windows.log
+
+# SCons object cache
+.scons_cache/

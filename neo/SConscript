@@ -1,7 +1,7 @@
 # DoomEXE equivalent: Windows GUI application.
 import os
 
-Import('env', 'build_objects', 'collect_sources', 'require_sources', 'BIN_DIR', 'DLL_BUILD', 'MACHINE_FLAG', 'external_lib', 'idlib_lib', 'game_static_lib', '_track_progress')
+Import('env', 'build_objects', 'collect_sources', 'require_sources', 'BIN_DIR', 'DLL_BUILD', 'MACHINE_FLAG', 'external_lib', 'idlib_lib', 'game_static_lib', '_track_progress', 'PROJECT_ROOT')
 
 # premake5.lua: files from the following directories, with explicit exclusions.
 doom_dirs = (
@@ -19,7 +19,9 @@ doom_excludes = [
 doom_all_sources = require_sources(
     'DoomEXE', collect_sources(doom_dirs, doom_excludes)
 )
-doom_resources = [s for s in doom_all_sources if s.lower().endswith('.rc')]
+# Source paths are relative to neo/, so absolutize the resources
+# before they reach the linker.
+doom_resources = [os.path.join(PROJECT_ROOT, s) for s in doom_all_sources if s.lower().endswith('.rc')]
 doom_sources = [s for s in doom_all_sources if not s.lower().endswith('.rc')]
 
 main_env = env.Clone()

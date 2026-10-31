@@ -471,11 +471,17 @@ if DEDICATED:
     print("WARNING: dedicated=1 was declared in Premake but has no implementation "
           "in the supplied Premake scripts; it is currently ignored.", file=sys.stderr)
 
-PROJECT_ROOT = os.path.abspath('.')
-BUILD_ROOT = os.path.join('build', 'scons', 'windows-%s-%s' % (ARCH, CONFIG))
+# Paths used by every SConscript. Anchor everything to this file's location
+# so the build works no matter which directory scons is invoked from. Source
+# roots live under neo/, mirroring the original Premake layout.
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, 'neo'))
+BUILD_ROOT = os.path.abspath(os.path.join(
+    SCRIPT_DIR, 'build', 'scons', 'windows-%s-%s' % (ARCH, CONFIG)))
 OBJECT_ROOT = os.path.join(BUILD_ROOT, 'obj')
 LIB_ROOT = os.path.join(BUILD_ROOT, 'lib')
-BIN_DIR = 'bin'
+BIN_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, 'bin'))
+CACHE_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, '.scons_cache'))
 
 os.makedirs(OBJECT_ROOT, exist_ok=True)
 os.makedirs(LIB_ROOT, exist_ok=True)
@@ -498,7 +504,7 @@ Usage:
 Project selection (mirrors Premake groups):
   libs               external + idLib + Game-D3XP static library (when dll=0)
   exes               DoomEXE / bin/Doom3BFG.exe
-  dll                Game-D3XP / bin/base/gamex86.dll (only when dll=1)
+  dll                Game-D3XP / bin/gamex86.dll (only when dll=1)
   external           Individual external static-library project
   idLib              Individual idLib static-library project
   Game-D3XP          Individual game project; .lib or .dll depending on dll=1
@@ -523,7 +529,7 @@ Project definitions:
 
 Build products:
   bin/Doom3BFG.exe
-  bin/base/gamex86.dll    (dll=1 only)
+  bin/gamex86.dll    (dll=1 only)
   build/scons/windows-<arch>-<config>/lib/*.lib
 ''')
 
@@ -614,12 +620,12 @@ if DLL_BUILD:
     base_defines.append('__DOOM_DLL__')
 
 base_cpppath = [
-    '.',
-    'external',
-    'idlib',
-    'external/miniz',
-    'external/minizip',
-    'external/libbinkdec/include',
+    PROJECT_ROOT,
+    os.path.join(PROJECT_ROOT, 'external'),
+    os.path.join(PROJECT_ROOT, 'idlib'),
+    os.path.join(PROJECT_ROOT, 'external/miniz'),
+    os.path.join(PROJECT_ROOT, 'external/minizip'),
+    os.path.join(PROJECT_ROOT, 'external/libbinkdec/include'),
 ]
 
 # Use SCons' Microsoft link/resource builders, but drive compilation and linking
@@ -697,7 +703,7 @@ if ARGUMENTS.get('verbose') != '1':
     env['RCCOMSTR'] = _status_text('Resources', '$SOURCE')
 
 # SCons cache. Outputs remain separated by configuration/architecture.
-env.CacheDir('.scons_cache')
+env.CacheDir(CACHE_ROOT)
 
 
 def build_objects(build_env, project_name, sources):
@@ -706,6 +712,9 @@ def build_objects(build_env, project_name, sources):
     for source in sources:
         source = _relative(source)
         rel = source
+        # Sources are relative to neo/: resolve them to full paths so the
+        # build does not depend on the invocation directory.
+        source = os.path.join(PROJECT_ROOT, source)
         target = os.path.join(OBJECT_ROOT, project_name, rel + '.obj')
         built = build_env.Object(target, source)
         objects.extend(built)
@@ -734,21 +743,21 @@ Export(
 
 # The dependency order is intentional: project scripts consume previously
 # constructed library nodes through SCons' exported construction environment.
-external_lib = SConscript('neo/external/SConscript', chdir=0)
+external_lib = SConscript(os.path.join(SCRIPT_DIR, 'neo/external/SConscript'), chdir=0)
 Export('external_lib')
 
-idlib_lib = SConscript('neo/idLib/SConscript', chdir=0)
+idlib_lib = SConscript(os.path.join(SCRIPT_DIR, 'neo/idLib/SConscript'), chdir=0)
 Export('idlib_lib')
 
 if DLL_BUILD:
-    game_target = SConscript('neo/d3xp/SConscript', chdir=0)
+    game_target = SConscript(os.path.join(SCRIPT_DIR, 'neo/d3xp/SConscript'), chdir=0)
     game_static_lib = None
 else:
-    game_target = SConscript('neo/d3xp/SConscript', chdir=0)
+    game_target = SConscript(os.path.join(SCRIPT_DIR, 'neo/d3xp/SConscript'), chdir=0)
     game_static_lib = game_target
 Export('game_target', 'game_static_lib')
 
-doom_target = SConscript('neo/SConscript', chdir=0)
+doom_target = SConscript(os.path.join(SCRIPT_DIR, 'neo/SConscript'), chdir=0)
 
 # -----------------------------------------------------------------------------
 # Premake-style project targets and groups

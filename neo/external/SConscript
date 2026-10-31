@@ -30,8 +30,11 @@ if missing:
     Exit(2)
 
 external_env = env.Clone()
+# Include paths are relative to the repo root (neo/), not this directory.
 external_env.Append(CPPPATH=[
-    'external/miniz', 'external/minizip', 'external/libbinkdec/include'
+    os.path.join(PROJECT_ROOT, 'external/miniz'),
+    os.path.join(PROJECT_ROOT, 'external/minizip'),
+    os.path.join(PROJECT_ROOT, 'external/libbinkdec/include'),
 ])
 # Premake external.lua: warnings('Off').
 external_env.Append(CCFLAGS=['/W0'], CXXFLAGS=['/W0'])
