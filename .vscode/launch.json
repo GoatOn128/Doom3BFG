@@ -2,248 +2,86 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "WolfSP (Windows, x64, debug)",
+            "name": "Doom3BFG (x64 debug)",
             "type": "lldb",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/WolfSP_x64.exe",
-            "cwd": "${workspaceFolder}/bin",
+            "program": "${workspaceFolder}/bin/Doom3BFG.exe",
+            "args": [
+                "+set",
+                "r_fullscreen",
+                "0"
+            ],
+            "cwd": "${workspaceFolder}",
             "preLaunchTask": "Build (x64 debug)",
+            "initCommands": [
+                "settings set target.max-children-count 256",
+                "settings set target.max-string-summary-length 2048"
+            ]
+        },
+        {
+            "name": "Doom3BFG (x64 release)",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/Doom3BFG.exe",
             "args": [
                 "+set",
                 "r_fullscreen",
-                "0",
-                "+set",
-                "win_viewlog",
-                "1",
-                "+set",
-                "sv_cheats",
-                "1",
-                "+set",
-                "developer",
-                "1"
+                "0"
             ],
-            "terminal": "integrated",
-            "stopOnEntry": false,
-            "sourceLanguages": [
-                "c",
-                "cpp"
-            ],
-            "initCommands": [
-                "settings set target.max-children-count 256",
-                "settings set target.max-string-summary-length 2048",
-                "settings set target.x86-disassembly-flavor intel"
-            ],
-            "env": {
-                "PATH": "C:\\Program Files\\LLVM\\bin;${env:PATH}"
-            }
-        },
-        {
-            "name": "WolfSP (Windows, x64, release)",
-            "type": "lldb",
-            "request": "launch",
-            "program": "${workspaceFolder}/bin/WolfSP_x64.exe",
-            "cwd": "${workspaceFolder}/bin",
+            "cwd": "${workspaceFolder}",
             "preLaunchTask": "Build (x64 release)",
+            "initCommands": [
+                "settings set target.max-children-count 256",
+                "settings set target.max-string-summary-length 2048"
+            ]
+        },
+        {
+            "name": "Doom3BFG (x64 retail)",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/Doom3BFG.exe",
             "args": [
                 "+set",
                 "r_fullscreen",
-                "0",
-                "+set",
-                "win_viewlog",
-                "1",
-                "+set",
-                "sv_cheats",
-                "1",
-                "+set",
-                "developer",
-                "1"
+                "0"
             ],
-            "terminal": "integrated",
-            "stopOnEntry": false,
-            "sourceLanguages": [
-                "c",
-                "cpp"
-            ],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "Build (x64 retail)",
             "initCommands": [
                 "settings set target.max-children-count 256",
-                "settings set target.max-string-summary-length 2048",
-                "settings set target.x86-disassembly-flavor intel"
-            ],
-            "env": {
-                "PATH": "C:\\Program Files\\LLVM\\bin;${env:PATH}"
-            }
+                "settings set target.max-string-summary-length 2048"
+            ]
         },
         {
-            "name": "WolfSP (Windows, x86, debug)",
+            "name": "Doom3BFG (x86 debug)",
             "type": "lldb",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/WolfSP_x86.exe",
-            "cwd": "${workspaceFolder}/bin",
+            "program": "${workspaceFolder}/bin/Doom3BFG.exe",
+            "args": [
+                "+set",
+                "r_fullscreen",
+                "0"
+            ],
+            "cwd": "${workspaceFolder}",
             "preLaunchTask": "Build (x86 debug)",
-            "args": [
-                "+set",
-                "r_fullscreen",
-                "0",
-                "+set",
-                "win_viewlog",
-                "1",
-                "+set",
-                "sv_cheats",
-                "1",
-                "+set",
-                "developer",
-                "1"
-            ],
-            "terminal": "integrated",
-            "stopOnEntry": false,
-            "sourceLanguages": [
-                "c",
-                "cpp"
-            ],
             "initCommands": [
                 "settings set target.max-children-count 256",
                 "settings set target.max-string-summary-length 2048",
                 "settings set target.x86-disassembly-flavor intel"
-            ],
-            "env": {
-                "PATH": "C:\\Program Files\\LLVM\\bin;${env:PATH}"
-            }
+            ]
         },
         {
-            "name": "WolfSP (Windows, x86, release)",
+            "name": "Doom3BFG (x86 release)",
             "type": "lldb",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/WolfSP_x86.exe",
-            "cwd": "${workspaceFolder}/bin",
+            "program": "${workspaceFolder}/bin/Doom3BFG.exe",
+            "args": [
+                "+set",
+                "r_fullscreen",
+                "0"
+            ],
+            "cwd": "${workspaceFolder}",
             "preLaunchTask": "Build (x86 release)",
-            "args": [
-                "+set",
-                "r_fullscreen",
-                "0",
-                "+set",
-                "win_viewlog",
-                "1",
-                "+set",
-                "sv_cheats",
-                "1",
-                "+set",
-                "developer",
-                "1"
-            ],
-            "terminal": "integrated",
-            "stopOnEntry": false,
-            "sourceLanguages": [
-                "c",
-                "cpp"
-            ],
-            "initCommands": [
-                "settings set target.max-children-count 256",
-                "settings set target.max-string-summary-length 2048",
-                "settings set target.x86-disassembly-flavor intel"
-            ],
-            "env": {
-                "PATH": "C:\\Program Files\\LLVM\\bin;${env:PATH}"
-            }
-        },
-        {
-            "name": "WolfSP (Windows, x64, release, renderer hard-linked)",
-            "type": "lldb",
-            "request": "launch",
-            "program": "${workspaceFolder}/bin/WolfSP_x64.exe",
-            "cwd": "${workspaceFolder}/bin",
-            "preLaunchTask": "Build (x64 release, renderer hard-linked)",
-            "args": [
-                "+set",
-                "r_fullscreen",
-                "0",
-                "+set",
-                "win_viewlog",
-                "1",
-                "+set",
-                "sv_cheats",
-                "1",
-                "+set",
-                "developer",
-                "1"
-            ],
-            "terminal": "integrated",
-            "stopOnEntry": false,
-            "sourceLanguages": [
-                "c",
-                "cpp"
-            ],
-            "initCommands": [
-                "settings set target.max-children-count 256",
-                "settings set target.max-string-summary-length 2048",
-                "settings set target.x86-disassembly-flavor intel"
-            ],
-            "env": {
-                "PATH": "C:\\Program Files\\LLVM\\bin;${env:PATH}"
-            }
-        },
-        {
-            "name": "WolfSP (Windows, x86, release, renderer hard-linked)",
-            "type": "lldb",
-            "request": "launch",
-            "program": "${workspaceFolder}/bin/WolfSP_x86.exe",
-            "cwd": "${workspaceFolder}/bin",
-            "preLaunchTask": "Build (x86 release, renderer hard-linked)",
-            "args": [
-                "+set",
-                "r_fullscreen",
-                "0",
-                "+set",
-                "win_viewlog",
-                "1",
-                "+set",
-                "sv_cheats",
-                "1",
-                "+set",
-                "developer",
-                "1"
-            ],
-            "terminal": "integrated",
-            "stopOnEntry": false,
-            "sourceLanguages": [
-                "c",
-                "cpp"
-            ],
-            "initCommands": [
-                "settings set target.max-children-count 256",
-                "settings set target.max-string-summary-length 2048",
-                "settings set target.x86-disassembly-flavor intel"
-            ],
-            "env": {
-                "PATH": "C:\\Program Files\\LLVM\\bin;${env:PATH}"
-            }
-        },
-        {
-            "name": "WolfSP (Linux, x64, debug)",
-            "type": "lldb",
-            "request": "launch",
-            "program": "${workspaceFolder}/bin/WolfSP_x64",
-            "cwd": "${workspaceFolder}/bin",
-            "preLaunchTask": "Build (x64 debug)",
-            "args": [
-                "+set",
-                "r_fullscreen",
-                "0",
-                "+set",
-                "win_viewlog",
-                "1",
-                "+set",
-                "sv_cheats",
-                "1",
-                "+set",
-                "developer",
-                "1"
-            ],
-            "terminal": "integrated",
-            "stopOnEntry": false,
-            "sourceLanguages": [
-                "c",
-                "cpp"
-            ],
             "initCommands": [
                 "settings set target.max-children-count 256",
                 "settings set target.max-string-summary-length 2048",
@@ -251,164 +89,17 @@
             ]
         },
         {
-            "name": "WolfSP (Linux, x64, release)",
+            "name": "Doom3BFG (x86 retail)",
             "type": "lldb",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/WolfSP_x64",
-            "cwd": "${workspaceFolder}/bin",
-            "preLaunchTask": "Build (x64 release)",
+            "program": "${workspaceFolder}/bin/Doom3BFG.exe",
             "args": [
                 "+set",
                 "r_fullscreen",
-                "0",
-                "+set",
-                "win_viewlog",
-                "1",
-                "+set",
-                "sv_cheats",
-                "1",
-                "+set",
-                "developer",
-                "1"
+                "0"
             ],
-            "terminal": "integrated",
-            "stopOnEntry": false,
-            "sourceLanguages": [
-                "c",
-                "cpp"
-            ],
-            "initCommands": [
-                "settings set target.max-children-count 256",
-                "settings set target.max-string-summary-length 2048",
-                "settings set target.x86-disassembly-flavor intel"
-            ]
-        },
-        {
-            "name": "WolfSP (Linux, x86, debug)",
-            "type": "lldb",
-            "request": "launch",
-            "program": "${workspaceFolder}/bin/WolfSP_x86",
-            "cwd": "${workspaceFolder}/bin",
-            "preLaunchTask": "Build (x86 debug)",
-            "args": [
-                "+set",
-                "r_fullscreen",
-                "0",
-                "+set",
-                "win_viewlog",
-                "1",
-                "+set",
-                "sv_cheats",
-                "1",
-                "+set",
-                "developer",
-                "1"
-            ],
-            "terminal": "integrated",
-            "stopOnEntry": false,
-            "sourceLanguages": [
-                "c",
-                "cpp"
-            ],
-            "initCommands": [
-                "settings set target.max-children-count 256",
-                "settings set target.max-string-summary-length 2048",
-                "settings set target.x86-disassembly-flavor intel"
-            ]
-        },
-        {
-            "name": "WolfSP (Linux, x86, release)",
-            "type": "lldb",
-            "request": "launch",
-            "program": "${workspaceFolder}/bin/WolfSP_x86",
-            "cwd": "${workspaceFolder}/bin",
-            "preLaunchTask": "Build (x86 release)",
-            "args": [
-                "+set",
-                "r_fullscreen",
-                "0",
-                "+set",
-                "win_viewlog",
-                "1",
-                "+set",
-                "sv_cheats",
-                "1",
-                "+set",
-                "developer",
-                "1"
-            ],
-            "terminal": "integrated",
-            "stopOnEntry": false,
-            "sourceLanguages": [
-                "c",
-                "cpp"
-            ],
-            "initCommands": [
-                "settings set target.max-children-count 256",
-                "settings set target.max-string-summary-length 2048",
-                "settings set target.x86-disassembly-flavor intel"
-            ]
-        },
-        {
-            "name": "WolfSP (Linux, x64, release, renderer hard-linked)",
-            "type": "lldb",
-            "request": "launch",
-            "program": "${workspaceFolder}/bin/WolfSP_x64",
-            "cwd": "${workspaceFolder}/bin",
-            "preLaunchTask": "Build (x64 release, renderer hard-linked)",
-            "args": [
-                "+set",
-                "r_fullscreen",
-                "0",
-                "+set",
-                "win_viewlog",
-                "1",
-                "+set",
-                "sv_cheats",
-                "1",
-                "+set",
-                "developer",
-                "1"
-            ],
-            "terminal": "integrated",
-            "stopOnEntry": false,
-            "sourceLanguages": [
-                "c",
-                "cpp"
-            ],
-            "initCommands": [
-                "settings set target.max-children-count 256",
-                "settings set target.max-string-summary-length 2048",
-                "settings set target.x86-disassembly-flavor intel"
-            ]
-        },
-        {
-            "name": "WolfSP (Linux, x86, release, renderer hard-linked)",
-            "type": "lldb",
-            "request": "launch",
-            "program": "${workspaceFolder}/bin/WolfSP_x86",
-            "cwd": "${workspaceFolder}/bin",
-            "preLaunchTask": "Build (x86 release, renderer hard-linked)",
-            "args": [
-                "+set",
-                "r_fullscreen",
-                "0",
-                "+set",
-                "win_viewlog",
-                "1",
-                "+set",
-                "sv_cheats",
-                "1",
-                "+set",
-                "developer",
-                "1"
-            ],
-            "terminal": "integrated",
-            "stopOnEntry": false,
-            "sourceLanguages": [
-                "c",
-                "cpp"
-            ],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "Build (x86 retail)",
             "initCommands": [
                 "settings set target.max-children-count 256",
                 "settings set target.max-string-summary-length 2048",

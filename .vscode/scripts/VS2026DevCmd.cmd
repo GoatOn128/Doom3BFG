@@ -9,6 +9,8 @@ rem   call .\.vscode\scripts\VS2026DevCmd.cmd
 rem       Loads the x64 developer environment into the current terminal.
 rem   call .\.vscode\scripts\VS2026DevCmd.cmd x86 debug 8
 rem       Loads the matching environment and runs SCons.
+rem   call .\.vscode\scripts\VS2026DevCmd.cmd x64 release 8 dll
+rem       Same, plus dll=1 so the game code builds as bin/gamex86.dll.
 
 set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
 set "VSINSTALL_FILE=%TEMP%\VSDevCmd_%RANDOM%_%RANDOM%.txt"
@@ -42,11 +44,12 @@ if "%~1"=="" goto interactive
 set "BUILD_ARCH=%~1"
 set "BUILD_CONFIG=%~2"
 set "BUILD_JOBS=%~3"
-set "BUILD_HARDLINK=%~4"
+set "BUILD_DLL=%~4"
 
 if /i not "%BUILD_ARCH%"=="x86" if /i not "%BUILD_ARCH%"=="x64" goto bad_arch
-if /i not "%BUILD_CONFIG%"=="debug" if /i not "%BUILD_CONFIG%"=="release" if /i not "%BUILD_CONFIG%"=="clean" goto bad_config
+if /i not "%BUILD_CONFIG%"=="debug" if /i not "%BUILD_CONFIG%"=="release" if /i not "%BUILD_CONFIG%"=="retail" if /i not "%BUILD_CONFIG%"=="clean" goto bad_config
 if not defined BUILD_JOBS set "BUILD_JOBS=8"
+if defined BUILD_DLL if /i not "%BUILD_DLL%"=="dll" goto bad_dll
 
 call "%VSDEVCMD%" -arch=%BUILD_ARCH% -host_arch=x64
 if not errorlevel 1 goto developer_environment_ready
@@ -59,16 +62,16 @@ cd /d "%~dp0..\.."
 if errorlevel 1 goto cd_failed
 
 if /i "%BUILD_CONFIG%"=="clean" goto clean
-if defined BUILD_HARDLINK goto build_hardlink
+if defined BUILD_DLL goto build_dll
 
 echo [VSDevCmd] Building arch=%BUILD_ARCH% config=%BUILD_CONFIG% jobs=%BUILD_JOBS%
 scons arch=%BUILD_ARCH% config=%BUILD_CONFIG% -j%BUILD_JOBS%
 set "BUILD_RESULT=%ERRORLEVEL%"
 goto build_finished
 
-:build_hardlink
-echo [VSDevCmd] Building arch=%BUILD_ARCH% config=%BUILD_CONFIG% hardlink=%BUILD_HARDLINK% jobs=%BUILD_JOBS%
-scons arch=%BUILD_ARCH% config=%BUILD_CONFIG% hardlink=%BUILD_HARDLINK% -j%BUILD_JOBS%
+:build_dll
+echo [VSDevCmd] Building arch=%BUILD_ARCH% config=%BUILD_CONFIG% dll=1 jobs=%BUILD_JOBS%
+scons arch=%BUILD_ARCH% config=%BUILD_CONFIG% dll=1 -j%BUILD_JOBS%
 set "BUILD_RESULT=%ERRORLEVEL%"
 goto build_finished
 
@@ -85,7 +88,7 @@ set "VSDEVCMD="
 set "BUILD_ARCH="
 set "BUILD_CONFIG="
 set "BUILD_JOBS="
-set "BUILD_HARDLINK="
+set "BUILD_DLL="
 exit /b %BUILD_RESULT%
 
 :interactive
@@ -123,7 +126,11 @@ echo [VSDevCmd] ERROR: Architecture must be x86 or x64.
 exit /b 2
 
 :bad_config
-echo [VSDevCmd] ERROR: Configuration must be debug, release, or clean.
+echo [VSDevCmd] ERROR: Configuration must be debug, release, retail, or clean.
+exit /b 2
+
+:bad_dll
+echo [VSDevCmd] ERROR: The fourth argument must be dll or empty.
 exit /b 2
 
 :cd_failed

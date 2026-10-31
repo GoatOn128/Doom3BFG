@@ -1,324 +1,232 @@
-
 {
-    "version": 4,
     "configurations": [
         {
-            "name": "Windows x64 debug",
+            "name": "Windows x64 Debug",
             "compilerPath": "C:/Program Files/LLVM/bin/clang-cl.exe",
-            "intelliSenseMode": "windows-clang-x64",
             "compilerArgs": [
-                "/W4",
                 "-m64",
-                "/nologo",
+                "/W4",
+                "/GS",
+                "/EHsc",
+                "/GR",
+                "/std:c++17",
+                "/MTd",
                 "/Z7",
                 "/Od"
             ],
+            "intelliSenseMode": "windows-clang-x64",
             "includePath": [
-                "${workspaceFolder}/src",
-                "${workspaceFolder}/src/games/game",
-                "${workspaceFolder}/src/client",
-                "${workspaceFolder}/src/qcommon",
-                "${workspaceFolder}/src/renderer",
-                "${workspaceFolder}/src/renderer-bfg",
-                "${workspaceFolder}/src/server",
-                "${workspaceFolder}/src/splines",
-                "${workspaceFolder}/src/sys/unix",
-                "${workspaceFolder}/src/sys/win32",
-                "${workspaceFolder}/src/games/botai",
-                "${workspaceFolder}/src/games/botlib",
-                "${workspaceFolder}/src/games/cgame",
-                "${workspaceFolder}/src/games/ui",
-                "${workspaceFolder}/src/third-party/glad/include",
-                "${workspaceFolder}/src/third-party/stb"
-            ],
-            "forcedInclude": [
-                "${workspaceFolder}/build/windows-x64-debug/q_buildconfig.h"
+                "${workspaceFolder}/neo",
+                "${workspaceFolder}/neo/idlib",
+                "${workspaceFolder}/neo/external",
+                "${workspaceFolder}/neo/external/miniz",
+                "${workspaceFolder}/neo/external/minizip",
+                "${workspaceFolder}/neo/external/libbinkdec/include"
             ],
             "defines": [
-                "WIN32",
-                "_WINDOWS",
-                "_CRT_SECURE_NO_WARNINGS",
-                "QDECL=__cdecl",
-                "MAC_STATIC="
+                "__DOOM__",
+                "ID_PC",
+                "_CRT_SECURE_NO_DEPRECATE",
+                "_CRT_NONSTDC_NO_DEPRECATE",
+                "_D3XP",
+                "CTF",
+                "_DEBUG"
             ],
             "cStandard": "c11",
             "cppStandard": "c++17"
         },
         {
-            "name": "Windows x64 release",
+            "name": "Windows x64 Release",
             "compilerPath": "C:/Program Files/LLVM/bin/clang-cl.exe",
-            "intelliSenseMode": "windows-clang-x64",
             "compilerArgs": [
-                "/W4",
                 "-m64",
-                "/nologo",
-                "/O2"
+                "/W4",
+                "/GS",
+                "/EHsc",
+                "/GR",
+                "/std:c++17",
+                "/MT",
+                "/O2",
+                "/Ob2",
+                "/Gy",
+                "/GF",
+                "/Oi"
             ],
+            "intelliSenseMode": "windows-clang-x64",
             "includePath": [
-                "${workspaceFolder}/src",
-                "${workspaceFolder}/src/games/game",
-                "${workspaceFolder}/src/client",
-                "${workspaceFolder}/src/qcommon",
-                "${workspaceFolder}/src/renderer",
-                "${workspaceFolder}/src/renderer-bfg",
-                "${workspaceFolder}/src/server",
-                "${workspaceFolder}/src/splines",
-                "${workspaceFolder}/src/sys/unix",
-                "${workspaceFolder}/src/sys/win32",
-                "${workspaceFolder}/src/games/botai",
-                "${workspaceFolder}/src/games/botlib",
-                "${workspaceFolder}/src/games/cgame",
-                "${workspaceFolder}/src/games/ui",
-                "${workspaceFolder}/src/third-party/glad/include",
-                "${workspaceFolder}/src/third-party/stb"
-            ],
-            "forcedInclude": [
-                "${workspaceFolder}/build/windows-x64-release/q_buildconfig.h"
+                "${workspaceFolder}/neo",
+                "${workspaceFolder}/neo/idlib",
+                "${workspaceFolder}/neo/external",
+                "${workspaceFolder}/neo/external/miniz",
+                "${workspaceFolder}/neo/external/minizip",
+                "${workspaceFolder}/neo/external/libbinkdec/include"
             ],
             "defines": [
-                "WIN32",
-                "_WINDOWS",
-                "_CRT_SECURE_NO_WARNINGS",
-                "QDECL=__cdecl",
-                "MAC_STATIC=",
+                "__DOOM__",
+                "ID_PC",
+                "_CRT_SECURE_NO_DEPRECATE",
+                "_CRT_NONSTDC_NO_DEPRECATE",
+                "_D3XP",
+                "CTF",
                 "NDEBUG"
             ],
             "cStandard": "c11",
             "cppStandard": "c++17"
         },
         {
-            "name": "Windows x86 debug",
+            "name": "Windows x64 Retail",
             "compilerPath": "C:/Program Files/LLVM/bin/clang-cl.exe",
-            "intelliSenseMode": "windows-clang-x86",
             "compilerArgs": [
+                "-m64",
                 "/W4",
+                "/GS",
+                "/EHsc",
+                "/GR",
+                "/std:c++17",
+                "/MT",
+                "/O2",
+                "/Ob2",
+                "/Gy",
+                "/GF",
+                "/Oi"
+            ],
+            "intelliSenseMode": "windows-clang-x64",
+            "includePath": [
+                "${workspaceFolder}/neo",
+                "${workspaceFolder}/neo/idlib",
+                "${workspaceFolder}/neo/external",
+                "${workspaceFolder}/neo/external/miniz",
+                "${workspaceFolder}/neo/external/minizip",
+                "${workspaceFolder}/neo/external/libbinkdec/include"
+            ],
+            "defines": [
+                "__DOOM__",
+                "ID_PC",
+                "_CRT_SECURE_NO_DEPRECATE",
+                "_CRT_NONSTDC_NO_DEPRECATE",
+                "_D3XP",
+                "CTF",
+                "NDEBUG",
+                "ID_RETAIL"
+            ],
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        },
+        {
+            "name": "Windows x64 Release (game dll)",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang-cl.exe",
+            "compilerArgs": [
+                "-m64",
+                "/W4",
+                "/GS",
+                "/EHsc",
+                "/GR",
+                "/std:c++17",
+                "/MT",
+                "/O2",
+                "/Ob2",
+                "/Gy",
+                "/GF",
+                "/Oi"
+            ],
+            "intelliSenseMode": "windows-clang-x64",
+            "includePath": [
+                "${workspaceFolder}/neo",
+                "${workspaceFolder}/neo/idlib",
+                "${workspaceFolder}/neo/external",
+                "${workspaceFolder}/neo/external/miniz",
+                "${workspaceFolder}/neo/external/minizip",
+                "${workspaceFolder}/neo/external/libbinkdec/include"
+            ],
+            "defines": [
+                "__DOOM__",
+                "ID_PC",
+                "_CRT_SECURE_NO_DEPRECATE",
+                "_CRT_NONSTDC_NO_DEPRECATE",
+                "_D3XP",
+                "CTF",
+                "NDEBUG",
+                "GAME_DLL",
+                "__DOOM_DLL__"
+            ],
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        },
+        {
+            "name": "Windows x86 Debug",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang-cl.exe",
+            "compilerArgs": [
                 "-m32",
-                "/nologo",
+                "/W4",
+                "/GS",
+                "/EHsc",
+                "/GR",
+                "/std:c++17",
+                "/MTd",
                 "/Z7",
                 "/Od"
             ],
-            "includePath": [
-                "${workspaceFolder}/src",
-                "${workspaceFolder}/src/games/game",
-                "${workspaceFolder}/src/client",
-                "${workspaceFolder}/src/qcommon",
-                "${workspaceFolder}/src/renderer",
-                "${workspaceFolder}/src/renderer-bfg",
-                "${workspaceFolder}/src/server",
-                "${workspaceFolder}/src/splines",
-                "${workspaceFolder}/src/sys/unix",
-                "${workspaceFolder}/src/sys/win32",
-                "${workspaceFolder}/src/games/botai",
-                "${workspaceFolder}/src/games/botlib",
-                "${workspaceFolder}/src/games/cgame",
-                "${workspaceFolder}/src/games/ui",
-                "${workspaceFolder}/src/third-party/glad/include",
-                "${workspaceFolder}/src/third-party/stb"
-            ],
-            "forcedInclude": [
-                "${workspaceFolder}/build/windows-x86-debug/q_buildconfig.h"
-            ],
-            "defines": [
-                "WIN32",
-                "_WINDOWS",
-                "_CRT_SECURE_NO_WARNINGS",
-                "QDECL=__cdecl",
-                "MAC_STATIC="
-            ],
-            "cStandard": "c11",
-            "cppStandard": "c++17"
-        },
-        {
-            "name": "Windows x86 release",
-            "compilerPath": "C:/Program Files/LLVM/bin/clang-cl.exe",
             "intelliSenseMode": "windows-clang-x86",
-            "compilerArgs": [
-                "/W4",
-                "-m32",
-                "/nologo",
-                "/O2"
-            ],
             "includePath": [
-                "${workspaceFolder}/src",
-                "${workspaceFolder}/src/games/game",
-                "${workspaceFolder}/src/client",
-                "${workspaceFolder}/src/qcommon",
-                "${workspaceFolder}/src/renderer",
-                "${workspaceFolder}/src/renderer-bfg",
-                "${workspaceFolder}/src/server",
-                "${workspaceFolder}/src/splines",
-                "${workspaceFolder}/src/sys/unix",
-                "${workspaceFolder}/src/sys/win32",
-                "${workspaceFolder}/src/games/botai",
-                "${workspaceFolder}/src/games/botlib",
-                "${workspaceFolder}/src/games/cgame",
-                "${workspaceFolder}/src/games/ui",
-                "${workspaceFolder}/src/third-party/glad/include",
-                "${workspaceFolder}/src/third-party/stb"
-            ],
-            "forcedInclude": [
-                "${workspaceFolder}/build/windows-x86-release/q_buildconfig.h"
+                "${workspaceFolder}/neo",
+                "${workspaceFolder}/neo/idlib",
+                "${workspaceFolder}/neo/external",
+                "${workspaceFolder}/neo/external/miniz",
+                "${workspaceFolder}/neo/external/minizip",
+                "${workspaceFolder}/neo/external/libbinkdec/include"
             ],
             "defines": [
-                "WIN32",
-                "_WINDOWS",
-                "_CRT_SECURE_NO_WARNINGS",
-                "QDECL=__cdecl",
-                "MAC_STATIC=",
-                "NDEBUG"
+                "__DOOM__",
+                "ID_PC",
+                "_CRT_SECURE_NO_DEPRECATE",
+                "_CRT_NONSTDC_NO_DEPRECATE",
+                "_D3XP",
+                "CTF",
+                "_DEBUG",
+                "_USE_32BIT_TIME_T"
             ],
             "cStandard": "c11",
             "cppStandard": "c++17"
         },
         {
-            "name": "Linux x64 debug",
-            "compilerPath": "/usr/bin/clang++",
-            "intelliSenseMode": "linux-clang-x64",
+            "name": "Windows x86 Release",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang-cl.exe",
             "compilerArgs": [
-                "-Wall",
-                "-fsigned-char",
-                "-m64"
+                "-m32",
+                "/W4",
+                "/GS",
+                "/EHsc",
+                "/GR",
+                "/std:c++17",
+                "/MT",
+                "/O2",
+                "/Ob2",
+                "/Gy",
+                "/GF",
+                "/Oi"
             ],
+            "intelliSenseMode": "windows-clang-x86",
             "includePath": [
-                "${workspaceFolder}/src",
-                "${workspaceFolder}/src/games/game",
-                "${workspaceFolder}/src/client",
-                "${workspaceFolder}/src/qcommon",
-                "${workspaceFolder}/src/renderer",
-                "${workspaceFolder}/src/renderer-bfg",
-                "${workspaceFolder}/src/server",
-                "${workspaceFolder}/src/splines",
-                "${workspaceFolder}/src/sys/unix",
-                "${workspaceFolder}/src/sys/win32",
-                "${workspaceFolder}/src/games/botai",
-                "${workspaceFolder}/src/games/botlib",
-                "${workspaceFolder}/src/games/cgame",
-                "${workspaceFolder}/src/games/ui",
-                "${workspaceFolder}/src/third-party/glad/include",
-                "${workspaceFolder}/src/third-party/stb"
-            ],
-            "forcedInclude": [
-                "${workspaceFolder}/build/linux-x64-debug/q_buildconfig.h"
+                "${workspaceFolder}/neo",
+                "${workspaceFolder}/neo/idlib",
+                "${workspaceFolder}/neo/external",
+                "${workspaceFolder}/neo/external/miniz",
+                "${workspaceFolder}/neo/external/minizip",
+                "${workspaceFolder}/neo/external/libbinkdec/include"
             ],
             "defines": [
-                "QDECL=",
-                "MAC_STATIC="
+                "__DOOM__",
+                "ID_PC",
+                "_CRT_SECURE_NO_DEPRECATE",
+                "_CRT_NONSTDC_NO_DEPRECATE",
+                "_D3XP",
+                "CTF",
+                "NDEBUG",
+                "_USE_32BIT_TIME_T"
             ],
-            "cStandard": "gnu89",
-            "cppStandard": "gnu++98"
-        },
-        {
-            "name": "Linux x64 release",
-            "compilerPath": "/usr/bin/clang++",
-            "intelliSenseMode": "linux-clang-x64",
-            "compilerArgs": [
-                "-Wall",
-                "-fsigned-char",
-                "-m64"
-            ],
-            "includePath": [
-                "${workspaceFolder}/src",
-                "${workspaceFolder}/src/games/game",
-                "${workspaceFolder}/src/client",
-                "${workspaceFolder}/src/qcommon",
-                "${workspaceFolder}/src/renderer",
-                "${workspaceFolder}/src/renderer-bfg",
-                "${workspaceFolder}/src/server",
-                "${workspaceFolder}/src/splines",
-                "${workspaceFolder}/src/sys/unix",
-                "${workspaceFolder}/src/sys/win32",
-                "${workspaceFolder}/src/games/botai",
-                "${workspaceFolder}/src/games/botlib",
-                "${workspaceFolder}/src/games/cgame",
-                "${workspaceFolder}/src/games/ui",
-                "${workspaceFolder}/src/third-party/glad/include",
-                "${workspaceFolder}/src/third-party/stb"
-            ],
-            "forcedInclude": [
-                "${workspaceFolder}/build/linux-x64-release/q_buildconfig.h"
-            ],
-            "defines": [
-                "QDECL=",
-                "MAC_STATIC=",
-                "NDEBUG"
-            ],
-            "cStandard": "gnu89",
-            "cppStandard": "gnu++98"
-        },
-        {
-            "name": "Linux x86 debug",
-            "compilerPath": "/usr/bin/clang++",
-            "intelliSenseMode": "linux-clang-x86",
-            "compilerArgs": [
-                "-Wall",
-                "-fsigned-char",
-                "-m32"
-            ],
-            "includePath": [
-                "${workspaceFolder}/src",
-                "${workspaceFolder}/src/games/game",
-                "${workspaceFolder}/src/client",
-                "${workspaceFolder}/src/qcommon",
-                "${workspaceFolder}/src/renderer",
-                "${workspaceFolder}/src/renderer-bfg",
-                "${workspaceFolder}/src/server",
-                "${workspaceFolder}/src/splines",
-                "${workspaceFolder}/src/sys/unix",
-                "${workspaceFolder}/src/sys/win32",
-                "${workspaceFolder}/src/games/botai",
-                "${workspaceFolder}/src/games/botlib",
-                "${workspaceFolder}/src/games/cgame",
-                "${workspaceFolder}/src/games/ui",
-                "${workspaceFolder}/src/third-party/glad/include",
-                "${workspaceFolder}/src/third-party/stb"
-            ],
-            "forcedInclude": [
-                "${workspaceFolder}/build/linux-x86-debug/q_buildconfig.h"
-            ],
-            "defines": [
-                "QDECL=",
-                "MAC_STATIC="
-            ],
-            "cStandard": "gnu89",
-            "cppStandard": "gnu++98"
-        },
-        {
-            "name": "Linux x86 release",
-            "compilerPath": "/usr/bin/clang++",
-            "intelliSenseMode": "linux-clang-x86",
-            "compilerArgs": [
-                "-Wall",
-                "-fsigned-char",
-                "-m32"
-            ],
-            "includePath": [
-                "${workspaceFolder}/src",
-                "${workspaceFolder}/src/games/game",
-                "${workspaceFolder}/src/client",
-                "${workspaceFolder}/src/qcommon",
-                "${workspaceFolder}/src/renderer",
-                "${workspaceFolder}/src/renderer-bfg",
-                "${workspaceFolder}/src/server",
-                "${workspaceFolder}/src/splines",
-                "${workspaceFolder}/src/sys/unix",
-                "${workspaceFolder}/src/sys/win32",
-                "${workspaceFolder}/src/games/botai",
-                "${workspaceFolder}/src/games/botlib",
-                "${workspaceFolder}/src/games/cgame",
-                "${workspaceFolder}/src/games/ui",
-                "${workspaceFolder}/src/third-party/glad/include",
-                "${workspaceFolder}/src/third-party/stb"
-            ],
-            "forcedInclude": [
-                "${workspaceFolder}/build/linux-x86-release/q_buildconfig.h"
-            ],
-            "defines": [
-                "QDECL=",
-                "MAC_STATIC=",
-                "NDEBUG"
-            ],
-            "cStandard": "gnu89",
-            "cppStandard": "gnu++98"
+            "cStandard": "c11",
+            "cppStandard": "c++17"
         }
-    ]
+    ],
+    "version": 4
 }
