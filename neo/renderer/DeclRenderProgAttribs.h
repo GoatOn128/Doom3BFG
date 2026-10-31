@@ -15,6 +15,7 @@ dropped; PC GLSL is the only target.
 
 #include "idlib/Str.h"
 #include "idlib/containers/StaticList.h"
+#include "idlib/containers/List.h"
 
 enum renderProgAttribType_t {
 	AT_VS_IN = 1 << 1,
@@ -41,6 +42,13 @@ enum programType_t {
 	PROGRAM_TYPE_FRAGMENT = 1,
 };
 
+// An in/out member type declared by an old style body's own struct; it
+// overrides the wider table default when the generated GLSL is written.
+struct declaredMember_t {
+	idStr	name;
+	idStr	type;
+};
+
 struct shaderConstructInfo_t {
 	shaderConstructInfo_t() { Clear(); }
 
@@ -52,6 +60,8 @@ struct shaderConstructInfo_t {
 	idStr			outputAttribInitString;
 	idStaticList<attribInfo_t, 16>	inAttribs;
 	idStaticList<attribInfo_t, 16>	outAttribs;
+	idList<declaredMember_t>	declaredInMembers;
+	idList<declaredMember_t>	declaredOutMembers;
 };
 
 #endif

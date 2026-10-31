@@ -94,7 +94,10 @@ const char * const vertexInsert =
 	"vec2 saturate( vec2 v ) { return clamp( v, vec2( 0.0 ), vec2( 1.0 ) ); }\n"
 	"vec3 saturate( vec3 v ) { return clamp( v, vec3( 0.0 ), vec3( 1.0 ) ); }\n"
 	"vec4 saturate( vec4 v ) { return clamp( v, vec4( 0.0 ), vec4( 1.0 ) ); }\n"
-	"vec4 tex2Dlod( sampler2D sampler, vec4 texcoord ) { return textureLod( sampler, texcoord.xy, texcoord.w ); }\n\n";
+	"vec4 tex2Dlod( sampler2D sampler, vec4 texcoord ) { return textureLod( sampler, texcoord.xy, texcoord.w ); }\n"
+	"vec4 tex1Dproj( sampler1D sampler, vec2 texcoord ) { return textureProj( sampler, texcoord ); }\n"
+	"vec4 tex2Dproj( sampler2D sampler, vec3 texcoord ) { return textureProj( sampler, texcoord ); }\n"
+	"vec4 tex3Dproj( sampler3D sampler, vec4 texcoord ) { return textureProj( sampler, texcoord ); }\n\n";
 
 const char * const fragmentInsert =
 	"#version 150\n\n"
@@ -191,8 +194,19 @@ void AppendTextureDeclarations( const renderProgData_t * data, idStr & header ) 
 	}
 }
 
-void AppendStructMember( idStr & code, const attribInfo_t & attribute ) {
-	AppendFormat( code, "\t%s %s : %s;\n", attribute.type, attribute.name, attribute.semantic );
+void AppendStructMember( idStr & code, const attribInfo_t & attribute,
+							 const idList<declaredMember_t> & declaredMembers ) {
+	// an old style body's own in/out structs declare the exact member
+	// types; the table defaults are wider (float4 texcoords) and would
+	// break the unswizzled function calls in the bodies
+	const char * type = attribute.type;
+	for ( int index = 0; index < declaredMembers.Num(); ++index ) {
+		if ( declaredMembers[index].name.Cmp( attribute.name ) == 0 ) {
+			type = declaredMembers[index].type.c_str();
+			break;
+		}
+	}
+	AppendFormat( code, "\t%s %s : %s;\n", type, attribute.name, attribute.semantic );
 }
 
 void NormalizeStateToken( idToken & token ) {
@@ -410,7 +424,7 @@ void GenerateCode( renderProgData_t * data, shaderConstructInfo_t * vertexInfo, 
 		code = vertexInfo->headerString;
 		code.Append( "struct VS_IN {\n" );
 		for ( int index = 0; index < vertexInfo->inAttribs.Num(); ++index ) {
-			AppendStructMember( code, vertexInfo->inAttribs[index] );
+			AppendStructMember( code, vertexInfo->inAttribs[index], vertexInfo->declaredInMembers );
 		}
 		code.Append( "};\nstruct VS_OUT {\n" );
 
@@ -420,7 +434,7 @@ void GenerateCode( renderProgData_t * data, shaderConstructInfo_t * vertexInfo, 
 			for ( int vertexIndex = 0; vertexIndex < vertexInfo->outAttribs.Num(); ++vertexIndex ) {
 				if ( idStr::Icmp( fragmentInfo->inAttribs[fragmentIndex].semantic,
 								 vertexInfo->outAttribs[vertexIndex].semantic ) == 0 ) {
-					AppendStructMember( code, vertexInfo->outAttribs[vertexIndex] );
+					AppendStructMember( code, vertexInfo->outAttribs[vertexIndex], vertexInfo->declaredOutMembers );
 					used.Append( vertexIndex );
 					break;
 				}
@@ -428,7 +442,7 @@ void GenerateCode( renderProgData_t * data, shaderConstructInfo_t * vertexInfo, 
 		}
 		for ( int vertexIndex = 0; vertexIndex < vertexInfo->outAttribs.Num(); ++vertexIndex ) {
 			if ( FindIndex( used, vertexIndex ) == -1 ) {
-				AppendStructMember( code, vertexInfo->outAttribs[vertexIndex] );
+				AppendStructMember( code, vertexInfo->outAttribs[vertexIndex], vertexInfo->declaredOutMembers );
 			}
 		}
 		code.Append( "};\nvoid main( VS_IN vertex, out VS_OUT result ) {\n" );
@@ -441,11 +455,11 @@ void GenerateCode( renderProgData_t * data, shaderConstructInfo_t * vertexInfo, 
 		code = fragmentInfo->headerString;
 		code.Append( "struct PS_IN {\n" );
 		for ( int index = 0; index < fragmentInfo->inAttribs.Num(); ++index ) {
-			AppendStructMember( code, fragmentInfo->inAttribs[index] );
+			AppendStructMember( code, fragmentInfo->inAttribs[index], fragmentInfo->declaredInMembers );
 		}
 		code.Append( "};\nstruct PS_OUT {\n" );
 		for ( int index = 0; index < fragmentInfo->outAttribs.Num(); ++index ) {
-			AppendStructMember( code, fragmentInfo->outAttribs[index] );
+			AppendStructMember( code, fragmentInfo->outAttribs[index], fragmentInfo->declaredOutMembers );
 		}
 		code.Append( "};\n" );
 		code.Append( "void main( PS_IN fragment, out PS_OUT result ) {\n" );
@@ -466,6 +480,8 @@ void shaderConstructInfo_t::Clear() {
 	outputAttribInitString.Clear();
 	inAttribs.Clear();
 	outAttribs.Clear();
+	declaredInMembers.Clear();
+	declaredOutMembers.Clear();
 }
 
 /*
@@ -774,9 +790,46 @@ bool ParseShader( programType_t programType, idParser * source, const idStr * gl
 			} else if ( programType == PROGRAM_TYPE_FRAGMENT && token == "clip" ) {
 				data->hasClip = true;
 			} else if ( token == "struct" ) {
-				// old-style shader bodies declare their own in/out structs;
-				// the attribute sets are derived from the body references
-				// instead, so the declarations are skipped entirely
+				// old style shader bodies declare their own in/out structs;
+				// the attribute sets are derived from the body references,
+				// but the declared member types are kept: the stock shader
+				// files pass narrow texcoords (float2/float3) that the
+				// table defaults would widen to float4, which breaks the
+				// unswizzled function calls in the bodies
+				idToken structName;
+				int structAttribType = 0;
+				bool recognizedStruct = false;
+				if ( source->ReadToken( &structName ) ) {
+					if ( structName == "VS_IN" ) {
+						structAttribType = AT_VS_IN;
+						recognizedStruct = true;
+					} else if ( structName == "VS_OUT" ) {
+						structAttribType = AT_VS_OUT;
+						recognizedStruct = true;
+					} else if ( structName == "PS_IN" ) {
+						structAttribType = AT_PS_IN;
+						recognizedStruct = true;
+					} else if ( structName == "PS_OUT" ) {
+						structAttribType = AT_PS_OUT;
+						recognizedStruct = true;
+					} else {
+						source->UnreadToken( &structName );
+					}
+				}
+				if ( recognizedStruct ) {
+					idList<inOutVariable_t> declaredVariables;
+					ParseInOutStruct( source, structAttribType, &declaredVariables );
+					idList<declaredMember_t> & declaredMembers =
+						( structAttribType == AT_VS_IN || structAttribType == AT_PS_IN )
+						? shaderInfo->declaredInMembers : shaderInfo->declaredOutMembers;
+					for ( int memberIndex = 0; memberIndex < declaredVariables.Num(); ++memberIndex ) {
+						declaredMember_t member;
+						member.name = declaredVariables[memberIndex].nameCg;
+						member.type = declaredVariables[memberIndex].type;
+						declaredMembers.Append( member );
+					}
+					continue;
+				}
 				int structDepth = 0;
 				idToken skip;
 				while ( source->ReadToken( &skip ) ) {
@@ -833,15 +886,15 @@ bool ParseShader( programType_t programType, idParser * source, const idStr * gl
 				// register annotations are cleaned up by ConvertCG2GLSL
 				AppendFormat( headerExtra, "uniform" );
 				while ( source->ReadToken( &next ) ) {
-					AppendFormat( headerExtra, " %s", next.c_str() );
-					if ( next == ";" ) {
-						break;
-					}
 					if ( next == ":" ) {
 						// a register annotation runs to the end of the
-						// declaration and is dropped
+						// declaration; drop it together with the colon
 						source->SkipUntilString( ";" );
 						AppendFormat( headerExtra, ";\n" );
+						break;
+					}
+					AppendFormat( headerExtra, " %s", next.c_str() );
+					if ( next == ";" ) {
 						break;
 					}
 				}
