@@ -914,6 +914,21 @@ bool ParseShader( programType_t programType, idParser * source, const idStr * gl
 				// old-style bodies reference the vector parms by their plain
 				// registry name instead of with a $ prefix
 				const idRenderProgParm * renderParm = renderProgParms.FindParmByName( token.c_str() );
+				if ( renderParm == nullptr ) {
+					// the global.inc helpers read vector parms the body never
+					// names directly; register the parm when such a helper is
+					// called so its uniform gets a location and is committed
+					static const char * const helperParms[][2] = {
+						{ "vposToScreenPosTexCoord", "rpWindowCoord" }
+					};
+					const int helperCount = static_cast< int >( sizeof( helperParms ) / sizeof( helperParms[0] ) );
+					for ( int helperIndex = 0; helperIndex < helperCount; ++helperIndex ) {
+						if ( token == helperParms[helperIndex][0] ) {
+							renderParm = renderProgParms.FindParmByName( helperParms[helperIndex][1] );
+							break;
+						}
+					}
+				}
 				if ( renderParm != nullptr && renderParm->GetType() == PT_VECTOR ) {
 					if ( FindParmIndex( uniformParms, renderParm->GetIndex() ) == -1 ) {
 						if ( uniformParms.Num() >= uniformParms.Max() ) {
