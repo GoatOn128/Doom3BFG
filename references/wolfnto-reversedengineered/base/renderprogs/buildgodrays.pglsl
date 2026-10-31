@@ -1,0 +1,38 @@
+#version 150
+
+#include "global.inc"
+
+uniform vec4 _fa_ [6];
+uniform sampler2D samp_viewdepthmap;
+uniform sampler2D samp_viewcolormap;
+uniform sampler2D samp_transmap;
+
+in vec4 vofi_TexCoord1;
+
+out vec4 out_FragColor0;
+
+void main() {
+	int NUM_STEPS = 32;
+	float BRIGHTNESS = 32.0 / NUM_STEPS;
+	vec2 depthMapCoord = ( vofi_TexCoord1.xy * 0.5 ) + 0.5;
+	vec2 depthMapStep = ( vofi_TexCoord1.zw ) / NUM_STEPS;
+	vec2 scaleBiasRecp = 1.0 / _fa_[0 ].xy;
+	vec4 resultColor = vec4( 0, 0, 0, 0 );
+	for ( int i = 0; i < NUM_STEPS; i++ ) {
+		vec2 sampleCoord = depthMapCoord.xy;
+		sampleCoord = _fa_[1 ].zw * saturate( sampleCoord );
+		float depth = tex2Ddepth( samp_viewdepthmap, sampleCoord ) * 2.0 - 1.0;
+		float window_z =
+		(depth + _fa_[2 ].z == 0.0) ?
+		1000000.0 :
+		depth * _fa_[2 ].w / ( depth + _fa_[2 ].z );
+		float depthMul = saturate( window_z + _fa_[3 ].z );
+		vec2 colorMapCoord = ( depthMapCoord - _fa_[4 ].zw ) * scaleBiasRecp;
+		colorMapCoord = saturate( colorMapCoord + vec2( 0.5, 0.5 ) );
+		float alpha = h4tex2D( samp_viewcolormap, sampleCoord.xy ).w;
+		depthMul *= saturate( 1.0 - alpha * alpha );
+		resultColor.xyz += h4tex2D( samp_transmap, colorMapCoord ).xyz * depthMul;
+		depthMapCoord += depthMapStep;
+	}
+	out_FragColor0 = vec4( resultColor.xyz * BRIGHTNESS * _fa_[5 ].xyz * _fa_[5 ].w, 0.0 );
+}

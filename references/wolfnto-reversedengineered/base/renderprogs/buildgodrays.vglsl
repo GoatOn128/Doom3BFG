@@ -1,0 +1,17 @@
+#version 150
+
+#include "global.inc"
+
+uniform vec4 _va_ [2];
+
+in vec4 in_Position;
+
+out vec4 vofi_TexCoord1;
+
+void main() {
+	gl_Position = in_Position;
+	gl_Position.xy = ( gl_Position.xy * _va_[0 ].xy ) + _va_[1 ].zw;
+	vofi_TexCoord1 = in_Position;
+	vofi_TexCoord1.xy = ( vofi_TexCoord1.xy * _va_[1 ].xy ) + _va_[1 ].zw;
+	vofi_TexCoord1.zw = ( vofi_TexCoord1.xy - _va_[1 ].zw );
+}
