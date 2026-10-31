@@ -1,0 +1,78 @@
+#ifndef __RENDERPROGPARM_H__
+#define __RENDERPROGPARM_H__
+
+/*
+Render parm registry for the renderprog system migration.
+
+Adapted from the Wolfenstein: The New Order renderparm interfaces
+reconstructed under references/wolfnto-reversedengineered (declrenderparm.h,
+parmblock.h). That material is decompiled proprietary code and is not
+GPL-compatible; this is a re-implementation on this engine's idlib.
+
+The parm indices match the renderParm_t enum in RenderProgs.h and the
+uniform register list in global.inc, so the existing shader base keeps
+working while the renderprog system is migrated.
+*/
+
+class idImage;
+class idDeclRenderProg;
+
+// Parm types. The numeric values follow the TNO ordering; the shadow,
+// multisample, sampler, and image-load/store variants in that ordering have
+// no GL equivalent in this engine and only the numbering is preserved.
+enum parmType_t {
+	PT_VECTOR = 0,
+	PT_TEXTURE_2D = 1,
+	PT_TEXTURE_3D = 2,
+	PT_TEXTURE_CUBE = 3,
+	PT_PROGRAM = 12,
+	PT_STRING = 13,
+	PT_MAX = 14
+};
+
+union parmValue_t {
+	float					value[4];
+	const idImage *			image;
+	const idDeclRenderProg *program;
+	const char *			string;
+	int						swizzle[4];
+};
+
+class idRenderProgParm {
+public:
+	idRenderProgParm() = default;
+	idRenderProgParm( const char * name, parmType_t type, int index );
+
+	const char *			GetName() const { return name; }
+	parmType_t				GetType() const { return parmType; }
+	int						GetIndex() const { return parmIndex; }
+	const parmValue_t &	GetDeclaredValue() const { return declaredValue; }
+
+private:
+	const char *			name = nullptr;
+	parmType_t				parmType = PT_VECTOR;
+	int						parmIndex = -1;
+	parmValue_t				declaredValue;
+};
+
+// Must match RENDERPARM_TOTAL in RenderProgs.h and the uniform register
+// list in global.inc.
+static const int RENDERPROG_NUM_BUILTIN_PARMS = 53;
+
+class idRenderProgParmState {
+public:
+	// The built-in table is constructed on first use.
+	const idRenderProgParm *	FindParmByName( const char * name );
+	const idRenderProgParm *	GetRenderParmForIndex( int index );
+	const char *			GetParmNameForIndex( int index );
+	int						NumParms() { EnsureBuilt(); return parms.Num(); }
+
+private:
+	void					EnsureBuilt();
+
+	idList<idRenderProgParm>	parms;
+};
+
+extern idRenderProgParmState renderProgParms;
+
+#endif
