@@ -24,8 +24,8 @@ game_objects = build_objects(game_env, 'Game-D3XP', d3xp_sources)
 if DLL_BUILD:
     game_env.Append(SHLINKFLAGS=DLL_LINKFLAGS)
     game_env.Append(LIBS=[
-        'dbghelp', 'glu32', 'iphlpapi', 'odbc32', 'odbccp32',
-        'opengl32', 'winmm', 'wsock32',
+        'dbghelp', 'gdi32', 'glu32', 'iphlpapi', 'odbc32', 'odbccp32',
+        'opengl32', 'user32', 'winmm', 'wsock32',
         'xinput', 'dinput8', 'dsound', 'dxguid',
     ])
     game_nodes = game_env.SharedLibrary(

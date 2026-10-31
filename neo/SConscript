@@ -28,8 +28,8 @@ doom_sources = [s for s in doom_all_sources if not s.lower().endswith('.rc')]
 main_env = env.Clone()
 main_env.Append(LINKFLAGS=GUI_LINKFLAGS)
 main_env.Append(LIBS=[
-    'dbghelp', 'glu32', 'iphlpapi', 'odbc32', 'odbccp32',
-    'opengl32', 'winmm', 'wsock32',
+    'dbghelp', 'gdi32', 'glu32', 'iphlpapi', 'odbc32', 'odbccp32',
+    'opengl32', 'user32', 'winmm', 'wsock32',
     'xinput', 'dinput8', 'dsound', 'dxguid',
 ])
 
