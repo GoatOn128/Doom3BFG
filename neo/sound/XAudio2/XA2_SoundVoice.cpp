@@ -407,7 +407,7 @@ float idSoundVoice_XAudio2::GetAmplitude() {
 		levels.ChannelCount = MAX_CHANNELS_PER_VOICE;
 	}
 
-	if ( pSourceVoice->GetEffectParameters( 1, &levels, sizeof( levels ) ) != S_OK ) {
+	if ( pSourceVoice->GetEffectParameters( 0, &levels, sizeof( levels ) ) != S_OK ) {
 		return 0.0f;
 	}
 
