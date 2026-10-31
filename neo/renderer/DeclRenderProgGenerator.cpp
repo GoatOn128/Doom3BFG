@@ -222,7 +222,11 @@ bool ReadStateToken( idParser * source, idToken & token ) {
 	return false;
 }
 
-void ParseInOutStruct( idLexer * source, int attribType, idList<inOutVariable_t> * variables ) {
+// the decl parser that reads a shader body and the lexer that re-lexes
+// the generated code are different types with no shared base class,
+// but both expose the same token interface, so this works for either
+template< typename parser_t >
+void ParseInOutStruct( parser_t * source, int attribType, idList<inOutVariable_t> * variables ) {
 	source->ExpectTokenString( "{" );
 	while ( !source->CheckTokenString( "}" ) ) {
 		inOutVariable_t variable;
