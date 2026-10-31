@@ -864,7 +864,10 @@ bool ParseShader( programType_t programType, idParser * source, const idStr * gl
 				idToken next;
 				if ( source->PeekTokenString( "matrices_ubo" ) ) {
 					source->ReadToken( &next );	// matrices_ubo
-					AppendFormat( headerExtra, "uniform matrices_ubo {" );
+					// the capture loop below emits the braces of the block itself;
+					// emitting an opening brace here as well doubled the block
+					// opener and left the generated GLSL unbalanced
+					AppendFormat( headerExtra, "uniform matrices_ubo" );
 					int blockDepth = 0;
 					while ( source->ReadToken( &next ) ) {
 						if ( next == "{" ) {
