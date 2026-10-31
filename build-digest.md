@@ -1,6 +1,6 @@
 # Build digest
 
-commit: 35831a62190c
+commit: f3849c534fab
 
 - windows-x64-debug: success
 - windows-x64-release: success
