@@ -1,5 +1,4 @@
 @echo off
-setlocal enableextensions
 rem Initialize the Visual Studio 2026 (18.x) developer environment.
 rem This script deliberately avoids FOR /F ('command') parsing: the default
 rem vswhere path contains "Program Files (x86)", whose parentheses can break
@@ -8,14 +7,16 @@ rem
 rem Usage:
 rem   call .\.vscode\scripts\VS2026DevCmd.cmd
 rem       Loads the x64 developer environment into the current terminal.
-rem   call .\.vscode\scripts\VS2026DevCmd.cmd x86 debug 8
+rem   call .\.vscode\scripts\VS2026DevCmd.cmd x86 debug 8 msvc
 rem       Loads the matching environment and runs SCons.
-rem   call .\.vscode\scripts\VS2026DevCmd.cmd x64 release 8 dll
+rem   call .\.vscode\scripts\VS2026DevCmd.cmd x64 release 8 msvc dll
 rem       Same, plus dll=1 so the game code builds as bin/gamex86.dll.
-rem   call .\.vscode\scripts\VS2026DevCmd.cmd x64 debug 8 "" clang
+rem   call .\.vscode\scripts\VS2026DevCmd.cmd x64 debug 8 clang
 rem       Same, but with toolchain=clang (LLVM over MSVC).
-rem   call .\.vscode\scripts\VS2026DevCmd.cmd x64 debug 8 "" gcc
+rem   call .\.vscode\scripts\VS2026DevCmd.cmd x64 debug 8 gcc
 rem       Builds with MinGW gcc; Visual Studio is not used or required.
+rem
+rem   Arguments: <arch> <config> <jobs> <toolchain> [dll]
 
 set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
 set "VSINSTALL_FILE=%TEMP%\VSDevCmd_%RANDOM%_%RANDOM%.txt"
@@ -23,20 +24,21 @@ set "VSINSTALL="
 
 rem Parse and validate the raw arguments before the Visual Studio lookup:
 rem the gcc toolchain skips Visual Studio entirely. The checks run on
-rem %1 and %2 directly so a stale or mangled variable cannot trip them.
+rem the raw %1..%5 so a stale or mangled variable cannot trip them.
+rem The argument order is: <arch> <config> <jobs> <toolchain> [dll]
 set "BUILD_ARCH=%~1"
 set "BUILD_CONFIG=%~2"
 set "BUILD_JOBS=%~3"
-set "BUILD_DLL=%~4"
-set "BUILD_TOOLCHAIN=%~5"
+set "BUILD_TOOLCHAIN=%~4"
+set "BUILD_DLL=%~5"
 if not defined BUILD_TOOLCHAIN set "BUILD_TOOLCHAIN=msvc"
 if not defined BUILD_JOBS set "BUILD_JOBS=8"
 if "%~1"=="" goto parse_done
 if /i not "%~1"=="x86" if /i not "%~1"=="x64" goto bad_arch
 if /i not "%~2"=="debug" if /i not "%~2"=="release" if /i not "%~2"=="retail" if /i not "%~2"=="clean" goto bad_config
-if defined BUILD_DLL if /i not "%BUILD_DLL%"=="dll" goto bad_dll
-if /i not "%BUILD_TOOLCHAIN%"=="msvc" if /i not "%BUILD_TOOLCHAIN%"=="clang" if /i not "%BUILD_TOOLCHAIN%"=="gcc" goto bad_toolchain
-if /i "%BUILD_TOOLCHAIN%"=="gcc" goto gcc_build
+if not "%~4"=="" if /i not "%~4"=="msvc" if /i not "%~4"=="clang" if /i not "%~4"=="gcc" goto bad_toolchain
+if not "%~5"=="" if /i not "%~5"=="dll" goto bad_dll
+if /i "%~4"=="gcc" goto gcc_build
 
 :parse_done
 
@@ -172,12 +174,12 @@ exit /b 2
 echo [VSDevCmd] ERROR: Configuration must be debug, release, retail, or clean. Received: "%~2"
 exit /b 2
 
-:bad_dll
-echo [VSDevCmd] ERROR: The fourth argument must be dll or empty. Received: "%~4"
+:bad_toolchain
+echo [VSDevCmd] ERROR: Toolchain must be msvc, clang, or gcc. Received: "%~4"
 exit /b 2
 
-:bad_toolchain
-echo [VSDevCmd] ERROR: Toolchain must be msvc, clang, or gcc. Received: "%~5"
+:bad_dll
+echo [VSDevCmd] ERROR: The fifth argument must be dll or empty. Received: "%~5"
 exit /b 2
 
 :cd_failed
