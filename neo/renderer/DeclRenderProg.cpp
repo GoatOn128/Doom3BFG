@@ -2,6 +2,9 @@
 #pragma hdrstop
 
 #include "DeclRenderProg.h"
+#include "DeclRenderProgGenerator.h"
+#include "ParmBlockParser.h"
+#include "idlib/Parser.h"
 
 /*
 Adapted from the Wolfenstein: The New Order idDeclRenderProg and decl render
@@ -10,220 +13,44 @@ prog generator reconstructed under references/wolfnto-reversedengineered
 proprietary code and is not GPL-compatible; this is a re-implementation on
 this engine's idlib.
 
-Phase 2 scope: the decl parses the inherit, state, flags, and interaction
-blocks and skips the parms and hlsl_vp/hlsl_fp blocks until the renderprog
-generator lands.
+The decl parses the inherit, parms, state, flags, interaction, and
+hlsl_vp/hlsl_fp blocks. The parms block is parsed by idParmBlockParser and
+the shader bodies are translated to GLSL by DeclRenderProgGenerator. The
+TNO platform resource manager and generated-file cache are replaced by a
+checksum over the decl text and the translated code.
+
+The TNO generator reads the shared include through the parser preprocessor;
+this engine's idParser has no include stack, so renderprogs/global.inc is
+read raw and embedded verbatim, which keeps its #define macros intact for
+the GLSL compiler to expand.
 */
 
 /*
-gl state bits stored in renderProgData_t::glState, following the TNO layout:
-
-blend src           0x01 - 0x07
-blend dst           0x08 - 0x38
-depthMask           0x40
-colorMask           0x380
-alphaMask           0x400
-wireframe           0x800
-polygonOffset       0x1000
-depthFunc           0x2000 - 0x6000
-twoSided            0x8000
-backSided           0x10000
-alphaCoverage       0x20000
-blendOp             0x40000 - 0xC0000
-stencil ref         << 20
-stencil mask        << 28
-stencil func        1 - 7 << 36
-stencil ops         3-bit fields starting at 0x8000000000 << shift
+====================
+LoadGlobalInclude
+====================
 */
-
-static void NormalizeStateToken( idToken & token ) {
-	token.ToUpper();
-	token.StripLeading( "GL_" );
-}
-
-static bool ReadStateToken( idLexer * src, idToken & token ) {
-	if ( src->ReadToken( &token ) ) {
-		return true;
+static void LoadGlobalInclude( idStr & out ) {
+	out.Clear();
+	if ( fileSystem == nullptr ) {
+		return;
 	}
-	src->Warning( "EOF in program." );
-	return false;
+	void * buffer = nullptr;
+	const int length = fileSystem->ReadFile( "renderprogs/global.inc", &buffer );
+	if ( length <= 0 || buffer == nullptr ) {
+		if ( buffer != nullptr ) {
+			fileSystem->FreeFile( buffer );
+		}
+		return;
+	}
+	out.Append( static_cast< const char * >( buffer ), length );
+	fileSystem->FreeFile( buffer );
 }
 
 /*
-=================
-ParseState
-=================
-*/
-static bool ParseState( idLexer * src, renderProgData_t * data ) {
-	idToken token;
-	if ( !src->ExpectTokenString( "{" ) ) {
-		return false;
-	}
-	while ( src->ReadToken( &token ) ) {
-		if ( token.Icmp( "}" ) == 0 ) {
-			return true;
-		}
-
-		if ( token.Icmp( "blend" ) == 0 ) {
-			if ( !ReadStateToken( src, token ) ) {
-				return false;
-			}
-			NormalizeStateToken( token );
-			if ( token.Icmp( "ONE" ) == 0 ) {
-			} else if ( token.Icmp( "ZERO" ) == 0 ) { data->glState |= 0x1;
-			} else if ( token.Icmp( "DST_COLOR" ) == 0 ) { data->glState |= 0x2;
-			} else if ( token.Icmp( "ONE_MINUS_DST_COLOR" ) == 0 ) { data->glState |= 0x3;
-			} else if ( token.Icmp( "SRC_ALPHA" ) == 0 ) { data->glState |= 0x4;
-			} else if ( token.Icmp( "ONE_MINUS_SRC_ALPHA" ) == 0 ) { data->glState |= 0x5;
-			} else if ( token.Icmp( "DST_ALPHA" ) == 0 ) { data->glState |= 0x6;
-			} else if ( token.Icmp( "ONE_MINUS_DST_ALPHA" ) == 0 ) { data->glState |= 0x7;
-			} else {
-				src->Warning( "bad blend mode %s", token.c_str() );
-				return false;
-			}
-			if ( !ReadStateToken( src, token ) ) {
-				return false;
-			}
-			NormalizeStateToken( token );
-			if ( token.Icmp( "ZERO" ) == 0 ) {
-			} else if ( token.Icmp( "ONE" ) == 0 ) { data->glState |= 0x8;
-			} else if ( token.Icmp( "SRC_COLOR" ) == 0 ) { data->glState |= 0x10;
-			} else if ( token.Icmp( "ONE_MINUS_SRC_COLOR" ) == 0 ) { data->glState |= 0x18;
-			} else if ( token.Icmp( "SRC_ALPHA" ) == 0 ) { data->glState |= 0x20;
-			} else if ( token.Icmp( "ONE_MINUS_SRC_ALPHA" ) == 0 ) { data->glState |= 0x28;
-			} else if ( token.Icmp( "DST_ALPHA" ) == 0 ) { data->glState |= 0x30;
-			} else if ( token.Icmp( "ONE_MINUS_DST_ALPHA" ) == 0 ) { data->glState |= 0x38;
-			} else {
-				src->Warning( "bad blend mode %s", token.c_str() );
-				return false;
-			}
-		} else if ( token.Icmp( "blendOp" ) == 0 ) {
-			if ( !ReadStateToken( src, token ) ) {
-				return false;
-			}
-			NormalizeStateToken( token );
-			if ( token.Icmp( "ADD" ) == 0 ) {
-			} else if ( token.Icmp( "MIN" ) == 0 ) { data->glState |= 0x80000;
-			} else if ( token.Icmp( "MAX" ) == 0 ) { data->glState |= 0xC0000;
-			} else if ( token.Icmp( "SUB" ) == 0 ) { data->glState |= 0x40000;
-			} else {
-				src->Warning( "bad blend op %s", token.c_str() );
-				return false;
-			}
-		} else if ( token.Icmp( "depthFunc" ) == 0 ) {
-			if ( !ReadStateToken( src, token ) ) {
-				return false;
-			}
-			NormalizeStateToken( token );
-			if ( token.Icmp( "LEQUAL" ) == 0 ) {
-			} else if ( token.Icmp( "GREATER" ) == 0 ) { data->glState |= 0x2000;
-			} else if ( token.Icmp( "ALWAYS" ) == 0 ) { data->glState |= 0x4000;
-			} else if ( token.Icmp( "EQUAL" ) == 0 ) { data->glState |= 0x6000;
-			} else {
-				src->Warning( "bad depthFunc %s", token.c_str() );
-				return false;
-			}
-		} else if ( token.Icmp( "wireframe" ) == 0 ) {
-			data->glState |= 0x800;
-		} else if ( token.Icmp( "alphaCoverage" ) == 0 ) {
-			data->glState |= 0x20000;
-			data->hasAlphaToCoverage = true;
-		} else if ( token.Icmp( "depthMask" ) == 0 ) {
-			data->glState |= 0x40;
-		} else if ( token.Icmp( "colorMask" ) == 0 ) {
-			data->glState |= 0x380;
-		} else if ( token.Icmp( "alphaMask" ) == 0 ) {
-			data->glState |= 0x400;
-		} else if ( token.Icmp( "twoSided" ) == 0 ) {
-			data->glState |= 0x8000;
-		} else if ( token.Icmp( "backSided" ) == 0 ) {
-			data->glState |= 0x10000;
-		} else if ( token.Icmp( "polygonOffset" ) == 0 ) {
-			data->glState |= 0x1000;
-		} else if ( token.Icmp( "stencilOp" ) == 0 ) {
-			for ( int shift = 0; shift < 9; shift += 3 ) {
-				if ( !ReadStateToken( src, token ) ) {
-					return false;
-				}
-				NormalizeStateToken( token );
-				unsigned long long operation = 0;
-				if ( token.Icmp( "KEEP" ) == 0 ) { operation = 0;
-				} else if ( token.Icmp( "ZERO" ) == 0 ) { operation = 0x8000000000ull;
-				} else if ( token.Icmp( "REPLACE" ) == 0 ) { operation = 0x10000000000ull;
-				} else if ( token.Icmp( "INCR" ) == 0 ) { operation = 0x18000000000ull;
-				} else if ( token.Icmp( "DECR" ) == 0 ) { operation = 0x20000000000ull;
-				} else if ( token.Icmp( "INVERT" ) == 0 ) { operation = 0x28000000000ull;
-				} else if ( token.Icmp( "INCR_WRAP" ) == 0 ) { operation = 0x30000000000ull;
-				} else if ( token.Icmp( "DECR_WRAP" ) == 0 ) { operation = 0x38000000000ull;
-				} else {
-					src->Warning( "bad stencilOp %s", token.c_str() );
-					return false;
-				}
-				data->glState |= operation << shift;
-			}
-		} else if ( token.Icmp( "stencilFunc" ) == 0 ) {
-			if ( !ReadStateToken( src, token ) ) {
-				return false;
-			}
-			NormalizeStateToken( token );
-			if ( token.Icmp( "ALWAYS" ) == 0 ) {
-			} else if ( token.Icmp( "LESS" ) == 0 ) { data->glState |= 0x1000000000ull;
-			} else if ( token.Icmp( "LEQUAL" ) == 0 ) { data->glState |= 0x2000000000ull;
-			} else if ( token.Icmp( "GREATER" ) == 0 ) { data->glState |= 0x3000000000ull;
-			} else if ( token.Icmp( "GEQUAL" ) == 0 ) { data->glState |= 0x4000000000ull;
-			} else if ( token.Icmp( "EQUAL" ) == 0 ) { data->glState |= 0x5000000000ull;
-			} else if ( token.Icmp( "NOTEQUAL" ) == 0 ) { data->glState |= 0x6000000000ull;
-			} else if ( token.Icmp( "NEVER" ) == 0 ) { data->glState |= 0x7000000000ull;
-			} else {
-				src->Warning( "bad stencilFunc %s", token.c_str() );
-				return false;
-			}
-			if ( src->ReadTokenOnLine( &token ) ) {
-				data->glState |= ( unsigned long long )( token.type == TT_NUMBER ? token.GetIntValue() : 0 ) << 20;
-			}
-			if ( src->ReadTokenOnLine( &token ) ) {
-				data->glState |= ( unsigned long long )( token.type == TT_NUMBER ? token.GetIntValue() : 0 ) << 28;
-			}
-		} else {
-			src->Warning( "Unknown drawing state option '%s'", token.c_str() );
-		}
-	}
-	src->Warning( "Unexpected EOF in state block" );
-	return false;
-}
-
-/*
-=================
-ParseFlags
-=================
-*/
-static bool ParseFlags( idLexer * src, renderProgData_t * data ) {
-	idToken token;
-	if ( !src->ExpectTokenString( "{" ) ) {
-		return false;
-	}
-	while ( src->ReadToken( &token ) ) {
-		if ( token.Icmp( "}" ) == 0 ) {
-			return true;
-		}
-		if ( token.Icmp( "perforated" ) == 0 ) {
-			data->flags |= 1;
-		} else if ( token.Icmp( "sky" ) == 0 ) {
-			data->flags |= 2;
-		} else if ( token.Icmp( "modelfade" ) == 0 ) {
-			data->flags |= 4;
-		} else {
-			src->Warning( "Unknown flag option '%s'", token.c_str() );
-		}
-	}
-	src->Warning( "Unexpected EOF in flags block" );
-	return false;
-}
-
-/*
-=================
+====================
 renderProgData_t::Clear
-=================
+====================
 */
 void renderProgData_t::Clear() {
 	inheritsFrom.Clear();
@@ -253,9 +80,9 @@ void renderProgData_t::Clear() {
 }
 
 /*
-=================
+====================
 renderProgData_t::operator=
-=================
+====================
 */
 renderProgData_t & renderProgData_t::operator=( const renderProgData_t & other ) {
 	if ( this == &other ) {
@@ -299,6 +126,8 @@ void idDeclRenderProg::Clear() {
 	vertexProgramChecksum = 0;
 	fragmentProgramChecksum = 0;
 	hasDerived = false;
+	vertexConstructInfo.Clear();
+	fragmentConstructInfo.Clear();
 	versions.Clear();
 	versions.Append( this );
 	versions.Append( this );
@@ -322,10 +151,10 @@ idDeclRenderProg::DefaultDefinition
 const char * idDeclRenderProg::DefaultDefinition() const {
 	return "{\tstate { depthFunc GL_LEQUAL }\n"
 		"\thlsl_vp {\n"
-		"\t\tresult.position.x = dot4( vertex.position, $mvpMatrixX );\n"
-		"\t\tresult.position.y = dot4( vertex.position, $mvpMatrixY );\n"
-		"\t\tresult.position.z = dot4( vertex.position, $mvpMatrixZ );\n"
-		"\t\tresult.position.w = dot4( vertex.position, $mvpMatrixW );\n"
+		"\t\tresult.position.x = dot4( vertex.position, $rpMVPmatrixX );\n"
+		"\t\tresult.position.y = dot4( vertex.position, $rpMVPmatrixY );\n"
+		"\t\tresult.position.z = dot4( vertex.position, $rpMVPmatrixZ );\n"
+		"\t\tresult.position.w = dot4( vertex.position, $rpMVPmatrixW );\n"
 		"\t}\n"
 		"\thlsl_fp {\n"
 		"\t\tresult.color = float4( 0.2, 1.0, 0.4, 1.0 );\n"
@@ -339,14 +168,18 @@ idDeclRenderProg::Parse
 =================
 */
 bool idDeclRenderProg::Parse( const char * text, const int textLength, bool allowBinaryVersion ) {
-	idLexer src;
+	idParser src( DECL_LEXER_FLAGS );
 	idToken token;
 
 	Clear();
 
-	src.LoadMemory( text, textLength, GetFileName(), GetLineNum() );
-	src.SetFlags( DECL_LEXER_FLAGS );
+	src.LoadMemory( text, textLength, GetFileName() );
+	src.AddDefine( "PC 1" );
+	src.AddDefine( "GLSL 1" );
 	src.SkipUntilString( "{" );
+
+	idStr globalInclude;
+	LoadGlobalInclude( globalInclude );
 
 	bool parsedShader = false;
 	while ( src.ReadToken( &token ) ) {
@@ -363,20 +196,29 @@ bool idDeclRenderProg::Parse( const char * text, const int textLength, bool allo
 				MakeDefault();
 				return false;
 			}
-			const idDeclRenderProg * parent = static_cast< const idDeclRenderProg * >( declManager->FindType( DECL_RENDERPROG, token, false ) );
+			const idDeclRenderProg * parent = static_cast< const idDeclRenderProg * >( declManager->FindType( DECL_RENDERPROG, token.c_str(), false ) );
 			if ( parent == nullptr ) {
 				src.Warning( "Unknown RenderProg %s", token.c_str() );
 				MakeDefault();
 				return false;
 			}
 			data = parent->data;
+			vertexConstructInfo = parent->vertexConstructInfo;
+			fragmentConstructInfo = parent->fragmentConstructInfo;
+			vertexProgramChecksum = parent->vertexProgramChecksum;
+			fragmentProgramChecksum = parent->fragmentProgramChecksum;
 			data.inheritsFrom = parent->GetName();
 			data.parentCheckSum = data.compoundCheckSum;
 			inheritsFromDecl = parent;
 			const_cast< idDeclRenderProg * >( parent )->hasDerived = true;
 		} else if ( token.Icmp( "parms" ) == 0 ) {
-			// the parm block expression parser lands with the renderprog generator
-			src.SkipBracedSection( true );
+			if ( !src.ExpectTokenString( "{" ) ) {
+				MakeDefault();
+				return false;
+			}
+			idParmBlockParser parser( src, data.parmBlock );
+			// the TNO engine computes data.stageSort from a stageSort parm
+			// here; this engine's registry has no such parm
 		} else if ( token.Icmp( "state" ) == 0 ) {
 			data.glState = 0;
 			data.hasAlphaToCoverage = false;
@@ -393,8 +235,17 @@ bool idDeclRenderProg::Parse( const char * text, const int textLength, bool allo
 		} else if ( token.Icmp( "interaction" ) == 0 ) {
 			data.hasInteractions = true;
 		} else if ( token.Icmp( "hlsl_vp" ) == 0 || token.Icmp( "hlsl_fp" ) == 0 ) {
-			// the shader body translation lands with the renderprog generator
-			src.SkipBracedSection( true );
+			const int oldFlags = src.GetFlags();
+			src.SetFlags( oldFlags & ~LEXFL_ALLOWPATHNAMES );
+			const programType_t programType = ( token.Icmp( "hlsl_vp" ) == 0 ) ? PROGRAM_TYPE_VERTEX : PROGRAM_TYPE_FRAGMENT;
+			shaderConstructInfo_t * shaderInfo = ( programType == PROGRAM_TYPE_VERTEX ) ? &vertexConstructInfo : &fragmentConstructInfo;
+			shaderInfo->Clear();
+			const bool parsed = ParseShader( programType, &src, &globalInclude, &data, shaderInfo );
+			src.SetFlags( oldFlags );
+			if ( !parsed ) {
+				MakeDefault();
+				return false;
+			}
 			parsedShader = true;
 		} else {
 			src.Warning( "Unknown program type: %s", token.c_str() );
@@ -414,6 +265,27 @@ bool idDeclRenderProg::Parse( const char * text, const int textLength, bool allo
 		variant.Append( "_parallel" );
 		versions[2] = static_cast< const idDeclRenderProg * >( declManager->FindType( DECL_RENDERPROG, variant, false ) );
 	}
+
+	GenerateCode( &data, &vertexConstructInfo, &fragmentConstructInfo );
+	if ( vertexConstructInfo.parsed ) {
+		data.vertexCode = ConvertCG2GLSL( data.vertexCode, GetName(), true );
+		vertexProgramChecksum = MD5_BlockChecksum( data.vertexCode.c_str(), data.vertexCode.Length() );
+	}
+	if ( fragmentConstructInfo.parsed ) {
+		data.fragmentCode = ConvertCG2GLSL( data.fragmentCode, GetName(), false );
+		fragmentProgramChecksum = MD5_BlockChecksum( data.fragmentCode.c_str(), data.fragmentCode.Length() );
+	}
+	bool foundGlobalInclude = false;
+	for ( int index = 0; index < data.dependencies.Num(); index++ ) {
+		if ( data.dependencies[index].Icmp( "renderprogs/global.inc" ) == 0 ) {
+			foundGlobalInclude = true;
+			break;
+		}
+	}
+	if ( !foundGlobalInclude ) {
+		data.dependencies.Append( idStr( "renderprogs/global.inc" ) );
+	}
+	data.compoundCheckSum = data.parentCheckSum ^ MD5_BlockChecksum( text, textLength );
 
 	return true;
 }

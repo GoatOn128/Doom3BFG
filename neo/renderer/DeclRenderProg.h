@@ -16,15 +16,15 @@ PC GLSL is the only target.
 #include "idlib/Str.h"
 #include "idlib/containers/StaticList.h"
 
+#include "DeclRenderProgAttribs.h"
 #include "ParmBlock.h"
 
 class idImage;
 
 /*
-Per-decl data filled in by the parser. The inherit, state, flags, and
-interaction blocks are parsed now; the parms and hlsl_vp/hlsl_fp blocks are
-consumed when the renderprog generator lands. The glState bit layout follows
-the TNO layout so later phases stay compatible.
+Per-decl data filled in by the parser and the generator. The inherit, state,
+flags, parms, interaction, and hlsl_vp/hlsl_fp blocks are all parsed; the
+shader bodies are translated to GLSL by DeclRenderProgGenerator.
 */
 struct renderProgData_t {
 	renderProgData_t() { Clear(); }
@@ -80,13 +80,18 @@ public:
 	// decl has an interaction block; entries may be null
 	const idDeclRenderProg *	GetInteractionVariant( int lightType ) const { return versions[lightType]; }
 
-	renderProgData_t	data;
+	renderProgData_t		data;
+
+	// shader construct info of the last parse; an inherit copies these from
+	// the parent so inherited shader bodies keep their attributes
+	shaderConstructInfo_t	vertexConstructInfo;
+	shaderConstructInfo_t	fragmentConstructInfo;
 
 private:
 	const idDeclRenderProg *	inheritsFromDecl;
-	unsigned int			vertexProgramChecksum;
-	unsigned int			fragmentProgramChecksum;
-	bool					hasDerived;		// some other renderprog inherits from this one
+	unsigned int				vertexProgramChecksum;
+	unsigned int				fragmentProgramChecksum;
+	bool						hasDerived;		// some other renderprog inherits from this one
 	idStaticList<const idDeclRenderProg *, 3> versions;
 };
 
