@@ -482,8 +482,19 @@ if DEDICATED:
 
 # Paths used by every SConscript. Anchor everything to this file's location
 # so the build works no matter which directory scons is invoked from. Source
-# roots live under neo/, mirroring the original Premake layout.
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+# roots live under neo/, mirroring the original Premake layout. Some SCons
+# versions execute the top-level SConstruct without defining __file__; fall
+# back to the working directory, which every supported entry point (the VS
+# Code build script, CI, a manual scons call) sets to the repository root.
+if '__file__' in globals():
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+else:
+    SCRIPT_DIR = os.getcwd()
+if not os.path.isfile(os.path.join(SCRIPT_DIR, 'SConstruct')):
+    print(
+        "ERROR: SConstruct was not found in %s. Run scons from the repository "
+        "root." % SCRIPT_DIR, file=sys.stderr)
+    Exit(2)
 PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, 'neo'))
 BUILD_ROOT = os.path.abspath(os.path.join(
     SCRIPT_DIR, 'build', 'scons', 'windows-%s-%s-%s' % (ARCH, CONFIG, TOOLCHAIN)))
