@@ -11,7 +11,7 @@
                 "r_fullscreen",
                 "0"
             ],
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/bin",
             "preLaunchTask": "Build (x64 debug)"
         },
         {
@@ -24,7 +24,7 @@
                 "r_fullscreen",
                 "0"
             ],
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/bin",
             "preLaunchTask": "Build (x64 release)"
         },
         {
@@ -37,7 +37,7 @@
                 "r_fullscreen",
                 "0"
             ],
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/bin",
             "preLaunchTask": "Build (x64 retail)"
         },
         {
@@ -50,7 +50,7 @@
                 "r_fullscreen",
                 "0"
             ],
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/bin",
             "preLaunchTask": "Build (x86 debug)"
         },
         {
@@ -63,7 +63,7 @@
                 "r_fullscreen",
                 "0"
             ],
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/bin",
             "preLaunchTask": "Build (x86 release)"
         },
         {
@@ -76,7 +76,7 @@
                 "r_fullscreen",
                 "0"
             ],
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/bin",
             "preLaunchTask": "Build (x86 retail)"
         },
         {
@@ -89,7 +89,7 @@
                 "r_fullscreen",
                 "0"
             ],
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/bin",
             "preLaunchTask": "Build (x64 debug, clang)",
             "initCommands": [
                 "settings set target.max-children-count 256",
@@ -106,7 +106,7 @@
                 "r_fullscreen",
                 "0"
             ],
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/bin",
             "preLaunchTask": "Build (x64 debug, gcc)",
             "MIMode": "gdb",
             "miDebuggerPath": "gdb",
