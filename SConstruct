@@ -1,7 +1,9 @@
 # Doom 3 BFG SCons build
 #
 # Usage:
-#   scons arch=x64 config=debug
+#   scons toolchain=msvc arch=x64 config=debug
+#   scons toolchain=clang arch=x64 config=debug
+#   scons toolchain=gcc arch=x64 config=debug
 #   scons arch=x86 config=release
 #   scons arch=x64 config=retail dll=1
 # Parallel jobs default to up to 16 CPU cores; use -jN or -j1 to override.
@@ -9,6 +11,9 @@
 # Project definitions live in neo/*/SConscript, mirroring the original
 # Premake external.lua, idlib.lua, d3xp.lua, and DoomEXE project blocks.
 # Outputs follow Premake: bin/Doom3BFG.exe and, for dll=1, bin/gamex86.dll.
+# Toolchains: msvc (default) builds with cl.exe/link.exe; clang drives LLVM
+# clang-cl/lld-link/llvm-lib over MSVC headers and libraries; gcc uses a
+# MinGW-w64 gcc/g++/windres toolchain from PATH.
 
 import atexit
 import colorsys
@@ -445,6 +450,7 @@ atexit.register(_report_build_result)
 # -----------------------------------------------------------------------------
 ARCH = ARGUMENTS.get('arch', 'x64').lower()
 CONFIG = ARGUMENTS.get('config', 'debug').lower()
+TOOLCHAIN = ARGUMENTS.get('toolchain', 'msvc').lower()
 DLL_BUILD = ARGUMENTS.get('dll', '0').lower() in ('1', 'true', 'yes', 'on')
 DEDICATED = ARGUMENTS.get('dedicated', '0').lower() in ('1', 'true', 'yes', 'on')
 
@@ -453,6 +459,9 @@ if ARCH not in ('x86', 'x64'):
     Exit(2)
 if CONFIG not in ('debug', 'release', 'retail'):
     print("config must be debug, release, or retail (received %r)" % CONFIG, file=sys.stderr)
+    Exit(2)
+if TOOLCHAIN not in ('msvc', 'clang', 'gcc'):
+    print("toolchain must be msvc, clang, or gcc (received %r)" % TOOLCHAIN, file=sys.stderr)
     Exit(2)
 
 HOST_PLATFORM = pyplatform.system()
@@ -477,7 +486,7 @@ if DEDICATED:
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, 'neo'))
 BUILD_ROOT = os.path.abspath(os.path.join(
-    SCRIPT_DIR, 'build', 'scons', 'windows-%s-%s' % (ARCH, CONFIG)))
+    SCRIPT_DIR, 'build', 'scons', 'windows-%s-%s-%s' % (ARCH, CONFIG, TOOLCHAIN)))
 OBJECT_ROOT = os.path.join(BUILD_ROOT, 'obj')
 LIB_ROOT = os.path.join(BUILD_ROOT, 'lib')
 BIN_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, 'bin'))
@@ -491,7 +500,7 @@ Help('''
 Doom 3 BFG SCons build
 
 Usage:
-  scons [arch=x86|x64] [config=debug|release|retail] [dll=1] [-jN]
+  scons [arch=x86|x64] [config=debug|release|retail] [toolchain=msvc|clang|gcc] [dll=1] [-jN]
   scons arch=x64 config=debug                 Build all projects
   scons libs                                  Build the "libs" group
   scons exes                                  Build the "exes" group
@@ -513,6 +522,9 @@ Project selection (mirrors Premake groups):
 
 Options:
   arch=x86|x64       Target architecture (default: x64)
+  toolchain=msvc     MSVC cl.exe/link.exe/lib.exe (default)
+  toolchain=clang    LLVM clang-cl/lld-link/llvm-lib over MSVC headers and libs
+  toolchain=gcc      MinGW-w64 gcc/g++/windres taken from PATH
   config=debug       Debug symbols, no optimization, static debug CRT
   config=release     Optimized release build
   config=retail      Optimized retail build with ID_RETAIL and no debug symbols
@@ -530,7 +542,7 @@ Project definitions:
 Build products:
   bin/Doom3BFG.exe
   bin/gamex86.dll    (dll=1 only)
-  build/scons/windows-<arch>-<config>/lib/*.lib
+  build/scons/windows-<arch>-<config>-<toolchain>/lib/*
 ''')
 
 # -----------------------------------------------------------------------------
@@ -573,40 +585,63 @@ def require_sources(label, sources):
 
 
 # -----------------------------------------------------------------------------
-# LLVM / Windows toolchain
+# Toolchain selection
 # -----------------------------------------------------------------------------
-LLVM_BIN = ARGUMENTS.get('llvm_bin', os.environ.get('LLVM_BIN', r'C:\Program Files\LLVM\bin'))
+# msvc (default): cl.exe / link.exe / lib.exe / rc.exe from the MSVC environment.
+# clang: LLVM clang-cl / lld-link / llvm-lib over MSVC headers and libraries.
+# gcc: a MinGW-w64 gcc / g++ / windres toolchain from PATH.
+if TOOLCHAIN == 'clang':
+    LLVM_BIN = ARGUMENTS.get('llvm_bin', os.environ.get('LLVM_BIN', r'C:\Program Files\LLVM\bin'))
 
 
-def find_tool(name, fallback=None):
-    executable = name if name.lower().endswith('.exe') else name + '.exe'
-    candidate = os.path.join(LLVM_BIN, executable)
-    if os.path.isfile(candidate):
-        return candidate
-    located = shutil.which(name) or shutil.which(executable)
-    if located:
-        return located
-    return fallback or name
+    def find_tool(name, fallback=None):
+        executable = name if name.lower().endswith('.exe') else name + '.exe'
+        candidate = os.path.join(LLVM_BIN, executable)
+        if os.path.isfile(candidate):
+            return candidate
+        located = shutil.which(name) or shutil.which(executable)
+        if located:
+            return located
+        return fallback or name
 
 
-CLANG_CL = ARGUMENTS.get('cc', find_tool('clang-cl'))
-LLD_LINK = ARGUMENTS.get('linker', find_tool('lld-link'))
-LLVM_LIB = ARGUMENTS.get('ar', find_tool('llvm-lib'))
-LLVM_RC = ARGUMENTS.get('rc', find_tool('llvm-rc', shutil.which('rc') or 'rc'))
+    CLANG_CL = ARGUMENTS.get('cc', find_tool('clang-cl'))
+    LLD_LINK = ARGUMENTS.get('linker', find_tool('lld-link'))
+    LLVM_LIB = ARGUMENTS.get('ar', find_tool('llvm-lib'))
+    LLVM_RC = ARGUMENTS.get('rc', find_tool('llvm-rc', shutil.which('rc') or 'rc'))
 
-if CLANG_CL == 'clang-cl' and not shutil.which(CLANG_CL):
-    print("ERROR: clang-cl was not found. Install LLVM or pass llvm_bin=<LLVM bin directory>.", file=sys.stderr)
-    Exit(2)
-if LLD_LINK == 'lld-link' and not shutil.which(LLD_LINK):
-    print("ERROR: lld-link was not found. Install LLVM or pass linker=<path>.", file=sys.stderr)
-    Exit(2)
-if LLVM_LIB == 'llvm-lib' and not shutil.which(LLVM_LIB):
-    print("ERROR: llvm-lib was not found. Install LLVM or pass ar=<path>.", file=sys.stderr)
-    Exit(2)
+    if CLANG_CL == 'clang-cl' and not shutil.which(CLANG_CL):
+        print("ERROR: clang-cl was not found. Install LLVM or pass llvm_bin=<LLVM bin directory>.", file=sys.stderr)
+        Exit(2)
+    if LLD_LINK == 'lld-link' and not shutil.which(LLD_LINK):
+        print("ERROR: lld-link was not found. Install LLVM or pass linker=<path>.", file=sys.stderr)
+        Exit(2)
+    if LLVM_LIB == 'llvm-lib' and not shutil.which(LLVM_LIB):
+        print("ERROR: llvm-lib was not found. Install LLVM or pass ar=<path>.", file=sys.stderr)
+        Exit(2)
+elif TOOLCHAIN == 'gcc':
+    for required_tool in ('gcc', 'g++', 'windres'):
+        if not shutil.which(required_tool):
+            print("ERROR: %s was not found on PATH. toolchain=gcc needs a MinGW-w64 toolchain (for example from MSYS2)." % required_tool, file=sys.stderr)
+            Exit(2)
 
 TARGET_ARCH = 'x86' if ARCH == 'x86' else 'amd64'
 MACHINE_FLAG = '/MACHINE:X86' if ARCH == 'x86' else '/MACHINE:X64'
 ARCH_FLAG = '-m32' if ARCH == 'x86' else '-m64'
+
+# Link flag sets consumed by the SConscript files. MSVC and clang share the
+# Microsoft linker switches; gcc needs the GNU equivalents.
+if TOOLCHAIN == 'gcc':
+    GUI_LINKFLAGS = ['-mwindows', '-Wl,--stack=16777216', '-Wl,--large-address-aware']
+    DLL_LINKFLAGS = ['-Wl,--large-address-aware']
+else:
+    GUI_LINKFLAGS = [
+        MACHINE_FLAG,
+        '/SUBSYSTEM:WINDOWS',
+        '/STACK:16777216,16777216',
+        '/LARGEADDRESSAWARE',
+    ]
+    DLL_LINKFLAGS = [MACHINE_FLAG, '/LARGEADDRESSAWARE', '/MANIFEST:NO']
 
 base_defines = [
     '__DOOM__',
@@ -628,52 +663,111 @@ base_cpppath = [
     os.path.join(PROJECT_ROOT, 'external/libbinkdec/include'),
 ]
 
-# Use SCons' Microsoft link/resource builders, but drive compilation and linking
-# with LLVM's clang-cl/lld-link/llvm-lib toolchain.
-env = Environment(
-    tools=['default', 'mslink'],
-    ENV=os.environ.copy(),
-    CC=CLANG_CL,
-    CXX=CLANG_CL,
-    LINK=LLD_LINK,
-    SHLINK=LLD_LINK,
-    AR=LLVM_LIB,
-    RC=LLVM_RC,
-    TARGET_ARCH=TARGET_ARCH,
-    CPPPATH=base_cpppath,
-)
-env.Replace(
-    PROGSUFFIX='.exe',
-    SHLIBPREFIX='',
-    SHLIBSUFFIX='.dll',
-    LIBPREFIX='',
-    LIBSUFFIX='.lib',
-    OBJSUFFIX='.obj',
-    ARFLAGS=['/nologo', '/OUT:$TARGET'],
-)
-env.Append(CPPDEFINES=base_defines)
-env.Append(CCFLAGS=['/W4', '/nologo', ARCH_FLAG, '/GS'])
-env.Append(CXXFLAGS=['/W4', '/nologo', ARCH_FLAG, '/GS', '/std:c++17', '/EHsc', '/GR'])
+# Toolchain environments: MSVC uses cl.exe/link.exe/lib.exe directly, clang
+# keeps SCons' Microsoft builders but drives them with the LLVM tools, and
+# gcc uses the MinGW builders (gcc/g++/windres) from PATH.
+if TOOLCHAIN == 'gcc':
+    env = Environment(
+        tools=['mingw'],
+        ENV=os.environ.copy(),
+        TARGET_ARCH=TARGET_ARCH,
+        CPPPATH=base_cpppath,
+    )
+    env.Replace(
+        PROGSUFFIX='.exe',
+        SHLIBPREFIX='',
+        SHLIBSUFFIX='.dll',
+        LIBPREFIX='',
+        LIBSUFFIX='.a',
+        OBJSUFFIX='.o',
+    )
+    env.Append(CPPDEFINES=base_defines)
+    env.Append(CCFLAGS=['-Wall', '-Wextra', ARCH_FLAG, '-fstack-protector'])
+    env.Append(CXXFLAGS=['-Wall', '-Wextra', ARCH_FLAG, '-fstack-protector', '-std=c++17'])
+    # Match the MSVC static-CRT behavior: link the GCC runtime statically
+    # so the exe and dll do not depend on libgcc/libstdc++ DLLs.
+    env.Append(LINKFLAGS=['-static-libgcc', '-static-libstdc++'])
+    env.Append(SHLINKFLAGS=['-static-libgcc', '-static-libstdc++'])
+elif TOOLCHAIN == 'clang':
+    env = Environment(
+        tools=['default', 'mslink'],
+        ENV=os.environ.copy(),
+        CC=CLANG_CL,
+        CXX=CLANG_CL,
+        LINK=LLD_LINK,
+        SHLINK=LLD_LINK,
+        AR=LLVM_LIB,
+        RC=LLVM_RC,
+        TARGET_ARCH=TARGET_ARCH,
+        CPPPATH=base_cpppath,
+    )
+    env.Replace(
+        PROGSUFFIX='.exe',
+        SHLIBPREFIX='',
+        SHLIBSUFFIX='.dll',
+        LIBPREFIX='',
+        LIBSUFFIX='.lib',
+        OBJSUFFIX='.obj',
+        ARFLAGS=['/nologo', '/OUT:$TARGET'],
+    )
+    env.Append(CPPDEFINES=base_defines)
+    env.Append(CCFLAGS=['/W4', '/nologo', ARCH_FLAG, '/GS'])
+    env.Append(CXXFLAGS=['/W4', '/nologo', ARCH_FLAG, '/GS', '/std:c++17', '/EHsc', '/GR'])
+else:  # msvc
+    env = Environment(
+        tools=['default', 'mslink'],
+        ENV=os.environ.copy(),
+        TARGET_ARCH=TARGET_ARCH,
+        CPPPATH=base_cpppath,
+    )
+    env.Replace(
+        PROGSUFFIX='.exe',
+        SHLIBPREFIX='',
+        SHLIBSUFFIX='.dll',
+        LIBPREFIX='',
+        LIBSUFFIX='.lib',
+        OBJSUFFIX='.obj',
+    )
+    env.Append(CPPDEFINES=base_defines)
+    env.Append(CCFLAGS=['/W4', '/nologo', '/GS'])
+    env.Append(CXXFLAGS=['/W4', '/nologo', '/GS', '/std:c++17', '/EHsc', '/GR'])
 
-# Premake staticruntime("On") maps to /MTd for Debug and /MT otherwise.
+# Premake staticruntime("On") maps to /MTd for Debug and /MT for the Microsoft
+# toolchains. GCC has no CRT switch; its runtime is linked statically in the
+# environment above, so only optimization and debug levels differ here.
+# MSVC debug uses /Zi so the Visual Studio debugger gets a PDB; clang-cl
+# keeps /Z7 for the same purpose.
+if TOOLCHAIN == 'gcc':
+    debug_ccflags = ['-O0', '-g']
+    release_ccflags = ['-O2']
+elif TOOLCHAIN == 'clang':
+    debug_ccflags = ['/MTd', '/Z7', '/Od']
+    release_ccflags = ['/MT', '/O2', '/Ob2', '/Gy', '/GF', '/Oi']
+else:
+    debug_ccflags = ['/MTd', '/Zi', '/Od']
+    release_ccflags = ['/MT', '/O2', '/Ob2', '/Gy', '/GF', '/Oi']
+
 if CONFIG == 'debug':
-    env.Append(CCFLAGS=['/MTd', '/Z7', '/Od'])
-    env.Append(CXXFLAGS=['/MTd', '/Z7', '/Od'])
+    env.Append(CCFLAGS=debug_ccflags)
+    env.Append(CXXFLAGS=debug_ccflags)
     env.Append(CPPDEFINES=['_DEBUG'])
-    env.Append(LINKFLAGS=['/DEBUG', '/MAP'])
-    env.Append(SHLINKFLAGS=['/DEBUG', '/MAP'])
+    if TOOLCHAIN != 'gcc':
+        env.Append(LINKFLAGS=['/DEBUG', '/MAP'])
+        env.Append(SHLINKFLAGS=['/DEBUG', '/MAP'])
 elif CONFIG == 'release':
-    env.Append(CCFLAGS=['/MT', '/O2', '/Ob2', '/Gy', '/GF', '/Oi'])
-    env.Append(CXXFLAGS=['/MT', '/O2', '/Ob2', '/Gy', '/GF', '/Oi'])
+    env.Append(CCFLAGS=release_ccflags)
+    env.Append(CXXFLAGS=release_ccflags)
     env.Append(CPPDEFINES=['NDEBUG'])
-    env.Append(LINKFLAGS=['/OPT:REF', '/OPT:ICF'])
-    env.Append(SHLINKFLAGS=['/OPT:REF', '/OPT:ICF'])
+    if TOOLCHAIN != 'gcc':
+        env.Append(LINKFLAGS=['/OPT:REF', '/OPT:ICF'])
+        env.Append(SHLINKFLAGS=['/OPT:REF', '/OPT:ICF'])
 else:  # retail
-    env.Append(CCFLAGS=['/MT', '/O2', '/Ob2', '/Gy', '/GF', '/Oi'])
-    env.Append(CXXFLAGS=['/MT', '/O2', '/Ob2', '/Gy', '/GF', '/Oi'])
+    env.Append(CCFLAGS=release_ccflags)
+    env.Append(CXXFLAGS=release_ccflags)
     env.Append(CPPDEFINES=['NDEBUG', 'ID_RETAIL'])
-    env.Append(LINKFLAGS=['/OPT:REF', '/OPT:ICF'])
-    env.Append(SHLINKFLAGS=['/OPT:REF', '/OPT:ICF'])
+    if TOOLCHAIN != 'gcc':
+        env.Append(LINKFLAGS=['/OPT:REF', '/OPT:ICF'])
+        env.Append(SHLINKFLAGS=['/OPT:REF', '/OPT:ICF'])
 
 # Keep stack protection enabled in every configuration. The supplied Premake
 # disables /GS for Release, but this SCons port intentionally avoids weakening
@@ -686,7 +780,10 @@ else:  # retail
 # /OPT:ICF for the equivalent dead-code / identical COMDAT optimizations.
 
 if USE_COLOR:
-    env.Append(CCFLAGS=['/clang:-fcolor-diagnostics'], CXXFLAGS=['/clang:-fcolor-diagnostics'])
+    if TOOLCHAIN == 'clang':
+        env.Append(CCFLAGS=['/clang:-fcolor-diagnostics'], CXXFLAGS=['/clang:-fcolor-diagnostics'])
+    elif TOOLCHAIN == 'gcc':
+        env.Append(CCFLAGS=['-fdiagnostics-color=always'], CXXFLAGS=['-fdiagnostics-color=always'])
 
 # Keep the diagnostic forwarding, SCons output, and progress footer from the
 # previous build script. SCons' mslink tool supplies the command templates.
@@ -715,7 +812,7 @@ def build_objects(build_env, project_name, sources):
         # Sources are relative to neo/: resolve them to full paths so the
         # build does not depend on the invocation directory.
         source = os.path.join(PROJECT_ROOT, source)
-        target = os.path.join(OBJECT_ROOT, project_name, rel + '.obj')
+        target = os.path.join(OBJECT_ROOT, project_name, rel + build_env['OBJSUFFIX'])
         built = build_env.Object(target, source)
         objects.extend(built)
     _track_progress(build_env, objects)
@@ -738,7 +835,8 @@ def build_static_library(project_name, sources, project_env=None):
 Export(
     'env', 'build_objects', 'build_static_library', 'collect_sources',
     'require_sources', 'PROJECT_ROOT', 'OBJECT_ROOT', 'LIB_ROOT', 'BIN_DIR',
-    'DLL_BUILD', 'ARCH', 'CONFIG', 'MACHINE_FLAG', '_track_progress',
+    'DLL_BUILD', 'ARCH', 'CONFIG', 'TOOLCHAIN', 'GUI_LINKFLAGS',
+    'DLL_LINKFLAGS', '_track_progress',
 )
 
 # The dependency order is intentional: project scripts consume previously

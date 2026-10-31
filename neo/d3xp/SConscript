@@ -1,7 +1,7 @@
 # d3xp.lua equivalent: Game-D3XP, static by default or gamex86.dll with dll=1.
 import os
 
-Import('env', 'build_objects', 'collect_sources', 'require_sources', 'DLL_BUILD', 'LIB_ROOT', 'BIN_DIR', 'MACHINE_FLAG', 'idlib_lib', '_track_progress')
+Import('env', 'build_objects', 'collect_sources', 'require_sources', 'DLL_BUILD', 'LIB_ROOT', 'BIN_DIR', 'DLL_LINKFLAGS', 'idlib_lib', '_track_progress')
 
 # Premake d3xp.lua: files({'**'}) with these exclusions.
 d3xp_excludes = [
@@ -22,9 +22,7 @@ if DLL_BUILD:
 game_objects = build_objects(game_env, 'Game-D3XP', d3xp_sources)
 
 if DLL_BUILD:
-    game_env.Append(SHLINKFLAGS=[
-        MACHINE_FLAG, '/LARGEADDRESSAWARE', '/MANIFEST:NO'
-    ])
+    game_env.Append(SHLINKFLAGS=DLL_LINKFLAGS)
     game_env.Append(LIBS=[
         'dbghelp', 'glu32', 'iphlpapi', 'odbc32', 'odbccp32',
         'opengl32', 'winmm', 'wsock32',
