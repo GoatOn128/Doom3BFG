@@ -1,11 +1,11 @@
-==== windows-x64-debug (cancelled) ====
+==== windows-x64-debug (failure) ====
 
 Filesystem      Size  Used Avail Use% Mounted on
 C:              150G  120G   31G  80% /c
 Collecting scons
   Downloading scons-4.11.1-py3-none-any.whl.metadata (9.2 kB)
 Downloading scons-4.11.1-py3-none-any.whl (4.1 MB)
-   ---------------------------------------- 4.1/4.1 MB 38.7 MB/s  0:00:00
+   ---------------------------------------- 4.1/4.1 MB 46.3 MB/s  0:00:00
 Installing collected packages: scons
 Successfully installed scons-4.11.1
 scons: Reading SConscript files ...
@@ -13,8 +13,8 @@ scons: done reading SConscript files.
 scons: Building targets ...
 Compiling 'neo\external\miniz\miniz.c'
 Compiling 'neo\external\minizip\ioapi.c'
-miniz.c
 ioapi.c
+miniz.c
 Compiling 'neo\external\minizip\unzip.cpp'
 Compiling 'neo\external\minizip\zip.cpp'
 unzip.cpp
@@ -30,9 +30,9 @@ BitReader.cpp
 Compiling 'neo\external\libbinkdec\src\FileStream.cpp'
 FileStream.cpp
 Compiling 'neo\external\libbinkdec\src\HuffmanVLC.cpp'
+HuffmanVLC.cpp
 Compiling 'neo\external\libbinkdec\src\LogError.cpp'
 Compiling 'neo\external\libbinkdec\src\Util.cpp'
-HuffmanVLC.cpp
 LogError.cpp
 Util.cpp
 Compiling 'neo\external\libbinkdec\src\avfft.c'
@@ -48,9 +48,9 @@ mdct.c
 Compiling 'neo\external\libbinkdec\src\rdft.c'
 rdft.c
 Compiling 'neo\idLib\Base64.cpp'
-Base64.cpp
 Compiling 'neo\idLib\BitMsg.cpp'
 Compiling 'neo\idLib\bv\Bounds.cpp'
+Base64.cpp
 BitMsg.cpp
 Bounds.cpp
 Archiving 'build\scons\windows-x64-debug-msvc\lib\external.lib'
@@ -68,24 +68,24 @@ HashIndex.cpp
 Compiling 'neo\idLib\Debug.cpp'
 Compiling 'neo\idLib\Dict.cpp'
 Debug.cpp
-Dict.cpp
 Compiling 'neo\idLib\geometry\DrawVert.cpp'
+Dict.cpp
 DrawVert.cpp
 Compiling 'neo\idLib\geometry\JointTransform.cpp'
 JointTransform.cpp
 Compiling 'neo\idLib\geometry\RenderMatrix.cpp'
 Compiling 'neo\idLib\geometry\Surface.cpp'
+Compiling 'neo\idLib\geometry\Surface_Patch.cpp'
 RenderMatrix.cpp
 Surface.cpp
-Compiling 'neo\idLib\geometry\Surface_Patch.cpp'
 Surface_Patch.cpp
 Compiling 'neo\idLib\geometry\Surface_Polytope.cpp'
 Surface_Polytope.cpp
 Compiling 'neo\idLib\geometry\Surface_SweptSpline.cpp'
 Surface_SweptSpline.cpp
 Compiling 'neo\idLib\geometry\TraceModel.cpp'
-TraceModel.cpp
 Compiling 'neo\idLib\geometry\Winding.cpp'
+TraceModel.cpp
 Winding.cpp
 Compiling 'neo\idLib\geometry\Winding2D.cpp'
 Winding2D.cpp
@@ -132,24 +132,24 @@ Rotation.cpp
 Compiling 'neo\idLib\math\Simd.cpp'
 Simd.cpp
 Compiling 'neo\idLib\math\Simd_Generic.cpp'
-Compiling 'neo\idLib\math\Simd_SSE.cpp'
 Simd_Generic.cpp
+Compiling 'neo\idLib\math\Simd_SSE.cpp'
 Simd_SSE.cpp
 Compiling 'neo\idLib\math\Vector.cpp'
 Vector.cpp
 Compiling 'neo\idLib\math\VecX.cpp'
 VecX.cpp
 Compiling 'neo\idLib\ParallelJobList.cpp'
-Compiling 'neo\idLib\Parser.cpp'
 ParallelJobList.cpp
+Compiling 'neo\idLib\Parser.cpp'
 Parser.cpp
 Compiling 'neo\idLib\precompiled.cpp'
 precompiled.cpp
 Compiling 'neo\idLib\RectAllocator.cpp'
 RectAllocator.cpp
 Compiling 'neo\idLib\SoftwareCache.cpp'
-Compiling 'neo\idLib\Str.cpp'
 SoftwareCache.cpp
+Compiling 'neo\idLib\Str.cpp'
 Str.cpp
 Compiling 'neo\idLib\sys\sys_assert.cpp'
 sys_assert.cpp
@@ -170,8 +170,8 @@ Achievements.cpp
 Compiling 'neo\d3xp\Actor.cpp'
 Actor.cpp
 Compiling 'neo\d3xp\AF.cpp'
-AF.cpp
 Archiving 'build\scons\windows-x64-debug-msvc\lib\idLib.lib'
+AF.cpp
 Indexing 'build\scons\windows-x64-debug-msvc\lib\idLib.lib'
 Compiling 'neo\d3xp\AFEntity.cpp'
 AFEntity.cpp
@@ -194,8 +194,8 @@ AI_Vagary.cpp
 Compiling 'neo\d3xp\AimAssist.cpp'
 AimAssist.cpp
 Compiling 'neo\d3xp\anim\Anim.cpp'
-Compiling 'neo\d3xp\anim\Anim_Blend.cpp'
 Anim.cpp
+Compiling 'neo\d3xp\anim\Anim_Blend.cpp'
 Anim_Blend.cpp
 Compiling 'neo\d3xp\anim\Anim_Testmodel.cpp'
 Anim_Testmodel.cpp
@@ -284,72 +284,72 @@ MenuScreen_Shell_Leaderboards.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Shell_Load.cpp'
 MenuScreen_Shell_Load.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Shell_MatchSettings.cpp'
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_ModeSelect.cpp'
 MenuScreen_Shell_MatchSettings.cpp
+Compiling 'neo\d3xp\menus\MenuScreen_Shell_ModeSelect.cpp'
 MenuScreen_Shell_ModeSelect.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Shell_NewGame.cpp'
 MenuScreen_Shell_NewGame.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Shell_PartyLobby.cpp'
 MenuScreen_Shell_PartyLobby.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Shell_Pause.cpp'
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_Playstation.cpp'
 MenuScreen_Shell_Pause.cpp
+Compiling 'neo\d3xp\menus\MenuScreen_Shell_Playstation.cpp'
 MenuScreen_Shell_Playstation.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Shell_Resolution.cpp'
 MenuScreen_Shell_Resolution.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Shell_Root.cpp'
 MenuScreen_Shell_Root.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Shell_Save.cpp'
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_Settings.cpp'
 MenuScreen_Shell_Save.cpp
+Compiling 'neo\d3xp\menus\MenuScreen_Shell_Settings.cpp'
 MenuScreen_Shell_Settings.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Shell_Singleplayer.cpp'
 MenuScreen_Shell_Singleplayer.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Shell_SystemOptions.cpp'
 MenuScreen_Shell_SystemOptions.cpp
 Compiling 'neo\d3xp\menus\MenuWidget.cpp'
-Compiling 'neo\d3xp\menus\MenuWidget_Button.cpp'
 MenuWidget.cpp
+Compiling 'neo\d3xp\menus\MenuWidget_Button.cpp'
 MenuWidget_Button.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_Carousel.cpp'
 MenuWidget_Carousel.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_CommandBar.cpp'
 MenuWidget_CommandBar.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_DynamicList.cpp'
-Compiling 'neo\d3xp\menus\MenuWidget_Help.cpp'
 MenuWidget_DynamicList.cpp
+Compiling 'neo\d3xp\menus\MenuWidget_Help.cpp'
 MenuWidget_Help.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_InfoBox.cpp'
 MenuWidget_InfoBox.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_ItemAssignment.cpp'
 MenuWidget_ItemAssignment.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_List.cpp'
-Compiling 'neo\d3xp\menus\MenuWidget_LobbyList.cpp'
 MenuWidget_List.cpp
+Compiling 'neo\d3xp\menus\MenuWidget_LobbyList.cpp'
 MenuWidget_LobbyList.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_MenuBar.cpp'
 MenuWidget_MenuBar.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_NavBar.cpp'
 MenuWidget_NavBar.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_NavButton.cpp'
-Compiling 'neo\d3xp\menus\MenuWidget_PDA_AudioFiles.cpp'
 MenuWidget_NavButton.cpp
+Compiling 'neo\d3xp\menus\MenuWidget_PDA_AudioFiles.cpp'
 MenuWidget_PDA_AudioFiles.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_PDA_EmailInbox.cpp'
 MenuWidget_PDA_EmailInbox.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_PDA_Objective.cpp'
 MenuWidget_PDA_Objective.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_PDA_UserData.cpp'
-Compiling 'neo\d3xp\menus\MenuWidget_PDA_VideoInfo.cpp'
 MenuWidget_PDA_UserData.cpp
+Compiling 'neo\d3xp\menus\MenuWidget_PDA_VideoInfo.cpp'
 MenuWidget_PDA_VideoInfo.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_Scrollbar.cpp'
 MenuWidget_Scrollbar.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_Shell_SaveInfo.cpp'
 MenuWidget_Shell_SaveInfo.cpp
 Compiling 'neo\d3xp\Misc.cpp'
-Compiling 'neo\d3xp\Moveable.cpp'
 Misc.cpp
+Compiling 'neo\d3xp\Moveable.cpp'
 Moveable.cpp
 Compiling 'neo\d3xp\Mover.cpp'
 Mover.cpp
@@ -364,16 +364,16 @@ Force_Constant.cpp
 Compiling 'neo\d3xp\physics\Force_Drag.cpp'
 Force_Drag.cpp
 Compiling 'neo\d3xp\physics\Force_Field.cpp'
-Compiling 'neo\d3xp\physics\Force_Grab.cpp'
 Force_Field.cpp
+Compiling 'neo\d3xp\physics\Force_Grab.cpp'
 Force_Grab.cpp
 Compiling 'neo\d3xp\physics\Force_Spring.cpp'
 Force_Spring.cpp
 Compiling 'neo\d3xp\physics\Physics.cpp'
 Physics.cpp
 Compiling 'neo\d3xp\physics\Physics_Actor.cpp'
-Compiling 'neo\d3xp\physics\Physics_AF.cpp'
 Physics_Actor.cpp
+Compiling 'neo\d3xp\physics\Physics_AF.cpp'
 Physics_AF.cpp
 Compiling 'neo\d3xp\physics\Physics_Base.cpp'
 Physics_Base.cpp
@@ -404,24 +404,24 @@ Projectile.cpp
 Compiling 'neo\d3xp\Pvs.cpp'
 Pvs.cpp
 Compiling 'neo\d3xp\script\Script_Compiler.cpp'
-Script_Compiler.cpp
 Compiling 'neo\d3xp\script\Script_Interpreter.cpp'
+Script_Compiler.cpp
 Script_Interpreter.cpp
 Compiling 'neo\d3xp\script\Script_Program.cpp'
 Script_Program.cpp
 Compiling 'neo\d3xp\script\Script_Thread.cpp'
 Script_Thread.cpp
 Compiling 'neo\d3xp\SecurityCamera.cpp'
-SecurityCamera.cpp
 Compiling 'neo\d3xp\SmokeParticles.cpp'
+SecurityCamera.cpp
 SmokeParticles.cpp
 Compiling 'neo\d3xp\Sound.cpp'
-Compiling 'neo\d3xp\Target.cpp'
 Sound.cpp
+Compiling 'neo\d3xp\Target.cpp'
 Target.cpp
 Compiling 'neo\d3xp\Trigger.cpp'
-Trigger.cpp
 Compiling 'neo\d3xp\Weapon.cpp'
+Trigger.cpp
 Weapon.cpp
 Compiling 'neo\d3xp\WorldSpawn.cpp'
 WorldSpawn.cpp
@@ -431,12 +431,12 @@ Compiling 'neo\cm\CollisionModel_contents.cpp'
 CollisionModel_contents.cpp
 Compiling 'neo\cm\CollisionModel_debug.cpp'
 CollisionModel_debug.cpp
+Archiving 'build\scons\windows-x64-debug-msvc\lib\gamex86.lib'
+Indexing 'build\scons\windows-x64-debug-msvc\lib\gamex86.lib'
 Compiling 'neo\cm\CollisionModel_files.cpp'
 CollisionModel_files.cpp
 Compiling 'neo\cm\CollisionModel_load.cpp'
 CollisionModel_load.cpp
-Archiving 'build\scons\windows-x64-debug-msvc\lib\gamex86.lib'
-Indexing 'build\scons\windows-x64-debug-msvc\lib\gamex86.lib'
 Compiling 'neo\cm\CollisionModel_rotate.cpp'
 CollisionModel_rotate.cpp
 Compiling 'neo\cm\CollisionModel_trace.cpp'
@@ -446,14 +446,14 @@ CollisionModel_translate.cpp
 Compiling 'neo\framework\CmdSystem.cpp'
 CmdSystem.cpp
 Compiling 'neo\framework\Common.cpp'
-Compiling 'neo\framework\Common_demos.cpp'
 Common.cpp
+Compiling 'neo\framework\Common_demos.cpp'
 Common_demos.cpp
 Compiling 'neo\framework\Common_dialog.cpp'
 Common_dialog.cpp
+neo\framework\Common.cpp(777): warning C4101: 'mouseEvents': unreferenced local variable
 Compiling 'neo\framework\common_frame.cpp'
 common_frame.cpp
-neo\framework\Common.cpp(777): warning C4101: 'mouseEvents': unreferenced local variable
 Compiling 'neo\framework\Common_load.cpp'
 Compiling 'neo\framework\Common_localize.cpp'
 Common_load.cpp
@@ -468,36 +468,36 @@ Common_printf.cpp
 Common_tools.cpp
 Compiling 'neo\framework\Compressor.cpp'
 Compressor.cpp
+neo\framework\Common_tools.cpp(40): warning C4245: 'initializing': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
 Compiling 'neo\framework\Console.cpp'
 Console.cpp
-neo\framework\Common_tools.cpp(40): warning C4245: 'initializing': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
 Compiling 'neo\framework\ConsoleHistory.cpp'
 Compiling 'neo\framework\CVarSystem.cpp'
 ConsoleHistory.cpp
 CVarSystem.cpp
 Compiling 'neo\framework\DebugGraph.cpp'
-Compiling 'neo\framework\DeclAF.cpp'
 DebugGraph.cpp
+Compiling 'neo\framework\DeclAF.cpp'
 DeclAF.cpp
 Compiling 'neo\framework\DeclEntityDef.cpp'
 Compiling 'neo\framework\DeclFX.cpp'
 DeclEntityDef.cpp
 DeclFX.cpp
 Compiling 'neo\framework\DeclManager.cpp'
-DeclManager.cpp
 Compiling 'neo\framework\DeclParticle.cpp'
+DeclManager.cpp
 DeclParticle.cpp
 Compiling 'neo\framework\DeclPDA.cpp'
-DeclPDA.cpp
 Compiling 'neo\framework\DeclSkin.cpp'
+DeclPDA.cpp
 DeclSkin.cpp
 Compiling 'neo\framework\DeclTable.cpp'
 Compiling 'neo\framework\DemoFile.cpp'
 DeclTable.cpp
 DemoFile.cpp
 Compiling 'neo\framework\EditField.cpp'
-EditField.cpp
 Compiling 'neo\framework\EventLoop.cpp'
+EditField.cpp
 EventLoop.cpp
 Compiling 'neo\framework\File.cpp'
 Compiling 'neo\framework\File_Manifest.cpp'
@@ -512,24 +512,24 @@ Compiling 'neo\framework\FileSystem.cpp'
 File_Zip.cpp
 FileSystem.cpp
 Compiling 'neo\framework\KeyInput.cpp'
-Compiling 'neo\framework\PlayerProfile.cpp'
 KeyInput.cpp
+Compiling 'neo\framework\PlayerProfile.cpp'
 PlayerProfile.cpp
 Compiling 'neo\framework\precompiled.cpp'
 precompiled.cpp
 Compiling 'neo\framework\TokenParser.cpp'
 TokenParser.cpp
 Compiling 'neo\framework\UsercmdGen.cpp'
-Compiling 'neo\framework\Zip.cpp'
 UsercmdGen.cpp
+Compiling 'neo\framework\Zip.cpp'
 Zip.cpp
 Compiling 'neo\renderer\AutoRender.cpp'
 AutoRender.cpp
 Compiling 'neo\renderer\AutoRenderBink.cpp'
 AutoRenderBink.cpp
 Compiling 'neo\renderer\BinaryImage.cpp'
-Compiling 'neo\renderer\BufferObject.cpp'
 BinaryImage.cpp
+Compiling 'neo\renderer\BufferObject.cpp'
 BufferObject.cpp
 Compiling 'neo\renderer\Cinematic.cpp'
 Cinematic.cpp
@@ -537,25 +537,25 @@ neo\renderer\BufferObject.cpp(188): warning C4312: 'reinterpret_cast': conversio
 neo\renderer\BufferObject.cpp(433): warning C4312: 'reinterpret_cast': conversion from 'GLuint' to 'void *' of greater size
 neo\renderer\BufferObject.cpp(671): warning C4312: 'reinterpret_cast': conversion from 'GLuint' to 'void *' of greater size
 Compiling 'neo\renderer\CinematicBink.cpp'
-Compiling 'neo\renderer\CinematicRoQ.cpp'
 CinematicBink.cpp
+Compiling 'neo\renderer\CinematicRoQ.cpp'
 CinematicRoQ.cpp
 Compiling 'neo\renderer\Color\ColorSpace.cpp'
 ColorSpace.cpp
+neo\renderer\CinematicBink.cpp(59): warning C4245: '=': conversion from 'int' to 'uint32', signed/unsigned mismatch
 Compiling 'neo\renderer\DXT\DXTDecoder.cpp'
 DXTDecoder.cpp
-neo\renderer\CinematicBink.cpp(59): warning C4245: '=': conversion from 'int' to 'uint32', signed/unsigned mismatch
 Compiling 'neo\renderer\DXT\DXTEncoder.cpp'
-Compiling 'neo\renderer\DXT\DXTEncoder_SSE2.cpp'
 DXTEncoder.cpp
+Compiling 'neo\renderer\DXT\DXTEncoder_SSE2.cpp'
 DXTEncoder_SSE2.cpp
 Compiling 'neo\renderer\Font.cpp'
 Font.cpp
 Compiling 'neo\renderer\GLMatrix.cpp'
 GLMatrix.cpp
 Compiling 'neo\renderer\GuiModel.cpp'
-Compiling 'neo\renderer\Image_files.cpp'
 GuiModel.cpp
+Compiling 'neo\renderer\Image_files.cpp'
 Image_files.cpp
 Compiling 'neo\renderer\Image_intrinsic.cpp'
 Image_intrinsic.cpp
@@ -576,8 +576,8 @@ PreLightShadowVolume.cpp
 Compiling 'neo\renderer\jobs\ShadowShared.cpp'
 ShadowShared.cpp
 Compiling 'neo\renderer\jobs\staticshadowvolume\StaticShadowVolume.cpp'
-Compiling 'neo\renderer\Material.cpp'
 StaticShadowVolume.cpp
+Compiling 'neo\renderer\Material.cpp'
 Material.cpp
 Compiling 'neo\renderer\Model.cpp'
 Model.cpp
@@ -588,8 +588,8 @@ Model_beam.cpp
 Compiling 'neo\renderer\Model_liquid.cpp'
 Model_liquid.cpp
 Compiling 'neo\renderer\Model_lwo.cpp'
-Model_lwo.cpp
 Compiling 'neo\renderer\Model_ma.cpp'
+Model_lwo.cpp
 Model_ma.cpp
 Compiling 'neo\renderer\Model_md3.cpp'
 Model_md3.cpp
@@ -602,26 +602,26 @@ Model_sprite.cpp
 Compiling 'neo\renderer\ModelDecal.cpp'
 ModelDecal.cpp
 Compiling 'neo\renderer\ModelManager.cpp'
-ModelManager.cpp
 Compiling 'neo\renderer\ModelOverlay.cpp'
 Compiling 'neo\renderer\OpenGL\gl_backend.cpp'
+ModelManager.cpp
 ModelOverlay.cpp
 gl_backend.cpp
 Compiling 'neo\renderer\OpenGL\gl_GraphicsAPIWrapper.cpp'
 gl_GraphicsAPIWrapper.cpp
 Compiling 'neo\renderer\OpenGL\gl_Image.cpp'
-gl_Image.cpp
 Compiling 'neo\renderer\RenderEntity.cpp'
-Compiling 'neo\renderer\RenderLog.cpp'
+gl_Image.cpp
 RenderEntity.cpp
+Compiling 'neo\renderer\RenderLog.cpp'
 RenderLog.cpp
 Compiling 'neo\renderer\RenderProgs.cpp'
 RenderProgs.cpp
 Compiling 'neo\renderer\RenderProgs_GLSL.cpp'
 Compiling 'neo\renderer\RenderSystem.cpp'
+Compiling 'neo\renderer\RenderSystem_init.cpp'
 RenderProgs_GLSL.cpp
 RenderSystem.cpp
-Compiling 'neo\renderer\RenderSystem_init.cpp'
 RenderSystem_init.cpp
 Compiling 'neo\renderer\RenderWorld.cpp'
 RenderWorld.cpp
@@ -645,13 +645,13 @@ Compiling 'neo\renderer\tr_backend_rendertools.cpp'
 tr_backend_rendertools.cpp
 Compiling 'neo\renderer\tr_frontend_addlights.cpp'
 tr_frontend_addlights.cpp
+Compiling 'neo\renderer\tr_frontend_addmodels.cpp'
+tr_frontend_addmodels.cpp
 neo\renderer\tr_backend_draw.cpp(170): warning C4389: '!=': signed/unsigned mismatch
 neo\renderer\tr_backend_draw.cpp(175): warning C4389: '!=': signed/unsigned mismatch
 neo\renderer\tr_backend_draw.cpp(1498): warning C4389: '!=': signed/unsigned mismatch
 neo\renderer\tr_backend_draw.cpp(1516): warning C4389: '!=': signed/unsigned mismatch
 neo\renderer\tr_backend_draw.cpp(1536): warning C4389: '!=': signed/unsigned mismatch
-Compiling 'neo\renderer\tr_frontend_addmodels.cpp'
-tr_frontend_addmodels.cpp
 Compiling 'neo\renderer\tr_frontend_deform.cpp'
 tr_frontend_deform.cpp
 neo\renderer\tr_backend_rendertools.cpp(724): warning C4311: 'type cast': pointer truncation from 'void *' to 'GLuint'
@@ -810,6 +810,8 @@ Compiling 'neo\sys\win32\win_syscon.cpp'
 win_syscon.cpp
 Compiling 'neo\sys\win32\win_wndproc.cpp'
 win_wndproc.cpp
+Compiling 'neo\tools\compilers\aas\AASBuild.cpp'
+AASBuild.cpp
 neo\sys\win32\win_syscon.cpp(119): warning C4311: 'type cast': pointer truncation from 'HBRUSH' to 'long'
 neo\sys\win32\win_syscon.cpp(119): warning C4302: 'type cast': truncation from 'HBRUSH' to 'long'
 neo\sys\win32\win_syscon.cpp(128): warning C4311: 'type cast': pointer truncation from 'HBRUSH' to 'long'
@@ -817,29 +819,125 @@ neo\sys\win32\win_syscon.cpp(128): warning C4302: 'type cast': truncation from '
 neo\sys\win32\win_syscon.cpp(392): error C2065: 'GWL_WNDPROC': undeclared identifier
 neo\sys\win32\win_syscon.cpp(392): warning C4311: 'type cast': pointer truncation from 'LONG (__cdecl *)(HWND,UINT,WPARAM,LPARAM)' to 'long'
 neo\sys\win32\win_syscon.cpp(392): warning C4302: 'type cast': truncation from 'LONG (__cdecl *)(HWND,UINT,WPARAM,LPARAM)' to 'long'
-Compiling 'neo\tools\compilers\aas\AASBuild.cpp'
 scons: *** [build\scons\windows-x64-debug-msvc\obj\DoomEXE\sys\win32\win_syscon.cpp.obj] Error 2
 Compiling 'neo\tools\compilers\aas\AASBuild_file.cpp'
-AASBuild.cpp
-AASBuild_file.cpp
 Compiling 'neo\tools\compilers\aas\AASBuild_gravity.cpp'
+AASBuild_file.cpp
 AASBuild_gravity.cpp
 Compiling 'neo\tools\compilers\aas\AASBuild_ledge.cpp'
 AASBuild_ledge.cpp
 Compiling 'neo\tools\compilers\aas\AASBuild_merge.cpp'
 AASBuild_merge.cpp
 Compiling 'neo\tools\compilers\aas\AASCluster.cpp'
+Compiling 'neo\tools\compilers\aas\AASFile.cpp'
 AASCluster.cpp
+AASFile.cpp
+Compiling 'neo\tools\compilers\aas\AASFile_optimize.cpp'
+AASFile_optimize.cpp
+Compiling 'neo\tools\compilers\aas\AASFile_sample.cpp'
+Compiling 'neo\tools\compilers\aas\AASFileManager.cpp'
+AASFile_sample.cpp
+AASFileManager.cpp
+Compiling 'neo\tools\compilers\aas\AASReach.cpp'
+AASReach.cpp
+Compiling 'neo\tools\compilers\aas\Brush.cpp'
+Brush.cpp
+Compiling 'neo\tools\compilers\aas\BrushBSP.cpp'
+Compiling 'neo\tools\compilers\amplitude\amplitude.cpp'
+BrushBSP.cpp
+amplitude.cpp
+D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\aas\AASReach.cpp(267) : warning C4701: potentially uninitialized local variable 'edge1Num' used
+Compiling 'neo\tools\compilers\dmap\dmap.cpp'
+dmap.cpp
+Compiling 'neo\tools\compilers\dmap\facebsp.cpp'
+facebsp.cpp
+D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\amplitude\amplitude.cpp(177) : warning C4701: potentially uninitialized local variable 'format' used
+Compiling 'neo\tools\compilers\dmap\gldraw.cpp'
+Compiling 'neo\tools\compilers\dmap\glfile.cpp'
+gldraw.cpp
+glfile.cpp
+Compiling 'neo\tools\compilers\dmap\leakfile.cpp'
+leakfile.cpp
+Compiling 'neo\tools\compilers\dmap\map.cpp'
+map.cpp
+Compiling 'neo\tools\compilers\dmap\optimize.cpp'
+optimize.cpp
+Compiling 'neo\tools\compilers\dmap\output.cpp'
+output.cpp
+Compiling 'neo\tools\compilers\dmap\portals.cpp'
+portals.cpp
+Compiling 'neo\tools\compilers\dmap\tritjunction.cpp'
+tritjunction.cpp
+Compiling 'neo\tools\compilers\dmap\tritools.cpp'
+Compiling 'neo\tools\compilers\dmap\ubrush.cpp'
+tritools.cpp
+ubrush.cpp
+Compiling 'neo\tools\compilers\dmap\usurface.cpp'
+usurface.cpp
+Compiling 'neo\tools\compilers\renderbump\renderbump.cpp'
+renderbump.cpp
+Compiling 'neo\tools\compilers\roqvq\codec.cpp'
+codec.cpp
+Compiling 'neo\tools\compilers\roqvq\NSBitmapImageRep.cpp'
+NSBitmapImageRep.cpp
+Compiling 'neo\tools\compilers\roqvq\roq.cpp'
+roq.cpp
+D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\renderbump\renderbump.cpp(1318) : warning C4701: potentially uninitialized local variable 'opt' used
+Compiling 'neo\tools\compilers\roqvq\roqParam.cpp'
+roqParam.cpp
+Compiling 'neo\ui\BindWindow.cpp'
+Compiling 'neo\ui\ChoiceWindow.cpp'
+BindWindow.cpp
+ChoiceWindow.cpp
+Compiling 'neo\ui\DeviceContext.cpp'
+DeviceContext.cpp
+Compiling 'neo\ui\DeviceContextOptinized.cpp'
+DeviceContextOptinized.cpp
+Compiling 'neo\ui\EditWindow.cpp'
+EditWindow.cpp
+Compiling 'neo\ui\FieldWindow.cpp'
+FieldWindow.cpp
+Compiling 'neo\ui\GameBearShootWindow.cpp'
+GameBearShootWindow.cpp
+Compiling 'neo\ui\GameBustOutWindow.cpp'
+GameBustOutWindow.cpp
+Compiling 'neo\ui\GameSSDWindow.cpp'
+GameSSDWindow.cpp
+Compiling 'neo\ui\GuiScript.cpp'
+GuiScript.cpp
+Compiling 'neo\ui\ListGUI.cpp'
+ListGUI.cpp
+Compiling 'neo\ui\ListWindow.cpp'
+ListWindow.cpp
+Compiling 'neo\ui\RegExp.cpp'
+Compiling 'neo\ui\RenderWindow.cpp'
+RegExp.cpp
+RenderWindow.cpp
+Compiling 'neo\ui\SimpleWindow.cpp'
+SimpleWindow.cpp
+Compiling 'neo\ui\SliderWindow.cpp'
+SliderWindow.cpp
+Compiling 'neo\ui\UserInterface.cpp'
+UserInterface.cpp
+Compiling 'neo\ui\Window.cpp'
+Window.cpp
+Compiling 'neo\ui\Winvar.cpp'
+Winvar.cpp
+Resources 'neo\sys\win32\rc\doom.rc'
+Resources 'build\scons\windows-x64-debug-msvc\obj\DoomEXE\doom_manifest.rc'
+scons: done building targets (errors occurred during build).
+❌ 🛠️ Compilation failed: 'build\scons\windows-x64-debug-msvc\obj\DoomEXE\sys\win32\win_syscon.cpp.obj' — Error 2
+📊 Diagnostics: ⚠️ 26 warning(s), ❌ 1 error(s)
 
 
-==== windows-x64-release-dll (failure) ====
+==== windows-x64-release-dll (cancelled) ====
 
 Filesystem      Size  Used Avail Use% Mounted on
-C:              150G  123G   28G  82% /c
+C:              150G  120G   31G  80% /c
 Collecting scons
   Downloading scons-4.11.1-py3-none-any.whl.metadata (9.2 kB)
 Downloading scons-4.11.1-py3-none-any.whl (4.1 MB)
-   ---------------------------------------- 4.1/4.1 MB 20.3 MB/s  0:00:00
+   ---------------------------------------- 4.1/4.1 MB 57.3 MB/s  0:00:00
 Installing collected packages: scons
 Successfully installed scons-4.11.1
 scons: Reading SConscript files ...
@@ -847,9 +945,9 @@ scons: done reading SConscript files.
 scons: Building targets ...
 Compiling 'neo\external\miniz\miniz.c'
 Compiling 'neo\external\minizip\ioapi.c'
-Compiling 'neo\external\minizip\unzip.cpp'
 ioapi.c
 miniz.c
+Compiling 'neo\external\minizip\unzip.cpp'
 Compiling 'neo\external\minizip\zip.cpp'
 unzip.cpp
 zip.cpp
@@ -862,80 +960,80 @@ BinkVideo.cpp
 Compiling 'neo\external\libbinkdec\src\BitReader.cpp'
 BitReader.cpp
 Compiling 'neo\external\libbinkdec\src\FileStream.cpp'
+FileStream.cpp
 Compiling 'neo\external\libbinkdec\src\HuffmanVLC.cpp'
 Compiling 'neo\external\libbinkdec\src\LogError.cpp'
-FileStream.cpp
 HuffmanVLC.cpp
 LogError.cpp
 Compiling 'neo\external\libbinkdec\src\Util.cpp'
-Compiling 'neo\external\libbinkdec\src\avfft.c'
-avfft.c
 Util.cpp
+Compiling 'neo\external\libbinkdec\src\avfft.c'
 Compiling 'neo\external\libbinkdec\src\dct.c'
-Compiling 'neo\external\libbinkdec\src\dct32.c'
-Compiling 'neo\external\libbinkdec\src\fft.c'
+avfft.c
 dct.c
+Compiling 'neo\external\libbinkdec\src\dct32.c'
 dct32.c
-fft.c
+Compiling 'neo\external\libbinkdec\src\fft.c'
 Compiling 'neo\external\libbinkdec\src\mdct.c'
-Compiling 'neo\external\libbinkdec\src\rdft.c'
+fft.c
 mdct.c
+Compiling 'neo\external\libbinkdec\src\rdft.c'
 Compiling 'neo\idLib\Base64.cpp'
 rdft.c
 Base64.cpp
 Compiling 'neo\idLib\BitMsg.cpp'
+BitMsg.cpp
 Compiling 'neo\idLib\bv\Bounds.cpp'
 Archiving 'build\scons\windows-x64-release-msvc\lib\external.lib'
-BitMsg.cpp
 Bounds.cpp
 Indexing 'build\scons\windows-x64-release-msvc\lib\external.lib'
 Compiling 'neo\idLib\bv\Box.cpp'
 Box.cpp
 Compiling 'neo\idLib\bv\Sphere.cpp'
-Sphere.cpp
 Compiling 'neo\idLib\CmdArgs.cpp'
+Sphere.cpp
 CmdArgs.cpp
 Compiling 'neo\idLib\CommandLink.cpp'
 CommandLink.cpp
 Compiling 'neo\idLib\containers\HashIndex.cpp'
 HashIndex.cpp
 Compiling 'neo\idLib\Debug.cpp'
-Debug.cpp
 Compiling 'neo\idLib\Dict.cpp'
-Compiling 'neo\idLib\geometry\DrawVert.cpp'
+Debug.cpp
 Dict.cpp
+Compiling 'neo\idLib\geometry\DrawVert.cpp'
 DrawVert.cpp
 Compiling 'neo\idLib\geometry\JointTransform.cpp'
 JointTransform.cpp
 Compiling 'neo\idLib\geometry\RenderMatrix.cpp'
-RenderMatrix.cpp
 Compiling 'neo\idLib\geometry\Surface.cpp'
+RenderMatrix.cpp
 Surface.cpp
 Compiling 'neo\idLib\geometry\Surface_Patch.cpp'
 Surface_Patch.cpp
 Compiling 'neo\idLib\geometry\Surface_Polytope.cpp'
+Surface_Polytope.cpp
 Compiling 'neo\idLib\geometry\Surface_SweptSpline.cpp'
 Surface_SweptSpline.cpp
-Surface_Polytope.cpp
 Compiling 'neo\idLib\geometry\TraceModel.cpp'
 Compiling 'neo\idLib\geometry\Winding.cpp'
-Winding.cpp
 Compiling 'neo\idLib\geometry\Winding2D.cpp'
 TraceModel.cpp
+Winding.cpp
 Winding2D.cpp
 Compiling 'neo\idLib\hashing\CRC32.cpp'
 CRC32.cpp
 Compiling 'neo\idLib\hashing\MD4.cpp'
 Compiling 'neo\idLib\hashing\MD5.cpp'
-Compiling 'neo\idLib\Heap.cpp'
 MD4.cpp
 MD5.cpp
-Compiling 'neo\idLib\LangDict.cpp'
+Compiling 'neo\idLib\Heap.cpp'
 Heap.cpp
+Compiling 'neo\idLib\LangDict.cpp'
 LangDict.cpp
 Compiling 'neo\idLib\Lexer.cpp'
-Compiling 'neo\idLib\Lib.cpp'
 Lexer.cpp
+Compiling 'neo\idLib\Lib.cpp'
 Lib.cpp
 Compiling 'neo\idLib\MapFile.cpp'
 MapFile.cpp
@@ -943,9 +1041,9 @@ Compiling 'neo\idLib\math\Angles.cpp'
 Angles.cpp
 Compiling 'neo\idLib\math\Complex.cpp'
 Compiling 'neo\idLib\math\Lcp.cpp'
-Compiling 'neo\idLib\math\Math.cpp'
 Complex.cpp
 Lcp.cpp
+Compiling 'neo\idLib\math\Math.cpp'
 Math.cpp
 Compiling 'neo\idLib\math\Matrix.cpp'
 Matrix.cpp
@@ -959,15 +1057,15 @@ Compiling 'neo\idLib\math\Pluecker.cpp'
 Pluecker.cpp
 Compiling 'neo\idLib\math\Polynomial.cpp'
 Compiling 'neo\idLib\math\Quat.cpp'
-Polynomial.cpp
 Quat.cpp
+Polynomial.cpp
 Compiling 'neo\idLib\math\Rotation.cpp'
 Rotation.cpp
 Compiling 'neo\idLib\math\Simd.cpp'
-Compiling 'neo\idLib\math\Simd_Generic.cpp'
 Simd.cpp
-Compiling 'neo\idLib\math\Simd_SSE.cpp'
+Compiling 'neo\idLib\math\Simd_Generic.cpp'
 Simd_Generic.cpp
+Compiling 'neo\idLib\math\Simd_SSE.cpp'
 Simd_SSE.cpp
 Compiling 'neo\idLib\math\Vector.cpp'
 Vector.cpp
@@ -982,13 +1080,13 @@ precompiled.cpp
 Compiling 'neo\idLib\RectAllocator.cpp'
 RectAllocator.cpp
 Compiling 'neo\idLib\SoftwareCache.cpp'
-SoftwareCache.cpp
 Compiling 'neo\idLib\Str.cpp'
-Compiling 'neo\idLib\sys\sys_assert.cpp'
+SoftwareCache.cpp
 Str.cpp
-sys_assert.cpp
+Compiling 'neo\idLib\sys\sys_assert.cpp'
 Compiling 'neo\idLib\sys\sys_exceptions.cpp'
 sys_exceptions.cpp
+sys_assert.cpp
 Compiling 'neo\idLib\sys\win32\win_crashhandler.cpp'
 win_crashhandler.cpp
 Compiling 'neo\idLib\sys\win32\win_thread.cpp'
@@ -1027,8 +1125,8 @@ Compiling 'neo\framework\Common_dialog.cpp'
 Common_dialog.cpp
 neo\framework\Common.cpp(777): warning C4101: 'mouseEvents': unreferenced local variable
 Compiling 'neo\framework\common_frame.cpp'
-Compiling 'neo\framework\Common_load.cpp'
 common_frame.cpp
+Compiling 'neo\framework\Common_load.cpp'
 Common_load.cpp
 Compiling 'neo\framework\Common_localize.cpp'
 Common_localize.cpp
@@ -1045,23 +1143,23 @@ Compressor.cpp
 neo\framework\Common_tools.cpp(40): warning C4245: 'initializing': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
 Compiling 'neo\framework\Console.cpp'
 Compiling 'neo\framework\ConsoleHistory.cpp'
-Compiling 'neo\framework\CVarSystem.cpp'
 Console.cpp
+Compiling 'neo\framework\CVarSystem.cpp'
 ConsoleHistory.cpp
 CVarSystem.cpp
 Compiling 'neo\framework\DebugGraph.cpp'
 DebugGraph.cpp
 Compiling 'neo\framework\DeclAF.cpp'
-DeclAF.cpp
 Compiling 'neo\framework\DeclEntityDef.cpp'
-Compiling 'neo\framework\DeclFX.cpp'
 DeclEntityDef.cpp
+DeclAF.cpp
+Compiling 'neo\framework\DeclFX.cpp'
 DeclFX.cpp
 Compiling 'neo\framework\DeclManager.cpp'
 DeclManager.cpp
 Compiling 'neo\framework\DeclParticle.cpp'
-Compiling 'neo\framework\DeclPDA.cpp'
 DeclParticle.cpp
+Compiling 'neo\framework\DeclPDA.cpp'
 DeclPDA.cpp
 Compiling 'neo\framework\DeclSkin.cpp'
 DeclSkin.cpp
@@ -1092,8 +1190,8 @@ PlayerProfile.cpp
 Compiling 'neo\framework\precompiled.cpp'
 precompiled.cpp
 Compiling 'neo\framework\TokenParser.cpp'
-TokenParser.cpp
 Compiling 'neo\framework\UsercmdGen.cpp'
+TokenParser.cpp
 UsercmdGen.cpp
 Compiling 'neo\framework\Zip.cpp'
 Zip.cpp
@@ -1108,13 +1206,13 @@ BufferObject.cpp
 Compiling 'neo\renderer\Cinematic.cpp'
 Cinematic.cpp
 Compiling 'neo\renderer\CinematicBink.cpp'
+CinematicBink.cpp
 neo\renderer\BufferObject.cpp(188): warning C4312: 'reinterpret_cast': conversion from 'GLuint' to 'void *' of greater size
 neo\renderer\BufferObject.cpp(433): warning C4312: 'reinterpret_cast': conversion from 'GLuint' to 'void *' of greater size
 neo\renderer\BufferObject.cpp(671): warning C4312: 'reinterpret_cast': conversion from 'GLuint' to 'void *' of greater size
-CinematicBink.cpp
 Compiling 'neo\renderer\CinematicRoQ.cpp'
-CinematicRoQ.cpp
 Compiling 'neo\renderer\Color\ColorSpace.cpp'
+CinematicRoQ.cpp
 ColorSpace.cpp
 Compiling 'neo\renderer\DXT\DXTDecoder.cpp'
 DXTDecoder.cpp
@@ -1136,35 +1234,35 @@ Image_intrinsic.cpp
 Compiling 'neo\renderer\Image_load.cpp'
 Image_load.cpp
 Compiling 'neo\renderer\Image_process.cpp'
-Compiling 'neo\renderer\Image_program.cpp'
 Image_process.cpp
+Compiling 'neo\renderer\Image_program.cpp'
 Compiling 'neo\renderer\ImageManager.cpp'
 Image_program.cpp
 ImageManager.cpp
 Compiling 'neo\renderer\Interaction.cpp'
 Interaction.cpp
 Compiling 'neo\renderer\jobs\dynamicshadowvolume\DynamicShadowVolume.cpp'
-Compiling 'neo\renderer\jobs\prelightshadowvolume\PreLightShadowVolume.cpp'
 DynamicShadowVolume.cpp
-PreLightShadowVolume.cpp
+Compiling 'neo\renderer\jobs\prelightshadowvolume\PreLightShadowVolume.cpp'
 Compiling 'neo\renderer\jobs\ShadowShared.cpp'
+PreLightShadowVolume.cpp
 ShadowShared.cpp
 Compiling 'neo\renderer\jobs\staticshadowvolume\StaticShadowVolume.cpp'
 StaticShadowVolume.cpp
 Compiling 'neo\renderer\Material.cpp'
-Compiling 'neo\renderer\Model.cpp'
 Material.cpp
-Model.cpp
+Compiling 'neo\renderer\Model.cpp'
 Compiling 'neo\renderer\Model_ase.cpp'
-Compiling 'neo\renderer\Model_beam.cpp'
+Model.cpp
 Model_ase.cpp
+Compiling 'neo\renderer\Model_beam.cpp'
 Model_beam.cpp
 Compiling 'neo\renderer\Model_liquid.cpp'
+Model_liquid.cpp
 Compiling 'neo\renderer\Model_lwo.cpp'
 Compiling 'neo\renderer\Model_ma.cpp'
-Model_liquid.cpp
-Model_lwo.cpp
 Model_ma.cpp
+Model_lwo.cpp
 Compiling 'neo\renderer\Model_md3.cpp'
 Model_md3.cpp
 Compiling 'neo\renderer\Model_md5.cpp'
@@ -1172,8 +1270,8 @@ Compiling 'neo\renderer\Model_prt.cpp'
 Model_md5.cpp
 Model_prt.cpp
 Compiling 'neo\renderer\Model_sprite.cpp'
-Compiling 'neo\renderer\ModelDecal.cpp'
 Model_sprite.cpp
+Compiling 'neo\renderer\ModelDecal.cpp'
 ModelDecal.cpp
 Compiling 'neo\renderer\ModelManager.cpp'
 Compiling 'neo\renderer\ModelOverlay.cpp'
@@ -1184,20 +1282,20 @@ gl_backend.cpp
 Compiling 'neo\renderer\OpenGL\gl_GraphicsAPIWrapper.cpp'
 gl_GraphicsAPIWrapper.cpp
 Compiling 'neo\renderer\OpenGL\gl_Image.cpp'
-Compiling 'neo\renderer\RenderEntity.cpp'
 gl_Image.cpp
+Compiling 'neo\renderer\RenderEntity.cpp'
 RenderEntity.cpp
 Compiling 'neo\renderer\RenderLog.cpp'
-RenderLog.cpp
 Compiling 'neo\renderer\RenderProgs.cpp'
+RenderLog.cpp
 RenderProgs.cpp
 Compiling 'neo\renderer\RenderProgs_GLSL.cpp'
 Compiling 'neo\renderer\RenderSystem.cpp'
 RenderProgs_GLSL.cpp
 RenderSystem.cpp
 Compiling 'neo\renderer\RenderSystem_init.cpp'
-RenderSystem_init.cpp
 Compiling 'neo\renderer\RenderWorld.cpp'
+RenderSystem_init.cpp
 RenderWorld.cpp
 Compiling 'neo\renderer\RenderWorld_defs.cpp'
 RenderWorld_defs.cpp
@@ -1218,8 +1316,8 @@ tr_backend_draw.cpp
 Compiling 'neo\renderer\tr_backend_rendertools.cpp'
 tr_backend_rendertools.cpp
 Compiling 'neo\renderer\tr_frontend_addlights.cpp'
-tr_frontend_addlights.cpp
 Compiling 'neo\renderer\tr_frontend_addmodels.cpp'
+tr_frontend_addlights.cpp
 tr_frontend_addmodels.cpp
 neo\renderer\tr_backend_draw.cpp(170): warning C4389: '!=': signed/unsigned mismatch
 neo\renderer\tr_backend_draw.cpp(175): warning C4389: '!=': signed/unsigned mismatch
@@ -1248,16 +1346,16 @@ OggFile.cpp
 Compiling 'neo\sound\snd_emitter.cpp'
 snd_emitter.cpp
 Compiling 'neo\sound\snd_shader.cpp'
-snd_shader.cpp
 Compiling 'neo\sound\snd_system.cpp'
+snd_shader.cpp
 snd_system.cpp
 Compiling 'neo\sound\snd_world.cpp'
 snd_world.cpp
 Compiling 'neo\sound\SoundVoice.cpp'
 SoundVoice.cpp
 Compiling 'neo\sound\stbvorbis_impl.c'
-Compiling 'neo\sound\WaveFile.cpp'
 stbvorbis_impl.c
+Compiling 'neo\sound\WaveFile.cpp'
 WaveFile.cpp
 D:\a\Doom3BFG\Doom3BFG\neo\external\stb\stb_vorbis.h(4849) : warning C4701: potentially uninitialized local variable 'mid' used
 Compiling 'neo\sound\XAudio2\XA2_CinematicAudio.cpp'
@@ -1299,8 +1397,8 @@ SWF_ScriptObject.cpp
 Compiling 'neo\swf\SWF_ScriptVar.cpp'
 SWF_ScriptVar.cpp
 Compiling 'neo\swf\SWF_ShapeParser.cpp'
-SWF_ShapeParser.cpp
 Compiling 'neo\swf\SWF_Shapes.cpp'
+SWF_ShapeParser.cpp
 SWF_Shapes.cpp
 Compiling 'neo\swf\SWF_Sounds.cpp'
 SWF_Sounds.cpp
@@ -1357,18 +1455,18 @@ sys_signin.cpp
 Compiling 'neo\sys\sys_voicechat.cpp'
 sys_voicechat.cpp
 Compiling 'neo\sys\win32\win_achievements.cpp'
-win_achievements.cpp
 Compiling 'neo\sys\win32\win_cpu.cpp'
-Compiling 'neo\sys\win32\win_glimp.cpp'
+win_achievements.cpp
 win_cpu.cpp
+Compiling 'neo\sys\win32\win_glimp.cpp'
 win_glimp.cpp
 Compiling 'neo\sys\win32\win_input.cpp'
 win_input.cpp
 Compiling 'neo\sys\win32\win_localuser.cpp'
-win_localuser.cpp
 Compiling 'neo\sys\win32\win_main.cpp'
-Compiling 'neo\sys\win32\win_net.cpp'
+win_localuser.cpp
 win_main.cpp
+Compiling 'neo\sys\win32\win_net.cpp'
 win_net.cpp
 Compiling 'neo\sys\win32\win_savegame.cpp'
 win_savegame.cpp
@@ -1386,6 +1484,8 @@ Compiling 'neo\sys\win32\win_wndproc.cpp'
 win_wndproc.cpp
 Compiling 'neo\tools\compilers\aas\AASBuild.cpp'
 AASBuild.cpp
+Compiling 'neo\tools\compilers\aas\AASBuild_file.cpp'
+AASBuild_file.cpp
 neo\sys\win32\win_syscon.cpp(119): warning C4311: 'type cast': pointer truncation from 'HBRUSH' to 'long'
 neo\sys\win32\win_syscon.cpp(119): warning C4302: 'type cast': truncation from 'HBRUSH' to 'long'
 neo\sys\win32\win_syscon.cpp(128): warning C4311: 'type cast': pointer truncation from 'HBRUSH' to 'long'
@@ -1394,55 +1494,53 @@ neo\sys\win32\win_syscon.cpp(392): error C2065: 'GWL_WNDPROC': undeclared identi
 neo\sys\win32\win_syscon.cpp(392): warning C4311: 'type cast': pointer truncation from 'LONG (__cdecl *)(HWND,UINT,WPARAM,LPARAM)' to 'long'
 neo\sys\win32\win_syscon.cpp(392): warning C4302: 'type cast': truncation from 'LONG (__cdecl *)(HWND,UINT,WPARAM,LPARAM)' to 'long'
 scons: *** [build\scons\windows-x64-release-msvc\obj\DoomEXE\sys\win32\win_syscon.cpp.obj] Error 2
-Compiling 'neo\tools\compilers\aas\AASBuild_file.cpp'
-AASBuild_file.cpp
 Compiling 'neo\tools\compilers\aas\AASBuild_gravity.cpp'
 AASBuild_gravity.cpp
 Compiling 'neo\tools\compilers\aas\AASBuild_ledge.cpp'
 AASBuild_ledge.cpp
 Compiling 'neo\tools\compilers\aas\AASBuild_merge.cpp'
-Compiling 'neo\tools\compilers\aas\AASCluster.cpp'
 AASBuild_merge.cpp
+Compiling 'neo\tools\compilers\aas\AASCluster.cpp'
 AASCluster.cpp
 Compiling 'neo\tools\compilers\aas\AASFile.cpp'
 AASFile.cpp
 Compiling 'neo\tools\compilers\aas\AASFile_optimize.cpp'
 AASFile_optimize.cpp
 Compiling 'neo\tools\compilers\aas\AASFile_sample.cpp'
-Compiling 'neo\tools\compilers\aas\AASFileManager.cpp'
 AASFile_sample.cpp
+Compiling 'neo\tools\compilers\aas\AASFileManager.cpp'
 AASFileManager.cpp
 Compiling 'neo\tools\compilers\aas\AASReach.cpp'
 AASReach.cpp
 Compiling 'neo\tools\compilers\aas\Brush.cpp'
 Brush.cpp
 Compiling 'neo\tools\compilers\aas\BrushBSP.cpp'
-Compiling 'neo\tools\compilers\amplitude\amplitude.cpp'
 BrushBSP.cpp
+Compiling 'neo\tools\compilers\amplitude\amplitude.cpp'
 amplitude.cpp
 D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\aas\AASReach.cpp(267) : warning C4701: potentially uninitialized local variable 'edge1Num' used
 Compiling 'neo\tools\compilers\dmap\dmap.cpp'
 dmap.cpp
-D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\amplitude\amplitude.cpp(177) : warning C4701: potentially uninitialized local variable 'format' used
 Compiling 'neo\tools\compilers\dmap\facebsp.cpp'
-Compiling 'neo\tools\compilers\dmap\gldraw.cpp'
 facebsp.cpp
+Compiling 'neo\tools\compilers\dmap\gldraw.cpp'
 gldraw.cpp
+D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\amplitude\amplitude.cpp(177) : warning C4701: potentially uninitialized local variable 'format' used
 Compiling 'neo\tools\compilers\dmap\glfile.cpp'
 glfile.cpp
 Compiling 'neo\tools\compilers\dmap\leakfile.cpp'
 leakfile.cpp
 Compiling 'neo\tools\compilers\dmap\map.cpp'
-Compiling 'neo\tools\compilers\dmap\optimize.cpp'
-Compiling 'neo\tools\compilers\dmap\output.cpp'
 map.cpp
+Compiling 'neo\tools\compilers\dmap\optimize.cpp'
 optimize.cpp
+Compiling 'neo\tools\compilers\dmap\output.cpp'
 output.cpp
 Compiling 'neo\tools\compilers\dmap\portals.cpp'
 portals.cpp
 Compiling 'neo\tools\compilers\dmap\tritjunction.cpp'
-Compiling 'neo\tools\compilers\dmap\tritools.cpp'
 tritjunction.cpp
+Compiling 'neo\tools\compilers\dmap\tritools.cpp'
 tritools.cpp
 Compiling 'neo\tools\compilers\dmap\ubrush.cpp'
 ubrush.cpp
@@ -1451,13 +1549,13 @@ usurface.cpp
 Compiling 'neo\tools\compilers\renderbump\renderbump.cpp'
 renderbump.cpp
 Compiling 'neo\tools\compilers\roqvq\codec.cpp'
-Compiling 'neo\tools\compilers\roqvq\NSBitmapImageRep.cpp'
 codec.cpp
+Compiling 'neo\tools\compilers\roqvq\NSBitmapImageRep.cpp'
 NSBitmapImageRep.cpp
 Compiling 'neo\tools\compilers\roqvq\roq.cpp'
 roq.cpp
-Compiling 'neo\tools\compilers\roqvq\roqParam.cpp'
 D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\renderbump\renderbump.cpp(1318) : warning C4701: potentially uninitialized local variable 'opt' used
+Compiling 'neo\tools\compilers\roqvq\roqParam.cpp'
 roqParam.cpp
 Compiling 'neo\ui\BindWindow.cpp'
 BindWindow.cpp
@@ -1478,12 +1576,12 @@ GameBustOutWindow.cpp
 Compiling 'neo\ui\GameSSDWindow.cpp'
 GameSSDWindow.cpp
 Compiling 'neo\ui\GuiScript.cpp'
-Compiling 'neo\ui\ListGUI.cpp'
 GuiScript.cpp
+Compiling 'neo\ui\ListGUI.cpp'
 ListGUI.cpp
 Compiling 'neo\ui\ListWindow.cpp'
-ListWindow.cpp
 Compiling 'neo\ui\RegExp.cpp'
+ListWindow.cpp
 RegExp.cpp
 Compiling 'neo\ui\RenderWindow.cpp'
 RenderWindow.cpp
@@ -1492,8 +1590,8 @@ SimpleWindow.cpp
 Compiling 'neo\ui\SliderWindow.cpp'
 SliderWindow.cpp
 Compiling 'neo\ui\UserInterface.cpp'
-UserInterface.cpp
 Compiling 'neo\ui\Window.cpp'
+UserInterface.cpp
 Window.cpp
 Compiling 'neo\ui\Winvar.cpp'
 Winvar.cpp
@@ -1540,10 +1638,10 @@ Entity.cpp
 Compiling 'neo\d3xp\Fx.cpp'
 Fx.cpp
 Compiling 'neo\d3xp\Game_local.cpp'
-Game_local.cpp
 Compiling 'neo\d3xp\Game_network.cpp'
-Compiling 'neo\d3xp\GameEdit.cpp'
+Game_local.cpp
 Game_network.cpp
+Compiling 'neo\d3xp\GameEdit.cpp'
 GameEdit.cpp
 Compiling 'neo\d3xp\gamesys\Class.cpp'
 Class.cpp
@@ -1560,8 +1658,8 @@ SysCmds.cpp
 Compiling 'neo\d3xp\gamesys\SysCvar.cpp'
 SysCvar.cpp
 Compiling 'neo\d3xp\Grabber.cpp'
-Compiling 'neo\d3xp\IK.cpp'
 Grabber.cpp
+Compiling 'neo\d3xp\IK.cpp'
 IK.cpp
 Compiling 'neo\d3xp\Item.cpp'
 Item.cpp
@@ -1570,19 +1668,21 @@ Leaderboards.cpp
 Compiling 'neo\d3xp\Light.cpp'
 Light.cpp
 Compiling 'neo\d3xp\menus\MenuHandler.cpp'
-Compiling 'neo\d3xp\menus\MenuHandler_HUD.cpp'
 MenuHandler.cpp
+Compiling 'neo\d3xp\menus\MenuHandler_HUD.cpp'
 MenuHandler_HUD.cpp
 Compiling 'neo\d3xp\menus\MenuHandler_PDA.cpp'
 MenuHandler_PDA.cpp
 Compiling 'neo\d3xp\menus\MenuHandler_Scoreboard.cpp'
+MenuHandler_Scoreboard.cpp
 Compiling 'neo\d3xp\menus\MenuHandler_Shell.cpp'
 Compiling 'neo\d3xp\menus\MenuScreen.cpp'
-MenuHandler_Scoreboard.cpp
 MenuHandler_Shell.cpp
 MenuScreen.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_HUD.cpp'
 MenuScreen_HUD.cpp
+Compiling 'neo\d3xp\menus\MenuScreen_PDA_Inventory.cpp'
+MenuScreen_PDA_Inventory.cpp
 neo\d3xp\menus\MenuHandler_Shell.cpp(281): error C2653: 'idKeyInput': is not a class or namespace name
 neo\d3xp\menus\MenuHandler_Shell.cpp(281): error C3861: 'GetBinding': identifier not found
 neo\d3xp\menus\MenuHandler_Shell.cpp(283): error C2653: 'idKeyInput': is not a class or namespace name
@@ -1594,8 +1694,6 @@ neo\d3xp\menus\MenuHandler_Shell.cpp(300): error C3861: 'SetBinding': identifier
 neo\d3xp\menus\MenuHandler_Shell.cpp(328): error C2653: 'idKeyInput': is not a class or namespace name
 neo\d3xp\menus\MenuHandler_Shell.cpp(328): error C3861: 'SetBinding': identifier not found
 scons: *** [build\scons\windows-x64-release-msvc\obj\Game-D3XP\d3xp\menus\MenuHandler_Shell.cpp.obj] Error 2
-Compiling 'neo\d3xp\menus\MenuScreen_PDA_Inventory.cpp'
-MenuScreen_PDA_Inventory.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_PDA_UserData.cpp'
 MenuScreen_PDA_UserData.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_PDA_UserEmails.cpp'
@@ -1609,8 +1707,8 @@ scons: *** [build\scons\windows-x64-release-msvc\obj\Game-D3XP\d3xp\menus\MenuSc
 Compiling 'neo\d3xp\menus\MenuScreen_PDA_VideoDisks.cpp'
 MenuScreen_PDA_VideoDisks.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Scoreboard.cpp'
-MenuScreen_Scoreboard.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Shell_Bindings.cpp'
+MenuScreen_Scoreboard.cpp
 MenuScreen_Shell_Bindings.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Shell_Browser.cpp'
 MenuScreen_Shell_Browser.cpp
@@ -1686,16 +1784,16 @@ MenuWidget_Help.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_InfoBox.cpp'
 MenuWidget_InfoBox.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_ItemAssignment.cpp'
-Compiling 'neo\d3xp\menus\MenuWidget_List.cpp'
 MenuWidget_ItemAssignment.cpp
+Compiling 'neo\d3xp\menus\MenuWidget_List.cpp'
 MenuWidget_List.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_LobbyList.cpp'
 MenuWidget_LobbyList.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_MenuBar.cpp'
 MenuWidget_MenuBar.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_NavBar.cpp'
-MenuWidget_NavBar.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_NavButton.cpp'
+MenuWidget_NavBar.cpp
 MenuWidget_NavButton.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_PDA_AudioFiles.cpp'
 MenuWidget_PDA_AudioFiles.cpp
@@ -1710,8 +1808,8 @@ MenuWidget_PDA_VideoInfo.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_Scrollbar.cpp'
 MenuWidget_Scrollbar.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_Shell_SaveInfo.cpp'
-Compiling 'neo\d3xp\Misc.cpp'
 MenuWidget_Shell_SaveInfo.cpp
+Compiling 'neo\d3xp\Misc.cpp'
 Misc.cpp
 Compiling 'neo\d3xp\Moveable.cpp'
 Moveable.cpp
@@ -1725,94 +1823,16 @@ Compiling 'neo\d3xp\physics\Force.cpp'
 Force.cpp
 Compiling 'neo\d3xp\physics\Force_Constant.cpp'
 Force_Constant.cpp
-Compiling 'neo\d3xp\physics\Force_Drag.cpp'
-Force_Drag.cpp
-Compiling 'neo\d3xp\physics\Force_Field.cpp'
-Force_Field.cpp
-Compiling 'neo\d3xp\physics\Force_Grab.cpp'
-Force_Grab.cpp
-Compiling 'neo\d3xp\physics\Force_Spring.cpp'
-Force_Spring.cpp
-Compiling 'neo\d3xp\physics\Physics.cpp'
-Physics.cpp
-Compiling 'neo\d3xp\physics\Physics_Actor.cpp'
-Physics_Actor.cpp
-Compiling 'neo\d3xp\physics\Physics_AF.cpp'
-Physics_AF.cpp
-Compiling 'neo\d3xp\physics\Physics_Base.cpp'
-Physics_Base.cpp
-Compiling 'neo\d3xp\physics\Physics_Monster.cpp'
-Physics_Monster.cpp
-Compiling 'neo\d3xp\physics\Physics_Parametric.cpp'
-Physics_Parametric.cpp
-Compiling 'neo\d3xp\physics\Physics_Player.cpp'
-Physics_Player.cpp
-Compiling 'neo\d3xp\physics\Physics_RigidBody.cpp'
-Physics_RigidBody.cpp
-Compiling 'neo\d3xp\physics\Physics_Static.cpp'
-Physics_Static.cpp
-Compiling 'neo\d3xp\physics\Physics_StaticMulti.cpp'
-Physics_StaticMulti.cpp
-Compiling 'neo\d3xp\physics\Push.cpp'
-Push.cpp
-Compiling 'neo\d3xp\Player.cpp'
-Compiling 'neo\d3xp\PlayerIcon.cpp'
-Player.cpp
-PlayerIcon.cpp
-Compiling 'neo\d3xp\PlayerView.cpp'
-PlayerView.cpp
-Compiling 'neo\d3xp\precompiled.cpp'
-precompiled.cpp
-Compiling 'neo\d3xp\Projectile.cpp'
-Projectile.cpp
-Compiling 'neo\d3xp\Pvs.cpp'
-Pvs.cpp
-Compiling 'neo\d3xp\script\Script_Compiler.cpp'
-Script_Compiler.cpp
-Compiling 'neo\d3xp\script\Script_Interpreter.cpp'
-Script_Interpreter.cpp
-Compiling 'neo\d3xp\script\Script_Program.cpp'
-Script_Program.cpp
-Compiling 'neo\d3xp\script\Script_Thread.cpp'
-Script_Thread.cpp
-D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(368) : warning C4702: unreachable code
-D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(1048) : warning C4702: unreachable code
-D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(1345) : warning C4702: unreachable code
-D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(1379) : warning C4702: unreachable code
-D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(1390) : warning C4702: unreachable code
-D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(1422) : warning C4702: unreachable code
-Compiling 'neo\d3xp\SecurityCamera.cpp'
-SecurityCamera.cpp
-Compiling 'neo\d3xp\SmokeParticles.cpp'
-SmokeParticles.cpp
-Compiling 'neo\d3xp\Sound.cpp'
-Sound.cpp
-Compiling 'neo\d3xp\Target.cpp'
-Target.cpp
-Compiling 'neo\d3xp\Trigger.cpp'
-Trigger.cpp
-Compiling 'neo\d3xp\Weapon.cpp'
-Weapon.cpp
-Compiling 'neo\d3xp\WorldSpawn.cpp'
-WorldSpawn.cpp
-scons: done building targets (errors occurred during build).
-❌ 🛠️ Compilation failed: 'build\scons\windows-x64-release-msvc\obj\DoomEXE\sys\win32\win_syscon.cpp.obj' — Error 2
-❌ 🛠️ Compilation failed: 'build\scons\windows-x64-release-msvc\obj\Game-D3XP\d3xp\Game_local.cpp.obj' — Error 2
-❌ 🛠️ Compilation failed: 'build\scons\windows-x64-release-msvc\obj\Game-D3XP\d3xp\menus\MenuHandler_Shell.cpp.obj' — Error 2
-❌ 🛠️ Compilation failed: 'build\scons\windows-x64-release-msvc\obj\Game-D3XP\d3xp\menus\MenuScreen_HUD.cpp.obj' — Error 2
-❌ 🛠️ Compilation failed: 'build\scons\windows-x64-release-msvc\obj\Game-D3XP\d3xp\menus\MenuScreen_Shell_Bindings.cpp.obj' — Error 2
-❌ 🛠️ Compilation failed: 'build\scons\windows-x64-release-msvc\obj\Game-D3XP\d3xp\menus\MenuScreen_Shell_ControllerLayout.cpp.obj' — Error 2
-📊 Diagnostics: ⚠️ 32 warning(s), ❌ 28 error(s)
 
 
-==== windows-x64-release (failure) ====
+==== windows-x64-release (cancelled) ====
 
 Filesystem      Size  Used Avail Use% Mounted on
-C:              150G  123G   28G  82% /c
+C:              150G  120G   31G  80% /c
 Collecting scons
   Downloading scons-4.11.1-py3-none-any.whl.metadata (9.2 kB)
 Downloading scons-4.11.1-py3-none-any.whl (4.1 MB)
-   ---------------------------------------- 4.1/4.1 MB 10.4 MB/s  0:00:00
+   ---------------------------------------- 4.1/4.1 MB 58.8 MB/s  0:00:00
 Installing collected packages: scons
 Successfully installed scons-4.11.1
 scons: Reading SConscript files ...
@@ -1820,10 +1840,10 @@ scons: done reading SConscript files.
 scons: Building targets ...
 Compiling 'neo\external\miniz\miniz.c'
 Compiling 'neo\external\minizip\ioapi.c'
+ioapi.c
+miniz.c
 Compiling 'neo\external\minizip\unzip.cpp'
 Compiling 'neo\external\minizip\zip.cpp'
-miniz.c
-ioapi.c
 unzip.cpp
 zip.cpp
 Compiling 'neo\external\libbinkdec\src\BinkAudio.cpp'
@@ -1831,35 +1851,35 @@ BinkAudio.cpp
 Compiling 'neo\external\libbinkdec\src\BinkDecoder.cpp'
 BinkDecoder.cpp
 Compiling 'neo\external\libbinkdec\src\BinkVideo.cpp'
-Compiling 'neo\external\libbinkdec\src\BitReader.cpp'
 BinkVideo.cpp
+Compiling 'neo\external\libbinkdec\src\BitReader.cpp'
 BitReader.cpp
 Compiling 'neo\external\libbinkdec\src\FileStream.cpp'
+FileStream.cpp
 Compiling 'neo\external\libbinkdec\src\HuffmanVLC.cpp'
 Compiling 'neo\external\libbinkdec\src\LogError.cpp'
 HuffmanVLC.cpp
-FileStream.cpp
 LogError.cpp
 Compiling 'neo\external\libbinkdec\src\Util.cpp'
-Compiling 'neo\external\libbinkdec\src\avfft.c'
 Util.cpp
+Compiling 'neo\external\libbinkdec\src\avfft.c'
 avfft.c
 Compiling 'neo\external\libbinkdec\src\dct.c'
 Compiling 'neo\external\libbinkdec\src\dct32.c'
 dct.c
-dct32.c
 Compiling 'neo\external\libbinkdec\src\fft.c'
-Compiling 'neo\external\libbinkdec\src\mdct.c'
+dct32.c
 fft.c
+Compiling 'neo\external\libbinkdec\src\mdct.c'
 Compiling 'neo\external\libbinkdec\src\rdft.c'
+Compiling 'neo\idLib\Base64.cpp'
 mdct.c
 rdft.c
-Compiling 'neo\idLib\Base64.cpp'
 Base64.cpp
 Compiling 'neo\idLib\BitMsg.cpp'
 Compiling 'neo\idLib\bv\Bounds.cpp'
-Archiving 'build\scons\windows-x64-release-msvc\lib\external.lib'
 BitMsg.cpp
+Archiving 'build\scons\windows-x64-release-msvc\lib\external.lib'
 Bounds.cpp
 Indexing 'build\scons\windows-x64-release-msvc\lib\external.lib'
 Compiling 'neo\idLib\bv\Box.cpp'
@@ -1874,9 +1894,9 @@ Compiling 'neo\idLib\containers\HashIndex.cpp'
 HashIndex.cpp
 Compiling 'neo\idLib\Debug.cpp'
 Compiling 'neo\idLib\Dict.cpp'
-Dict.cpp
 Debug.cpp
 Compiling 'neo\idLib\geometry\DrawVert.cpp'
+Dict.cpp
 DrawVert.cpp
 Compiling 'neo\idLib\geometry\JointTransform.cpp'
 JointTransform.cpp
@@ -1893,54 +1913,54 @@ Surface_SweptSpline.cpp
 Compiling 'neo\idLib\geometry\TraceModel.cpp'
 Compiling 'neo\idLib\geometry\Winding.cpp'
 TraceModel.cpp
-Winding.cpp
 Compiling 'neo\idLib\geometry\Winding2D.cpp'
+Winding.cpp
 Winding2D.cpp
 Compiling 'neo\idLib\hashing\CRC32.cpp'
 CRC32.cpp
 Compiling 'neo\idLib\hashing\MD4.cpp'
-MD4.cpp
 Compiling 'neo\idLib\hashing\MD5.cpp'
-Compiling 'neo\idLib\Heap.cpp'
+MD4.cpp
 MD5.cpp
-Compiling 'neo\idLib\LangDict.cpp'
+Compiling 'neo\idLib\Heap.cpp'
 Heap.cpp
+Compiling 'neo\idLib\LangDict.cpp'
 LangDict.cpp
 Compiling 'neo\idLib\Lexer.cpp'
 Compiling 'neo\idLib\Lib.cpp'
 Lexer.cpp
 Lib.cpp
 Compiling 'neo\idLib\MapFile.cpp'
-Compiling 'neo\idLib\math\Angles.cpp'
 MapFile.cpp
+Compiling 'neo\idLib\math\Angles.cpp'
 Angles.cpp
 Compiling 'neo\idLib\math\Complex.cpp'
-Compiling 'neo\idLib\math\Lcp.cpp'
 Complex.cpp
-Compiling 'neo\idLib\math\Math.cpp'
+Compiling 'neo\idLib\math\Lcp.cpp'
 Lcp.cpp
+Compiling 'neo\idLib\math\Math.cpp'
 Math.cpp
 Compiling 'neo\idLib\math\Matrix.cpp'
 Matrix.cpp
 Compiling 'neo\idLib\math\MatX.cpp'
-Compiling 'neo\idLib\math\Ode.cpp'
 MatX.cpp
-Ode.cpp
+Compiling 'neo\idLib\math\Ode.cpp'
 Compiling 'neo\idLib\math\Plane.cpp'
+Ode.cpp
 Plane.cpp
 Compiling 'neo\idLib\math\Pluecker.cpp'
 Pluecker.cpp
 Compiling 'neo\idLib\math\Polynomial.cpp'
 Compiling 'neo\idLib\math\Quat.cpp'
-Polynomial.cpp
 Quat.cpp
+Polynomial.cpp
 Compiling 'neo\idLib\math\Rotation.cpp'
 Rotation.cpp
 Compiling 'neo\idLib\math\Simd.cpp'
-Compiling 'neo\idLib\math\Simd_Generic.cpp'
 Simd.cpp
-Compiling 'neo\idLib\math\Simd_SSE.cpp'
+Compiling 'neo\idLib\math\Simd_Generic.cpp'
 Simd_Generic.cpp
+Compiling 'neo\idLib\math\Simd_SSE.cpp'
 Simd_SSE.cpp
 Compiling 'neo\idLib\math\Vector.cpp'
 Vector.cpp
@@ -1949,16 +1969,16 @@ VecX.cpp
 Compiling 'neo\idLib\ParallelJobList.cpp'
 ParallelJobList.cpp
 Compiling 'neo\idLib\Parser.cpp'
-Parser.cpp
 Compiling 'neo\idLib\precompiled.cpp'
+Parser.cpp
 precompiled.cpp
 Compiling 'neo\idLib\RectAllocator.cpp'
 RectAllocator.cpp
 Compiling 'neo\idLib\SoftwareCache.cpp'
 SoftwareCache.cpp
 Compiling 'neo\idLib\Str.cpp'
-Str.cpp
 Compiling 'neo\idLib\sys\sys_assert.cpp'
+Str.cpp
 sys_assert.cpp
 Compiling 'neo\idLib\sys\sys_exceptions.cpp'
 sys_exceptions.cpp
@@ -1973,8 +1993,8 @@ Timer.cpp
 Compiling 'neo\idLib\Token.cpp'
 Token.cpp
 Compiling 'neo\d3xp\Achievements.cpp'
-Achievements.cpp
 Compiling 'neo\d3xp\Actor.cpp'
+Achievements.cpp
 Actor.cpp
 Compiling 'neo\d3xp\AF.cpp'
 AF.cpp
@@ -1999,10 +2019,10 @@ AI_pathing.cpp
 Compiling 'neo\d3xp\ai\AI_Vagary.cpp'
 AI_Vagary.cpp
 Compiling 'neo\d3xp\AimAssist.cpp'
-AimAssist.cpp
 Compiling 'neo\d3xp\anim\Anim.cpp'
-Compiling 'neo\d3xp\anim\Anim_Blend.cpp'
+AimAssist.cpp
 Anim.cpp
+Compiling 'neo\d3xp\anim\Anim_Blend.cpp'
 Anim_Blend.cpp
 Compiling 'neo\d3xp\anim\Anim_Testmodel.cpp'
 Anim_Testmodel.cpp
@@ -2033,8 +2053,8 @@ SysCmds.cpp
 Compiling 'neo\d3xp\gamesys\SysCvar.cpp'
 SysCvar.cpp
 Compiling 'neo\d3xp\Grabber.cpp'
-Compiling 'neo\d3xp\IK.cpp'
 Grabber.cpp
+Compiling 'neo\d3xp\IK.cpp'
 IK.cpp
 Compiling 'neo\d3xp\Item.cpp'
 Item.cpp
@@ -2049,24 +2069,24 @@ MenuHandler_HUD.cpp
 Compiling 'neo\d3xp\menus\MenuHandler_PDA.cpp'
 MenuHandler_PDA.cpp
 Compiling 'neo\d3xp\menus\MenuHandler_Scoreboard.cpp'
-Compiling 'neo\d3xp\menus\MenuHandler_Shell.cpp'
 MenuHandler_Scoreboard.cpp
-Compiling 'neo\d3xp\menus\MenuScreen.cpp'
+Compiling 'neo\d3xp\menus\MenuHandler_Shell.cpp'
 MenuHandler_Shell.cpp
+Compiling 'neo\d3xp\menus\MenuScreen.cpp'
 MenuScreen.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_HUD.cpp'
 MenuScreen_HUD.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_PDA_Inventory.cpp'
-Compiling 'neo\d3xp\menus\MenuScreen_PDA_UserData.cpp'
 MenuScreen_PDA_Inventory.cpp
+Compiling 'neo\d3xp\menus\MenuScreen_PDA_UserData.cpp'
 MenuScreen_PDA_UserData.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_PDA_UserEmails.cpp'
 MenuScreen_PDA_UserEmails.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_PDA_VideoDisks.cpp'
 MenuScreen_PDA_VideoDisks.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Scoreboard.cpp'
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_Bindings.cpp'
 MenuScreen_Scoreboard.cpp
+Compiling 'neo\d3xp\menus\MenuScreen_Shell_Bindings.cpp'
 MenuScreen_Shell_Bindings.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Shell_Browser.cpp'
 MenuScreen_Shell_Browser.cpp
@@ -2091,8 +2111,8 @@ MenuScreen_Shell_Leaderboards.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Shell_Load.cpp'
 MenuScreen_Shell_Load.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Shell_MatchSettings.cpp'
-MenuScreen_Shell_MatchSettings.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Shell_ModeSelect.cpp'
+MenuScreen_Shell_MatchSettings.cpp
 MenuScreen_Shell_ModeSelect.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Shell_NewGame.cpp'
 MenuScreen_Shell_NewGame.cpp
@@ -2107,24 +2127,24 @@ MenuScreen_Shell_Resolution.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Shell_Root.cpp'
 MenuScreen_Shell_Root.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Shell_Save.cpp'
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_Settings.cpp'
 MenuScreen_Shell_Save.cpp
+Compiling 'neo\d3xp\menus\MenuScreen_Shell_Settings.cpp'
 MenuScreen_Shell_Settings.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Shell_Singleplayer.cpp'
 MenuScreen_Shell_Singleplayer.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Shell_SystemOptions.cpp'
 MenuScreen_Shell_SystemOptions.cpp
 Compiling 'neo\d3xp\menus\MenuWidget.cpp'
-Compiling 'neo\d3xp\menus\MenuWidget_Button.cpp'
 MenuWidget.cpp
-MenuWidget_Button.cpp
+Compiling 'neo\d3xp\menus\MenuWidget_Button.cpp'
 Compiling 'neo\d3xp\menus\MenuWidget_Carousel.cpp'
+MenuWidget_Button.cpp
 MenuWidget_Carousel.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_CommandBar.cpp'
 MenuWidget_CommandBar.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_DynamicList.cpp'
-Compiling 'neo\d3xp\menus\MenuWidget_Help.cpp'
 MenuWidget_DynamicList.cpp
+Compiling 'neo\d3xp\menus\MenuWidget_Help.cpp'
 Compiling 'neo\d3xp\menus\MenuWidget_InfoBox.cpp'
 MenuWidget_Help.cpp
 MenuWidget_InfoBox.cpp
@@ -2147,18 +2167,18 @@ MenuWidget_PDA_EmailInbox.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_PDA_Objective.cpp'
 MenuWidget_PDA_Objective.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_PDA_UserData.cpp'
-Compiling 'neo\d3xp\menus\MenuWidget_PDA_VideoInfo.cpp'
 MenuWidget_PDA_UserData.cpp
-MenuWidget_PDA_VideoInfo.cpp
+Compiling 'neo\d3xp\menus\MenuWidget_PDA_VideoInfo.cpp'
 Compiling 'neo\d3xp\menus\MenuWidget_Scrollbar.cpp'
+MenuWidget_PDA_VideoInfo.cpp
 MenuWidget_Scrollbar.cpp
 Compiling 'neo\d3xp\menus\MenuWidget_Shell_SaveInfo.cpp'
 MenuWidget_Shell_SaveInfo.cpp
 Compiling 'neo\d3xp\Misc.cpp'
 Compiling 'neo\d3xp\Moveable.cpp'
+Moveable.cpp
 Misc.cpp
 Compiling 'neo\d3xp\Mover.cpp'
-Moveable.cpp
 Mover.cpp
 Compiling 'neo\d3xp\MultiplayerGame.cpp'
 MultiplayerGame.cpp
@@ -2179,10 +2199,10 @@ Force_Spring.cpp
 Compiling 'neo\d3xp\physics\Physics.cpp'
 Physics.cpp
 Compiling 'neo\d3xp\physics\Physics_Actor.cpp'
-Compiling 'neo\d3xp\physics\Physics_AF.cpp'
 Physics_Actor.cpp
-Compiling 'neo\d3xp\physics\Physics_Base.cpp'
+Compiling 'neo\d3xp\physics\Physics_AF.cpp'
 Physics_AF.cpp
+Compiling 'neo\d3xp\physics\Physics_Base.cpp'
 Physics_Base.cpp
 Compiling 'neo\d3xp\physics\Physics_Monster.cpp'
 Physics_Monster.cpp
@@ -2211,19 +2231,19 @@ Projectile.cpp
 Compiling 'neo\d3xp\Pvs.cpp'
 Compiling 'neo\d3xp\script\Script_Compiler.cpp'
 Pvs.cpp
-Compiling 'neo\d3xp\script\Script_Interpreter.cpp'
 Script_Compiler.cpp
+Compiling 'neo\d3xp\script\Script_Interpreter.cpp'
 Script_Interpreter.cpp
 Compiling 'neo\d3xp\script\Script_Program.cpp'
 Script_Program.cpp
 D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(368) : warning C4702: unreachable code
 D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(1048) : warning C4702: unreachable code
 Compiling 'neo\d3xp\script\Script_Thread.cpp'
-Script_Thread.cpp
 D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(1345) : warning C4702: unreachable code
 D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(1379) : warning C4702: unreachable code
 D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(1390) : warning C4702: unreachable code
 D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(1422) : warning C4702: unreachable code
+Script_Thread.cpp
 Compiling 'neo\d3xp\SecurityCamera.cpp'
 SecurityCamera.cpp
 Compiling 'neo\d3xp\SmokeParticles.cpp'
@@ -2244,17 +2264,17 @@ CollisionModel_contacts.cpp
 CollisionModel_contents.cpp
 Compiling 'neo\cm\CollisionModel_debug.cpp'
 CollisionModel_debug.cpp
+Archiving 'build\scons\windows-x64-release-msvc\lib\gamex86.lib'
+Indexing 'build\scons\windows-x64-release-msvc\lib\gamex86.lib'
 Compiling 'neo\cm\CollisionModel_files.cpp'
 Compiling 'neo\cm\CollisionModel_load.cpp'
 CollisionModel_files.cpp
-Archiving 'build\scons\windows-x64-release-msvc\lib\gamex86.lib'
 CollisionModel_load.cpp
-Indexing 'build\scons\windows-x64-release-msvc\lib\gamex86.lib'
 Compiling 'neo\cm\CollisionModel_rotate.cpp'
 CollisionModel_rotate.cpp
 Compiling 'neo\cm\CollisionModel_trace.cpp'
-Compiling 'neo\cm\CollisionModel_translate.cpp'
 CollisionModel_trace.cpp
+Compiling 'neo\cm\CollisionModel_translate.cpp'
 CollisionModel_translate.cpp
 Compiling 'neo\framework\CmdSystem.cpp'
 CmdSystem.cpp
@@ -2264,16 +2284,16 @@ Compiling 'neo\framework\Common_demos.cpp'
 Common_demos.cpp
 neo\framework\Common.cpp(777): warning C4101: 'mouseEvents': unreferenced local variable
 Compiling 'neo\framework\Common_dialog.cpp'
-Common_dialog.cpp
 Compiling 'neo\framework\common_frame.cpp'
+Common_dialog.cpp
 common_frame.cpp
 Compiling 'neo\framework\Common_load.cpp'
 Common_load.cpp
 Compiling 'neo\framework\Common_localize.cpp'
 Common_localize.cpp
 Compiling 'neo\framework\Common_menu.cpp'
-Compiling 'neo\framework\Common_network.cpp'
 Common_menu.cpp
+Compiling 'neo\framework\Common_network.cpp'
 Common_network.cpp
 Compiling 'neo\framework\Common_printf.cpp'
 Common_printf.cpp
@@ -2291,16 +2311,16 @@ CVarSystem.cpp
 Compiling 'neo\framework\DebugGraph.cpp'
 DebugGraph.cpp
 Compiling 'neo\framework\DeclAF.cpp'
-DeclAF.cpp
 Compiling 'neo\framework\DeclEntityDef.cpp'
+DeclAF.cpp
 DeclEntityDef.cpp
 Compiling 'neo\framework\DeclFX.cpp'
 DeclFX.cpp
 Compiling 'neo\framework\DeclManager.cpp'
-DeclManager.cpp
 Compiling 'neo\framework\DeclParticle.cpp'
-Compiling 'neo\framework\DeclPDA.cpp'
 DeclParticle.cpp
+DeclManager.cpp
+Compiling 'neo\framework\DeclPDA.cpp'
 DeclPDA.cpp
 Compiling 'neo\framework\DeclSkin.cpp'
 DeclSkin.cpp
@@ -2314,33 +2334,33 @@ Compiling 'neo\framework\EventLoop.cpp'
 EventLoop.cpp
 Compiling 'neo\framework\File.cpp'
 Compiling 'neo\framework\File_Manifest.cpp'
-Compiling 'neo\framework\File_Resource.cpp'
 File.cpp
+Compiling 'neo\framework\File_Resource.cpp'
 File_Manifest.cpp
 File_Resource.cpp
 Compiling 'neo\framework\File_SaveGame.cpp'
 File_SaveGame.cpp
 Compiling 'neo\framework\File_Zip.cpp'
 Compiling 'neo\framework\FileSystem.cpp'
+Compiling 'neo\framework\KeyInput.cpp'
 File_Zip.cpp
 FileSystem.cpp
-Compiling 'neo\framework\KeyInput.cpp'
 KeyInput.cpp
 Compiling 'neo\framework\PlayerProfile.cpp'
 PlayerProfile.cpp
 Compiling 'neo\framework\precompiled.cpp'
 Compiling 'neo\framework\TokenParser.cpp'
 precompiled.cpp
-TokenParser.cpp
 Compiling 'neo\framework\UsercmdGen.cpp'
+TokenParser.cpp
 UsercmdGen.cpp
 Compiling 'neo\framework\Zip.cpp'
 Zip.cpp
 Compiling 'neo\renderer\AutoRender.cpp'
 AutoRender.cpp
 Compiling 'neo\renderer\AutoRenderBink.cpp'
-Compiling 'neo\renderer\BinaryImage.cpp'
 AutoRenderBink.cpp
+Compiling 'neo\renderer\BinaryImage.cpp'
 BinaryImage.cpp
 Compiling 'neo\renderer\BufferObject.cpp'
 BufferObject.cpp
@@ -2355,9 +2375,9 @@ neo\renderer\BufferObject.cpp(433): warning C4312: 'reinterpret_cast': conversio
 neo\renderer\BufferObject.cpp(671): warning C4312: 'reinterpret_cast': conversion from 'GLuint' to 'void *' of greater size
 Compiling 'neo\renderer\Color\ColorSpace.cpp'
 ColorSpace.cpp
-neo\renderer\CinematicBink.cpp(59): warning C4245: '=': conversion from 'int' to 'uint32', signed/unsigned mismatch
 Compiling 'neo\renderer\DXT\DXTDecoder.cpp'
 DXTDecoder.cpp
+neo\renderer\CinematicBink.cpp(59): warning C4245: '=': conversion from 'int' to 'uint32', signed/unsigned mismatch
 Compiling 'neo\renderer\DXT\DXTEncoder.cpp'
 DXTEncoder.cpp
 Compiling 'neo\renderer\DXT\DXTEncoder_SSE2.cpp'
@@ -2389,20 +2409,20 @@ PreLightShadowVolume.cpp
 Compiling 'neo\renderer\jobs\ShadowShared.cpp'
 ShadowShared.cpp
 Compiling 'neo\renderer\jobs\staticshadowvolume\StaticShadowVolume.cpp'
-StaticShadowVolume.cpp
 Compiling 'neo\renderer\Material.cpp'
+StaticShadowVolume.cpp
 Material.cpp
 Compiling 'neo\renderer\Model.cpp'
-Compiling 'neo\renderer\Model_ase.cpp'
 Model.cpp
-Model_ase.cpp
+Compiling 'neo\renderer\Model_ase.cpp'
 Compiling 'neo\renderer\Model_beam.cpp'
+Model_ase.cpp
 Model_beam.cpp
 Compiling 'neo\renderer\Model_liquid.cpp'
 Compiling 'neo\renderer\Model_lwo.cpp'
-Model_lwo.cpp
 Model_liquid.cpp
 Compiling 'neo\renderer\Model_ma.cpp'
+Model_lwo.cpp
 Model_ma.cpp
 Compiling 'neo\renderer\Model_md3.cpp'
 Model_md3.cpp
@@ -2417,8 +2437,8 @@ ModelDecal.cpp
 Compiling 'neo\renderer\ModelManager.cpp'
 Compiling 'neo\renderer\ModelOverlay.cpp'
 ModelManager.cpp
-ModelOverlay.cpp
 Compiling 'neo\renderer\OpenGL\gl_backend.cpp'
+ModelOverlay.cpp
 gl_backend.cpp
 Compiling 'neo\renderer\OpenGL\gl_GraphicsAPIWrapper.cpp'
 gl_GraphicsAPIWrapper.cpp
@@ -2427,15 +2447,15 @@ Compiling 'neo\renderer\RenderEntity.cpp'
 gl_Image.cpp
 RenderEntity.cpp
 Compiling 'neo\renderer\RenderLog.cpp'
-RenderLog.cpp
 Compiling 'neo\renderer\RenderProgs.cpp'
+RenderLog.cpp
 RenderProgs.cpp
 Compiling 'neo\renderer\RenderProgs_GLSL.cpp'
 Compiling 'neo\renderer\RenderSystem.cpp'
-Compiling 'neo\renderer\RenderSystem_init.cpp'
-RenderSystem.cpp
-RenderSystem_init.cpp
 RenderProgs_GLSL.cpp
+RenderSystem.cpp
+Compiling 'neo\renderer\RenderSystem_init.cpp'
+RenderSystem_init.cpp
 Compiling 'neo\renderer\RenderWorld.cpp'
 RenderWorld.cpp
 Compiling 'neo\renderer\RenderWorld_defs.cpp'
@@ -2455,8 +2475,8 @@ Compiling 'neo\renderer\tr_backend_draw.cpp'
 stblib_impls.c
 tr_backend_draw.cpp
 Compiling 'neo\renderer\tr_backend_rendertools.cpp'
-Compiling 'neo\renderer\tr_frontend_addlights.cpp'
 tr_backend_rendertools.cpp
+Compiling 'neo\renderer\tr_frontend_addlights.cpp'
 tr_frontend_addlights.cpp
 neo\renderer\tr_backend_draw.cpp(170): warning C4389: '!=': signed/unsigned mismatch
 neo\renderer\tr_backend_draw.cpp(175): warning C4389: '!=': signed/unsigned mismatch
@@ -2487,9 +2507,9 @@ OggFile.cpp
 Compiling 'neo\sound\snd_emitter.cpp'
 snd_emitter.cpp
 Compiling 'neo\sound\snd_shader.cpp'
+snd_shader.cpp
 Compiling 'neo\sound\snd_system.cpp'
 snd_system.cpp
-snd_shader.cpp
 Compiling 'neo\sound\snd_world.cpp'
 snd_world.cpp
 Compiling 'neo\sound\SoundVoice.cpp'
@@ -2502,8 +2522,8 @@ D:\a\Doom3BFG\Doom3BFG\neo\external\stb\stb_vorbis.h(4849) : warning C4701: pote
 Compiling 'neo\sound\XAudio2\XA2_CinematicAudio.cpp'
 XA2_CinematicAudio.cpp
 Compiling 'neo\sound\XAudio2\XA2_SoundHardware.cpp'
-Compiling 'neo\sound\XAudio2\XA2_SoundSample.cpp'
 XA2_SoundHardware.cpp
+Compiling 'neo\sound\XAudio2\XA2_SoundSample.cpp'
 XA2_SoundSample.cpp
 Compiling 'neo\sound\XAudio2\XA2_SoundVoice.cpp'
 XA2_SoundVoice.cpp
@@ -2516,30 +2536,30 @@ SWF_Dictionary.cpp
 Compiling 'neo\swf\SWF_Events.cpp'
 SWF_Events.cpp
 Compiling 'neo\swf\SWF_Image.cpp'
-Compiling 'neo\swf\SWF_Inflate.cpp'
-Compiling 'neo\swf\SWF_Load.cpp'
 SWF_Image.cpp
+Compiling 'neo\swf\SWF_Inflate.cpp'
 SWF_Inflate.cpp
+Compiling 'neo\swf\SWF_Load.cpp'
 SWF_Load.cpp
 Compiling 'neo\swf\SWF_Main.cpp'
 SWF_Main.cpp
 Compiling 'neo\swf\SWF_Names.cpp'
+SWF_Names.cpp
 Compiling 'neo\swf\SWF_ParmList.cpp'
 SWF_ParmList.cpp
-SWF_Names.cpp
 Compiling 'neo\swf\SWF_PlaceObject.cpp'
 SWF_PlaceObject.cpp
 Compiling 'neo\swf\SWF_Render.cpp'
-SWF_Render.cpp
 Compiling 'neo\swf\SWF_ScriptFunction.cpp'
-Compiling 'neo\swf\SWF_ScriptObject.cpp'
+SWF_Render.cpp
 SWF_ScriptFunction.cpp
+Compiling 'neo\swf\SWF_ScriptObject.cpp'
 SWF_ScriptObject.cpp
 Compiling 'neo\swf\SWF_ScriptVar.cpp'
 SWF_ScriptVar.cpp
 Compiling 'neo\swf\SWF_ShapeParser.cpp'
-Compiling 'neo\swf\SWF_Shapes.cpp'
 SWF_ShapeParser.cpp
+Compiling 'neo\swf\SWF_Shapes.cpp'
 SWF_Shapes.cpp
 Compiling 'neo\swf\SWF_Sounds.cpp'
 SWF_Sounds.cpp
@@ -2548,8 +2568,8 @@ SWF_SpriteInstance.cpp
 Compiling 'neo\swf\SWF_Sprites.cpp'
 SWF_Sprites.cpp
 Compiling 'neo\swf\SWF_Text.cpp'
-SWF_Text.cpp
 Compiling 'neo\swf\SWF_TextInstance.cpp'
+SWF_Text.cpp
 SWF_TextInstance.cpp
 Compiling 'neo\sys\LightweightCompression.cpp'
 LightweightCompression.cpp
@@ -2564,24 +2584,24 @@ SnapshotProcessor.cpp
 Compiling 'neo\sys\sys_achievements.cpp'
 sys_achievements.cpp
 Compiling 'neo\sys\sys_dedicated_server_search.cpp'
-Compiling 'neo\sys\sys_lobby.cpp'
 sys_dedicated_server_search.cpp
-sys_lobby.cpp
+Compiling 'neo\sys\sys_lobby.cpp'
 Compiling 'neo\sys\sys_lobby_backend_direct.cpp'
+sys_lobby.cpp
 sys_lobby_backend_direct.cpp
 Compiling 'neo\sys\sys_lobby_migrate.cpp'
 sys_lobby_migrate.cpp
 Compiling 'neo\sys\sys_lobby_snapshot.cpp'
-sys_lobby_snapshot.cpp
 Compiling 'neo\sys\sys_lobby_users.cpp'
+sys_lobby_snapshot.cpp
 sys_lobby_users.cpp
 Compiling 'neo\sys\sys_local.cpp'
 sys_local.cpp
 Compiling 'neo\sys\sys_localuser.cpp'
 sys_localuser.cpp
 Compiling 'neo\sys\sys_platform_local.cpp'
-Compiling 'neo\sys\sys_profile.cpp'
 sys_platform_local.cpp
+Compiling 'neo\sys\sys_profile.cpp'
 sys_profile.cpp
 Compiling 'neo\sys\sys_savegame.cpp'
 sys_savegame.cpp
@@ -2590,32 +2610,32 @@ sys_session_callbacks.cpp
 Compiling 'neo\sys\sys_session_local.cpp'
 sys_session_local.cpp
 Compiling 'neo\sys\sys_session_savegames.cpp'
-Compiling 'neo\sys\sys_signin.cpp'
 sys_session_savegames.cpp
+Compiling 'neo\sys\sys_signin.cpp'
 sys_signin.cpp
 Compiling 'neo\sys\sys_voicechat.cpp'
 sys_voicechat.cpp
 Compiling 'neo\sys\win32\win_achievements.cpp'
-Compiling 'neo\sys\win32\win_cpu.cpp'
 win_achievements.cpp
-Compiling 'neo\sys\win32\win_glimp.cpp'
-Compiling 'neo\sys\win32\win_input.cpp'
+Compiling 'neo\sys\win32\win_cpu.cpp'
 win_cpu.cpp
+Compiling 'neo\sys\win32\win_glimp.cpp'
 win_glimp.cpp
+Compiling 'neo\sys\win32\win_input.cpp'
 win_input.cpp
 Compiling 'neo\sys\win32\win_localuser.cpp'
-Compiling 'neo\sys\win32\win_main.cpp'
 win_localuser.cpp
-Compiling 'neo\sys\win32\win_net.cpp'
+Compiling 'neo\sys\win32\win_main.cpp'
 win_main.cpp
+Compiling 'neo\sys\win32\win_net.cpp'
 win_net.cpp
 Compiling 'neo\sys\win32\win_savegame.cpp'
 win_savegame.cpp
 Compiling 'neo\sys\win32\win_seh.cpp'
 win_seh.cpp
 Compiling 'neo\sys\win32\win_session_local.cpp'
-win_session_local.cpp
 Compiling 'neo\sys\win32\win_shared.cpp'
+win_session_local.cpp
 win_shared.cpp
 Compiling 'neo\sys\win32\win_signin.cpp'
 win_signin.cpp
@@ -2656,15 +2676,15 @@ AASReach.cpp
 Compiling 'neo\tools\compilers\aas\Brush.cpp'
 Brush.cpp
 Compiling 'neo\tools\compilers\aas\BrushBSP.cpp'
-Compiling 'neo\tools\compilers\amplitude\amplitude.cpp'
 BrushBSP.cpp
+Compiling 'neo\tools\compilers\amplitude\amplitude.cpp'
 amplitude.cpp
 D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\aas\AASReach.cpp(267) : warning C4701: potentially uninitialized local variable 'edge1Num' used
 Compiling 'neo\tools\compilers\dmap\dmap.cpp'
 dmap.cpp
+D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\amplitude\amplitude.cpp(177) : warning C4701: potentially uninitialized local variable 'format' used
 Compiling 'neo\tools\compilers\dmap\facebsp.cpp'
 facebsp.cpp
-D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\amplitude\amplitude.cpp(177) : warning C4701: potentially uninitialized local variable 'format' used
 Compiling 'neo\tools\compilers\dmap\gldraw.cpp'
 gldraw.cpp
 Compiling 'neo\tools\compilers\dmap\glfile.cpp'
@@ -2674,890 +2694,35 @@ leakfile.cpp
 Compiling 'neo\tools\compilers\dmap\map.cpp'
 map.cpp
 Compiling 'neo\tools\compilers\dmap\optimize.cpp'
-optimize.cpp
 Compiling 'neo\tools\compilers\dmap\output.cpp'
+optimize.cpp
 output.cpp
 Compiling 'neo\tools\compilers\dmap\portals.cpp'
 portals.cpp
 Compiling 'neo\tools\compilers\dmap\tritjunction.cpp'
 tritjunction.cpp
 Compiling 'neo\tools\compilers\dmap\tritools.cpp'
-tritools.cpp
 Compiling 'neo\tools\compilers\dmap\ubrush.cpp'
+tritools.cpp
 ubrush.cpp
 Compiling 'neo\tools\compilers\dmap\usurface.cpp'
 usurface.cpp
 Compiling 'neo\tools\compilers\renderbump\renderbump.cpp'
-renderbump.cpp
 Compiling 'neo\tools\compilers\roqvq\codec.cpp'
+renderbump.cpp
 Compiling 'neo\tools\compilers\roqvq\NSBitmapImageRep.cpp'
 codec.cpp
 NSBitmapImageRep.cpp
 Compiling 'neo\tools\compilers\roqvq\roq.cpp'
 roq.cpp
-D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\renderbump\renderbump.cpp(1318) : warning C4701: potentially uninitialized local variable 'opt' used
 Compiling 'neo\tools\compilers\roqvq\roqParam.cpp'
 roqParam.cpp
+D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\renderbump\renderbump.cpp(1318) : warning C4701: potentially uninitialized local variable 'opt' used
 Compiling 'neo\ui\BindWindow.cpp'
 BindWindow.cpp
 Compiling 'neo\ui\ChoiceWindow.cpp'
 ChoiceWindow.cpp
 Compiling 'neo\ui\DeviceContext.cpp'
 DeviceContext.cpp
-Compiling 'neo\ui\DeviceContextOptinized.cpp'
-Compiling 'neo\ui\EditWindow.cpp'
-DeviceContextOptinized.cpp
-EditWindow.cpp
-Compiling 'neo\ui\FieldWindow.cpp'
-FieldWindow.cpp
-Compiling 'neo\ui\GameBearShootWindow.cpp'
-GameBearShootWindow.cpp
-Compiling 'neo\ui\GameBustOutWindow.cpp'
-GameBustOutWindow.cpp
-Compiling 'neo\ui\GameSSDWindow.cpp'
-GameSSDWindow.cpp
-Compiling 'neo\ui\GuiScript.cpp'
-GuiScript.cpp
-Compiling 'neo\ui\ListGUI.cpp'
-ListGUI.cpp
-Compiling 'neo\ui\ListWindow.cpp'
-Compiling 'neo\ui\RegExp.cpp'
-ListWindow.cpp
-RegExp.cpp
-Compiling 'neo\ui\RenderWindow.cpp'
-RenderWindow.cpp
-Compiling 'neo\ui\SimpleWindow.cpp'
-SimpleWindow.cpp
-Compiling 'neo\ui\SliderWindow.cpp'
-Compiling 'neo\ui\UserInterface.cpp'
-Compiling 'neo\ui\Window.cpp'
-SliderWindow.cpp
-UserInterface.cpp
-Window.cpp
-Compiling 'neo\ui\Winvar.cpp'
-Winvar.cpp
-Resources 'neo\sys\win32\rc\doom.rc'
-Resources 'build\scons\windows-x64-release-msvc\obj\DoomEXE\doom_manifest.rc'
-scons: done building targets (errors occurred during build).
-❌ 🛠️ Compilation failed: 'build\scons\windows-x64-release-msvc\obj\DoomEXE\sys\win32\win_syscon.cpp.obj' — Error 2
-📊 Diagnostics: ⚠️ 32 warning(s), ❌ 1 error(s)
-
-
-==== windows-x86-debug (cancelled) ====
-
-Filesystem      Size  Used Avail Use% Mounted on
-C:              150G  120G   31G  80% /c
-Collecting scons
-  Downloading scons-4.11.1-py3-none-any.whl.metadata (9.2 kB)
-Downloading scons-4.11.1-py3-none-any.whl (4.1 MB)
-   ---------------------------------------- 4.1/4.1 MB 27.7 MB/s  0:00:00
-Installing collected packages: scons
-Successfully installed scons-4.11.1
-scons: Reading SConscript files ...
-scons: done reading SConscript files.
-scons: Building targets ...
-Compiling 'neo\external\miniz\miniz.c'
-Compiling 'neo\external\minizip\ioapi.c'
-Compiling 'neo\external\minizip\unzip.cpp'
-Compiling 'neo\external\minizip\zip.cpp'
-unzip.cpp
-ioapi.c
-zip.cpp
-miniz.c
-Compiling 'neo\external\libbinkdec\src\BinkAudio.cpp'
-Compiling 'neo\external\libbinkdec\src\BinkDecoder.cpp'
-BinkAudio.cpp
-BinkDecoder.cpp
-Compiling 'neo\external\libbinkdec\src\BinkVideo.cpp'
-Compiling 'neo\external\libbinkdec\src\BitReader.cpp'
-BinkVideo.cpp
-BitReader.cpp
-Compiling 'neo\external\libbinkdec\src\FileStream.cpp'
-FileStream.cpp
-Compiling 'neo\external\libbinkdec\src\HuffmanVLC.cpp'
-HuffmanVLC.cpp
-Compiling 'neo\external\libbinkdec\src\LogError.cpp'
-Compiling 'neo\external\libbinkdec\src\Util.cpp'
-Util.cpp
-LogError.cpp
-Compiling 'neo\external\libbinkdec\src\avfft.c'
-avfft.c
-Compiling 'neo\external\libbinkdec\src\dct.c'
-dct.c
-Compiling 'neo\external\libbinkdec\src\dct32.c'
-dct32.c
-Compiling 'neo\external\libbinkdec\src\fft.c'
-Compiling 'neo\external\libbinkdec\src\mdct.c'
-fft.c
-mdct.c
-Compiling 'neo\external\libbinkdec\src\rdft.c'
-Compiling 'neo\idLib\Base64.cpp'
-rdft.c
-Compiling 'neo\idLib\BitMsg.cpp'
-Base64.cpp
-BitMsg.cpp
-Compiling 'neo\idLib\bv\Bounds.cpp'
-Bounds.cpp
-Archiving 'build\scons\windows-x86-debug-msvc\lib\external.lib'
-Indexing 'build\scons\windows-x86-debug-msvc\lib\external.lib'
-Compiling 'neo\idLib\bv\Box.cpp'
-Box.cpp
-Compiling 'neo\idLib\bv\Sphere.cpp'
-Compiling 'neo\idLib\CmdArgs.cpp'
-Sphere.cpp
-CmdArgs.cpp
-Compiling 'neo\idLib\CommandLink.cpp'
-CommandLink.cpp
-Compiling 'neo\idLib\containers\HashIndex.cpp'
-HashIndex.cpp
-Compiling 'neo\idLib\Debug.cpp'
-Compiling 'neo\idLib\Dict.cpp'
-Debug.cpp
-Dict.cpp
-Compiling 'neo\idLib\geometry\DrawVert.cpp'
-DrawVert.cpp
-Compiling 'neo\idLib\geometry\JointTransform.cpp'
-JointTransform.cpp
-Compiling 'neo\idLib\geometry\RenderMatrix.cpp'
-Compiling 'neo\idLib\geometry\Surface.cpp'
-RenderMatrix.cpp
-Surface.cpp
-Compiling 'neo\idLib\geometry\Surface_Patch.cpp'
-Surface_Patch.cpp
-Compiling 'neo\idLib\geometry\Surface_Polytope.cpp'
-Surface_Polytope.cpp
-Compiling 'neo\idLib\geometry\Surface_SweptSpline.cpp'
-Surface_SweptSpline.cpp
-Compiling 'neo\idLib\geometry\TraceModel.cpp'
-TraceModel.cpp
-Compiling 'neo\idLib\geometry\Winding.cpp'
-Winding.cpp
-Compiling 'neo\idLib\geometry\Winding2D.cpp'
-Winding2D.cpp
-Compiling 'neo\idLib\hashing\CRC32.cpp'
-CRC32.cpp
-Compiling 'neo\idLib\hashing\MD4.cpp'
-MD4.cpp
-Compiling 'neo\idLib\hashing\MD5.cpp'
-MD5.cpp
-Compiling 'neo\idLib\Heap.cpp'
-Heap.cpp
-Compiling 'neo\idLib\LangDict.cpp'
-LangDict.cpp
-Compiling 'neo\idLib\Lexer.cpp'
-Lexer.cpp
-Compiling 'neo\idLib\Lib.cpp'
-Lib.cpp
-Compiling 'neo\idLib\MapFile.cpp'
-MapFile.cpp
-Compiling 'neo\idLib\math\Angles.cpp'
-Angles.cpp
-Compiling 'neo\idLib\math\Complex.cpp'
-Complex.cpp
-Compiling 'neo\idLib\math\Lcp.cpp'
-Lcp.cpp
-Compiling 'neo\idLib\math\Math.cpp'
-Math.cpp
-Compiling 'neo\idLib\math\Matrix.cpp'
-Matrix.cpp
-Compiling 'neo\idLib\math\MatX.cpp'
-MatX.cpp
-Compiling 'neo\idLib\math\Ode.cpp'
-Ode.cpp
-Compiling 'neo\idLib\math\Plane.cpp'
-Plane.cpp
-Compiling 'neo\idLib\math\Pluecker.cpp'
-Pluecker.cpp
-Compiling 'neo\idLib\math\Polynomial.cpp'
-Polynomial.cpp
-Compiling 'neo\idLib\math\Quat.cpp'
-Quat.cpp
-Compiling 'neo\idLib\math\Rotation.cpp'
-Rotation.cpp
-Compiling 'neo\idLib\math\Simd.cpp'
-Simd.cpp
-Compiling 'neo\idLib\math\Simd_Generic.cpp'
-Compiling 'neo\idLib\math\Simd_SSE.cpp'
-Simd_Generic.cpp
-Simd_SSE.cpp
-Compiling 'neo\idLib\math\Vector.cpp'
-Vector.cpp
-Compiling 'neo\idLib\math\VecX.cpp'
-VecX.cpp
-Compiling 'neo\idLib\ParallelJobList.cpp'
-ParallelJobList.cpp
-Compiling 'neo\idLib\Parser.cpp'
-Parser.cpp
-Compiling 'neo\idLib\precompiled.cpp'
-precompiled.cpp
-Compiling 'neo\idLib\RectAllocator.cpp'
-RectAllocator.cpp
-Compiling 'neo\idLib\SoftwareCache.cpp'
-SoftwareCache.cpp
-Compiling 'neo\idLib\Str.cpp'
-Str.cpp
-Compiling 'neo\idLib\sys\sys_assert.cpp'
-sys_assert.cpp
-Compiling 'neo\idLib\sys\sys_exceptions.cpp'
-sys_exceptions.cpp
-Compiling 'neo\idLib\sys\win32\win_crashhandler.cpp'
-win_crashhandler.cpp
-Compiling 'neo\idLib\sys\win32\win_thread.cpp'
-win_thread.cpp
-Compiling 'neo\idLib\Thread.cpp'
-Thread.cpp
-Compiling 'neo\idLib\Timer.cpp'
-Timer.cpp
-Compiling 'neo\idLib\Token.cpp'
-Token.cpp
-Compiling 'neo\d3xp\Achievements.cpp'
-Achievements.cpp
-Compiling 'neo\d3xp\Actor.cpp'
-Actor.cpp
-Compiling 'neo\d3xp\AF.cpp'
-AF.cpp
-Archiving 'build\scons\windows-x86-debug-msvc\lib\idLib.lib'
-Indexing 'build\scons\windows-x86-debug-msvc\lib\idLib.lib'
-Compiling 'neo\d3xp\AFEntity.cpp'
-AFEntity.cpp
-Compiling 'neo\d3xp\ai\AAS.cpp'
-AAS.cpp
-Compiling 'neo\d3xp\ai\AAS_debug.cpp'
-AAS_debug.cpp
-Compiling 'neo\d3xp\ai\AAS_pathing.cpp'
-AAS_pathing.cpp
-Compiling 'neo\d3xp\ai\AAS_routing.cpp'
-AAS_routing.cpp
-Compiling 'neo\d3xp\ai\AI.cpp'
-AI.cpp
-Compiling 'neo\d3xp\ai\AI_events.cpp'
-AI_events.cpp
-Compiling 'neo\d3xp\ai\AI_pathing.cpp'
-AI_pathing.cpp
-Compiling 'neo\d3xp\ai\AI_Vagary.cpp'
-AI_Vagary.cpp
-Compiling 'neo\d3xp\AimAssist.cpp'
-AimAssist.cpp
-Compiling 'neo\d3xp\anim\Anim.cpp'
-Compiling 'neo\d3xp\anim\Anim_Blend.cpp'
-Anim.cpp
-Anim_Blend.cpp
-Compiling 'neo\d3xp\anim\Anim_Testmodel.cpp'
-Anim_Testmodel.cpp
-Compiling 'neo\d3xp\BrittleFracture.cpp'
-BrittleFracture.cpp
-Compiling 'neo\d3xp\Camera.cpp'
-Camera.cpp
-Compiling 'neo\d3xp\Entity.cpp'
-Entity.cpp
-Compiling 'neo\d3xp\Fx.cpp'
-Fx.cpp
-Compiling 'neo\d3xp\Game_local.cpp'
-Game_local.cpp
-Compiling 'neo\d3xp\Game_network.cpp'
-Game_network.cpp
-Compiling 'neo\d3xp\GameEdit.cpp'
-GameEdit.cpp
-Compiling 'neo\d3xp\gamesys\Class.cpp'
-Class.cpp
-neo\d3xp\Game_local.cpp(249): warning C4245: '=': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
-neo\d3xp\Game_local.cpp(250): warning C4245: '=': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
-Compiling 'neo\d3xp\gamesys\Event.cpp'
-Event.cpp
-Compiling 'neo\d3xp\gamesys\SaveGame.cpp'
-SaveGame.cpp
-Compiling 'neo\d3xp\gamesys\SysCmds.cpp'
-SysCmds.cpp
-Compiling 'neo\d3xp\gamesys\SysCvar.cpp'
-SysCvar.cpp
-neo\d3xp\gamesys\Event.cpp(786): warning C4389: '==': signed/unsigned mismatch
-neo\d3xp\gamesys\Event.cpp(853): warning C4389: '!=': signed/unsigned mismatch
-neo\d3xp\gamesys\Event.cpp(903): warning C4389: '==': signed/unsigned mismatch
-neo\d3xp\gamesys\Event.cpp(943): warning C4389: '!=': signed/unsigned mismatch
-Compiling 'neo\d3xp\Grabber.cpp'
-Grabber.cpp
-Compiling 'neo\d3xp\IK.cpp'
-IK.cpp
-Compiling 'neo\d3xp\Item.cpp'
-Item.cpp
-Compiling 'neo\d3xp\Leaderboards.cpp'
-Leaderboards.cpp
-Compiling 'neo\d3xp\Light.cpp'
-Light.cpp
-Compiling 'neo\d3xp\menus\MenuHandler.cpp'
-MenuHandler.cpp
-Compiling 'neo\d3xp\menus\MenuHandler_HUD.cpp'
-MenuHandler_HUD.cpp
-Compiling 'neo\d3xp\menus\MenuHandler_PDA.cpp'
-MenuHandler_PDA.cpp
-Compiling 'neo\d3xp\menus\MenuHandler_Scoreboard.cpp'
-MenuHandler_Scoreboard.cpp
-Compiling 'neo\d3xp\menus\MenuHandler_Shell.cpp'
-MenuHandler_Shell.cpp
-Compiling 'neo\d3xp\menus\MenuScreen.cpp'
-MenuScreen.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_HUD.cpp'
-MenuScreen_HUD.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_PDA_Inventory.cpp'
-MenuScreen_PDA_Inventory.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_PDA_UserData.cpp'
-MenuScreen_PDA_UserData.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_PDA_UserEmails.cpp'
-MenuScreen_PDA_UserEmails.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_PDA_VideoDisks.cpp'
-MenuScreen_PDA_VideoDisks.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_Scoreboard.cpp'
-MenuScreen_Scoreboard.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_Bindings.cpp'
-MenuScreen_Shell_Bindings.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_Browser.cpp'
-MenuScreen_Shell_Browser.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_ControllerLayout.cpp'
-MenuScreen_Shell_ControllerLayout.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_Controls.cpp'
-MenuScreen_Shell_Controls.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_Credits.cpp'
-MenuScreen_Shell_Credits.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_Dev.cpp'
-MenuScreen_Shell_Dev.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_Difficulty.cpp'
-MenuScreen_Shell_Difficulty.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_GameLobby.cpp'
-MenuScreen_Shell_GameLobby.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_GameOptions.cpp'
-MenuScreen_Shell_GameOptions.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_Gamepad.cpp'
-MenuScreen_Shell_Gamepad.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_Leaderboards.cpp'
-MenuScreen_Shell_Leaderboards.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_Load.cpp'
-MenuScreen_Shell_Load.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_MatchSettings.cpp'
-MenuScreen_Shell_MatchSettings.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_ModeSelect.cpp'
-MenuScreen_Shell_ModeSelect.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_NewGame.cpp'
-MenuScreen_Shell_NewGame.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_PartyLobby.cpp'
-MenuScreen_Shell_PartyLobby.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_Pause.cpp'
-MenuScreen_Shell_Pause.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_Playstation.cpp'
-MenuScreen_Shell_Playstation.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_Resolution.cpp'
-MenuScreen_Shell_Resolution.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_Root.cpp'
-MenuScreen_Shell_Root.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_Save.cpp'
-MenuScreen_Shell_Save.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_Settings.cpp'
-MenuScreen_Shell_Settings.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_Singleplayer.cpp'
-MenuScreen_Shell_Singleplayer.cpp
-Compiling 'neo\d3xp\menus\MenuScreen_Shell_SystemOptions.cpp'
-MenuScreen_Shell_SystemOptions.cpp
-Compiling 'neo\d3xp\menus\MenuWidget.cpp'
-MenuWidget.cpp
-Compiling 'neo\d3xp\menus\MenuWidget_Button.cpp'
-MenuWidget_Button.cpp
-Compiling 'neo\d3xp\menus\MenuWidget_Carousel.cpp'
-MenuWidget_Carousel.cpp
-Compiling 'neo\d3xp\menus\MenuWidget_CommandBar.cpp'
-MenuWidget_CommandBar.cpp
-Compiling 'neo\d3xp\menus\MenuWidget_DynamicList.cpp'
-MenuWidget_DynamicList.cpp
-Compiling 'neo\d3xp\menus\MenuWidget_Help.cpp'
-MenuWidget_Help.cpp
-Compiling 'neo\d3xp\menus\MenuWidget_InfoBox.cpp'
-MenuWidget_InfoBox.cpp
-Compiling 'neo\d3xp\menus\MenuWidget_ItemAssignment.cpp'
-MenuWidget_ItemAssignment.cpp
-Compiling 'neo\d3xp\menus\MenuWidget_List.cpp'
-MenuWidget_List.cpp
-Compiling 'neo\d3xp\menus\MenuWidget_LobbyList.cpp'
-MenuWidget_LobbyList.cpp
-Compiling 'neo\d3xp\menus\MenuWidget_MenuBar.cpp'
-MenuWidget_MenuBar.cpp
-Compiling 'neo\d3xp\menus\MenuWidget_NavBar.cpp'
-MenuWidget_NavBar.cpp
-Compiling 'neo\d3xp\menus\MenuWidget_NavButton.cpp'
-MenuWidget_NavButton.cpp
-Compiling 'neo\d3xp\menus\MenuWidget_PDA_AudioFiles.cpp'
-MenuWidget_PDA_AudioFiles.cpp
-Compiling 'neo\d3xp\menus\MenuWidget_PDA_EmailInbox.cpp'
-MenuWidget_PDA_EmailInbox.cpp
-Compiling 'neo\d3xp\menus\MenuWidget_PDA_Objective.cpp'
-MenuWidget_PDA_Objective.cpp
-Compiling 'neo\d3xp\menus\MenuWidget_PDA_UserData.cpp'
-MenuWidget_PDA_UserData.cpp
-Compiling 'neo\d3xp\menus\MenuWidget_PDA_VideoInfo.cpp'
-MenuWidget_PDA_VideoInfo.cpp
-Compiling 'neo\d3xp\menus\MenuWidget_Scrollbar.cpp'
-MenuWidget_Scrollbar.cpp
-Compiling 'neo\d3xp\menus\MenuWidget_Shell_SaveInfo.cpp'
-MenuWidget_Shell_SaveInfo.cpp
-Compiling 'neo\d3xp\Misc.cpp'
-Misc.cpp
-Compiling 'neo\d3xp\Moveable.cpp'
-Moveable.cpp
-Compiling 'neo\d3xp\Mover.cpp'
-Mover.cpp
-Compiling 'neo\d3xp\MultiplayerGame.cpp'
-MultiplayerGame.cpp
-Compiling 'neo\d3xp\physics\Clip.cpp'
-Clip.cpp
-Compiling 'neo\d3xp\physics\Force.cpp'
-Force.cpp
-Compiling 'neo\d3xp\physics\Force_Constant.cpp'
-Force_Constant.cpp
-Compiling 'neo\d3xp\physics\Force_Drag.cpp'
-Force_Drag.cpp
-Compiling 'neo\d3xp\physics\Force_Field.cpp'
-Force_Field.cpp
-Compiling 'neo\d3xp\physics\Force_Grab.cpp'
-Force_Grab.cpp
-Compiling 'neo\d3xp\physics\Force_Spring.cpp'
-Force_Spring.cpp
-Compiling 'neo\d3xp\physics\Physics.cpp'
-Physics.cpp
-Compiling 'neo\d3xp\physics\Physics_Actor.cpp'
-Physics_Actor.cpp
-Compiling 'neo\d3xp\physics\Physics_AF.cpp'
-Physics_AF.cpp
-Compiling 'neo\d3xp\physics\Physics_Base.cpp'
-Physics_Base.cpp
-Compiling 'neo\d3xp\physics\Physics_Monster.cpp'
-Physics_Monster.cpp
-Compiling 'neo\d3xp\physics\Physics_Parametric.cpp'
-Physics_Parametric.cpp
-Compiling 'neo\d3xp\physics\Physics_Player.cpp'
-Physics_Player.cpp
-Compiling 'neo\d3xp\physics\Physics_RigidBody.cpp'
-Physics_RigidBody.cpp
-Compiling 'neo\d3xp\physics\Physics_Static.cpp'
-Physics_Static.cpp
-Compiling 'neo\d3xp\physics\Physics_StaticMulti.cpp'
-Physics_StaticMulti.cpp
-Compiling 'neo\d3xp\physics\Push.cpp'
-Push.cpp
-Compiling 'neo\d3xp\Player.cpp'
-Player.cpp
-Compiling 'neo\d3xp\PlayerIcon.cpp'
-PlayerIcon.cpp
-Compiling 'neo\d3xp\PlayerView.cpp'
-PlayerView.cpp
-Compiling 'neo\d3xp\precompiled.cpp'
-precompiled.cpp
-Compiling 'neo\d3xp\Projectile.cpp'
-Projectile.cpp
-Compiling 'neo\d3xp\Pvs.cpp'
-Pvs.cpp
-Compiling 'neo\d3xp\script\Script_Compiler.cpp'
-Script_Compiler.cpp
-Compiling 'neo\d3xp\script\Script_Interpreter.cpp'
-Script_Interpreter.cpp
-Compiling 'neo\d3xp\script\Script_Program.cpp'
-Script_Program.cpp
-Compiling 'neo\d3xp\script\Script_Thread.cpp'
-Script_Thread.cpp
-Compiling 'neo\d3xp\SecurityCamera.cpp'
-Compiling 'neo\d3xp\SmokeParticles.cpp'
-SecurityCamera.cpp
-SmokeParticles.cpp
-Compiling 'neo\d3xp\Sound.cpp'
-Sound.cpp
-Compiling 'neo\d3xp\Target.cpp'
-Target.cpp
-Compiling 'neo\d3xp\Trigger.cpp'
-Compiling 'neo\d3xp\Weapon.cpp'
-Trigger.cpp
-Weapon.cpp
-Compiling 'neo\d3xp\WorldSpawn.cpp'
-WorldSpawn.cpp
-Compiling 'neo\cm\CollisionModel_contacts.cpp'
-CollisionModel_contacts.cpp
-Compiling 'neo\cm\CollisionModel_contents.cpp'
-Compiling 'neo\cm\CollisionModel_debug.cpp'
-CollisionModel_contents.cpp
-CollisionModel_debug.cpp
-Archiving 'build\scons\windows-x86-debug-msvc\lib\gamex86.lib'
-Indexing 'build\scons\windows-x86-debug-msvc\lib\gamex86.lib'
-Compiling 'neo\cm\CollisionModel_files.cpp'
-Compiling 'neo\cm\CollisionModel_load.cpp'
-CollisionModel_files.cpp
-CollisionModel_load.cpp
-Compiling 'neo\cm\CollisionModel_rotate.cpp'
-Compiling 'neo\cm\CollisionModel_trace.cpp'
-CollisionModel_rotate.cpp
-CollisionModel_trace.cpp
-Compiling 'neo\cm\CollisionModel_translate.cpp'
-CollisionModel_translate.cpp
-Compiling 'neo\framework\CmdSystem.cpp'
-CmdSystem.cpp
-Compiling 'neo\framework\Common.cpp'
-Compiling 'neo\framework\Common_demos.cpp'
-Common.cpp
-Common_demos.cpp
-Compiling 'neo\framework\Common_dialog.cpp'
-Common_dialog.cpp
-Compiling 'neo\framework\common_frame.cpp'
-common_frame.cpp
-neo\framework\Common.cpp(777): warning C4101: 'mouseEvents': unreferenced local variable
-Compiling 'neo\framework\Common_load.cpp'
-Compiling 'neo\framework\Common_localize.cpp'
-Common_load.cpp
-Common_localize.cpp
-Compiling 'neo\framework\Common_menu.cpp'
-Common_menu.cpp
-Compiling 'neo\framework\Common_network.cpp'
-Common_network.cpp
-Compiling 'neo\framework\Common_printf.cpp'
-Common_printf.cpp
-Compiling 'neo\framework\Common_tools.cpp'
-Common_tools.cpp
-Compiling 'neo\framework\Compressor.cpp'
-Compressor.cpp
-Compiling 'neo\framework\Console.cpp'
-Console.cpp
-neo\framework\Common_tools.cpp(40): warning C4245: 'initializing': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
-Compiling 'neo\framework\ConsoleHistory.cpp'
-Compiling 'neo\framework\CVarSystem.cpp'
-ConsoleHistory.cpp
-CVarSystem.cpp
-Compiling 'neo\framework\DebugGraph.cpp'
-DebugGraph.cpp
-Compiling 'neo\framework\DeclAF.cpp'
-DeclAF.cpp
-Compiling 'neo\framework\DeclEntityDef.cpp'
-Compiling 'neo\framework\DeclFX.cpp'
-DeclEntityDef.cpp
-DeclFX.cpp
-Compiling 'neo\framework\DeclManager.cpp'
-DeclManager.cpp
-Compiling 'neo\framework\DeclParticle.cpp'
-DeclParticle.cpp
-Compiling 'neo\framework\DeclPDA.cpp'
-Compiling 'neo\framework\DeclSkin.cpp'
-DeclPDA.cpp
-DeclSkin.cpp
-Compiling 'neo\framework\DeclTable.cpp'
-DeclTable.cpp
-Compiling 'neo\framework\DemoFile.cpp'
-DemoFile.cpp
-Compiling 'neo\framework\EditField.cpp'
-Compiling 'neo\framework\EventLoop.cpp'
-EditField.cpp
-EventLoop.cpp
-Compiling 'neo\framework\File.cpp'
-File.cpp
-Compiling 'neo\framework\File_Manifest.cpp'
-File_Manifest.cpp
-Compiling 'neo\framework\File_Resource.cpp'
-Compiling 'neo\framework\File_SaveGame.cpp'
-File_Resource.cpp
-File_SaveGame.cpp
-Compiling 'neo\framework\File_Zip.cpp'
-File_Zip.cpp
-Compiling 'neo\framework\FileSystem.cpp'
-FileSystem.cpp
-Compiling 'neo\framework\KeyInput.cpp'
-KeyInput.cpp
-Compiling 'neo\framework\PlayerProfile.cpp'
-PlayerProfile.cpp
-Compiling 'neo\framework\precompiled.cpp'
-precompiled.cpp
-Compiling 'neo\framework\TokenParser.cpp'
-TokenParser.cpp
-Compiling 'neo\framework\UsercmdGen.cpp'
-UsercmdGen.cpp
-Compiling 'neo\framework\Zip.cpp'
-Zip.cpp
-Compiling 'neo\renderer\AutoRender.cpp'
-AutoRender.cpp
-Compiling 'neo\renderer\AutoRenderBink.cpp'
-AutoRenderBink.cpp
-Compiling 'neo\renderer\BinaryImage.cpp'
-BinaryImage.cpp
-Compiling 'neo\renderer\BufferObject.cpp'
-BufferObject.cpp
-Compiling 'neo\renderer\Cinematic.cpp'
-Cinematic.cpp
-Compiling 'neo\renderer\CinematicBink.cpp'
-CinematicBink.cpp
-Compiling 'neo\renderer\CinematicRoQ.cpp'
-CinematicRoQ.cpp
-Compiling 'neo\renderer\Color\ColorSpace.cpp'
-ColorSpace.cpp
-Compiling 'neo\renderer\DXT\DXTDecoder.cpp'
-DXTDecoder.cpp
-neo\renderer\CinematicBink.cpp(59): warning C4245: '=': conversion from 'int' to 'uint32', signed/unsigned mismatch
-Compiling 'neo\renderer\DXT\DXTEncoder.cpp'
-DXTEncoder.cpp
-Compiling 'neo\renderer\DXT\DXTEncoder_SSE2.cpp'
-DXTEncoder_SSE2.cpp
-Compiling 'neo\renderer\Font.cpp'
-Font.cpp
-Compiling 'neo\renderer\GLMatrix.cpp'
-GLMatrix.cpp
-Compiling 'neo\renderer\GuiModel.cpp'
-GuiModel.cpp
-Compiling 'neo\renderer\Image_files.cpp'
-Image_files.cpp
-Compiling 'neo\renderer\Image_intrinsic.cpp'
-Image_intrinsic.cpp
-Compiling 'neo\renderer\Image_load.cpp'
-Image_load.cpp
-Compiling 'neo\renderer\Image_process.cpp'
-Image_process.cpp
-Compiling 'neo\renderer\Image_program.cpp'
-Image_program.cpp
-Compiling 'neo\renderer\ImageManager.cpp'
-ImageManager.cpp
-Compiling 'neo\renderer\Interaction.cpp'
-Interaction.cpp
-Compiling 'neo\renderer\jobs\dynamicshadowvolume\DynamicShadowVolume.cpp'
-DynamicShadowVolume.cpp
-Compiling 'neo\renderer\jobs\prelightshadowvolume\PreLightShadowVolume.cpp'
-PreLightShadowVolume.cpp
-Compiling 'neo\renderer\jobs\ShadowShared.cpp'
-ShadowShared.cpp
-Compiling 'neo\renderer\jobs\staticshadowvolume\StaticShadowVolume.cpp'
-StaticShadowVolume.cpp
-Compiling 'neo\renderer\Material.cpp'
-Material.cpp
-Compiling 'neo\renderer\Model.cpp'
-Model.cpp
-Compiling 'neo\renderer\Model_ase.cpp'
-Model_ase.cpp
-Compiling 'neo\renderer\Model_beam.cpp'
-Model_beam.cpp
-Compiling 'neo\renderer\Model_liquid.cpp'
-Model_liquid.cpp
-Compiling 'neo\renderer\Model_lwo.cpp'
-Model_lwo.cpp
-Compiling 'neo\renderer\Model_ma.cpp'
-Model_ma.cpp
-Compiling 'neo\renderer\Model_md3.cpp'
-Model_md3.cpp
-Compiling 'neo\renderer\Model_md5.cpp'
-Model_md5.cpp
-Compiling 'neo\renderer\Model_prt.cpp'
-Compiling 'neo\renderer\Model_sprite.cpp'
-Model_prt.cpp
-Model_sprite.cpp
-Compiling 'neo\renderer\ModelDecal.cpp'
-ModelDecal.cpp
-Compiling 'neo\renderer\ModelManager.cpp'
-ModelManager.cpp
-Compiling 'neo\renderer\ModelOverlay.cpp'
-ModelOverlay.cpp
-Compiling 'neo\renderer\OpenGL\gl_backend.cpp'
-gl_backend.cpp
-Compiling 'neo\renderer\OpenGL\gl_GraphicsAPIWrapper.cpp'
-gl_GraphicsAPIWrapper.cpp
-Compiling 'neo\renderer\OpenGL\gl_Image.cpp'
-gl_Image.cpp
-Compiling 'neo\renderer\RenderEntity.cpp'
-RenderEntity.cpp
-Compiling 'neo\renderer\RenderLog.cpp'
-RenderLog.cpp
-Compiling 'neo\renderer\RenderProgs.cpp'
-RenderProgs.cpp
-Compiling 'neo\renderer\RenderProgs_GLSL.cpp'
-RenderProgs_GLSL.cpp
-Compiling 'neo\renderer\RenderSystem.cpp'
-RenderSystem.cpp
-Compiling 'neo\renderer\RenderSystem_init.cpp'
-RenderSystem_init.cpp
-Compiling 'neo\renderer\RenderWorld.cpp'
-RenderWorld.cpp
-Compiling 'neo\renderer\RenderWorld_defs.cpp'
-Compiling 'neo\renderer\RenderWorld_demo.cpp'
-RenderWorld_defs.cpp
-RenderWorld_demo.cpp
-Compiling 'neo\renderer\RenderWorld_load.cpp'
-RenderWorld_load.cpp
-Compiling 'neo\renderer\RenderWorld_portals.cpp'
-RenderWorld_portals.cpp
-Compiling 'neo\renderer\ResolutionScale.cpp'
-Compiling 'neo\renderer\ScreenRect.cpp'
-ResolutionScale.cpp
-ScreenRect.cpp
-Compiling 'neo\renderer\stblib_impls.c'
-stblib_impls.c
-Compiling 'neo\renderer\tr_backend_draw.cpp'
-tr_backend_draw.cpp
-Compiling 'neo\renderer\tr_backend_rendertools.cpp'
-tr_backend_rendertools.cpp
-Compiling 'neo\renderer\tr_frontend_addlights.cpp'
-Compiling 'neo\renderer\tr_frontend_addmodels.cpp'
-tr_frontend_addlights.cpp
-tr_frontend_addmodels.cpp
-neo\renderer\tr_backend_draw.cpp(170): warning C4389: '!=': signed/unsigned mismatch
-neo\renderer\tr_backend_draw.cpp(175): warning C4389: '!=': signed/unsigned mismatch
-neo\renderer\tr_backend_draw.cpp(1498): warning C4389: '!=': signed/unsigned mismatch
-neo\renderer\tr_backend_draw.cpp(1516): warning C4389: '!=': signed/unsigned mismatch
-neo\renderer\tr_backend_draw.cpp(1536): warning C4389: '!=': signed/unsigned mismatch
-Compiling 'neo\renderer\tr_frontend_deform.cpp'
-tr_frontend_deform.cpp
-Compiling 'neo\renderer\tr_frontend_guisurf.cpp'
-tr_frontend_guisurf.cpp
-Compiling 'neo\renderer\tr_frontend_main.cpp'
-tr_frontend_main.cpp
-Compiling 'neo\renderer\tr_frontend_subview.cpp'
-tr_frontend_subview.cpp
-Compiling 'neo\renderer\tr_trace.cpp'
-tr_trace.cpp
-Compiling 'neo\renderer\tr_trisurf.cpp'
-tr_trisurf.cpp
-Compiling 'neo\renderer\VertexCache.cpp'
-VertexCache.cpp
-Compiling 'neo\sound\OggFile.cpp'
-OggFile.cpp
-Compiling 'neo\sound\snd_emitter.cpp'
-snd_emitter.cpp
-Compiling 'neo\sound\snd_shader.cpp'
-snd_shader.cpp
-Compiling 'neo\sound\snd_system.cpp'
-snd_system.cpp
-Compiling 'neo\sound\snd_world.cpp'
-snd_world.cpp
-Compiling 'neo\sound\SoundVoice.cpp'
-SoundVoice.cpp
-Compiling 'neo\sound\stbvorbis_impl.c'
-stbvorbis_impl.c
-D:\a\Doom3BFG\Doom3BFG\neo\external\stb\stb_vorbis.h(4849) : warning C4701: potentially uninitialized local variable 'mid' used
-Compiling 'neo\sound\WaveFile.cpp'
-WaveFile.cpp
-Compiling 'neo\sound\XAudio2\XA2_CinematicAudio.cpp'
-XA2_CinematicAudio.cpp
-Compiling 'neo\sound\XAudio2\XA2_SoundHardware.cpp'
-XA2_SoundHardware.cpp
-Compiling 'neo\sound\XAudio2\XA2_SoundSample.cpp'
-XA2_SoundSample.cpp
-Compiling 'neo\sound\XAudio2\XA2_SoundVoice.cpp'
-XA2_SoundVoice.cpp
-Compiling 'neo\swf\SWF_Bitstream.cpp'
-SWF_Bitstream.cpp
-Compiling 'neo\swf\SWF_Dialogs.cpp'
-SWF_Dialogs.cpp
-Compiling 'neo\swf\SWF_Dictionary.cpp'
-SWF_Dictionary.cpp
-Compiling 'neo\swf\SWF_Events.cpp'
-SWF_Events.cpp
-Compiling 'neo\swf\SWF_Image.cpp'
-SWF_Image.cpp
-Compiling 'neo\swf\SWF_Inflate.cpp'
-SWF_Inflate.cpp
-Compiling 'neo\swf\SWF_Load.cpp'
-SWF_Load.cpp
-Compiling 'neo\swf\SWF_Main.cpp'
-SWF_Main.cpp
-Compiling 'neo\swf\SWF_Names.cpp'
-SWF_Names.cpp
-Compiling 'neo\swf\SWF_ParmList.cpp'
-SWF_ParmList.cpp
-Compiling 'neo\swf\SWF_PlaceObject.cpp'
-SWF_PlaceObject.cpp
-Compiling 'neo\swf\SWF_Render.cpp'
-SWF_Render.cpp
-Compiling 'neo\swf\SWF_ScriptFunction.cpp'
-SWF_ScriptFunction.cpp
-Compiling 'neo\swf\SWF_ScriptObject.cpp'
-SWF_ScriptObject.cpp
-Compiling 'neo\swf\SWF_ScriptVar.cpp'
-SWF_ScriptVar.cpp
-Compiling 'neo\swf\SWF_ShapeParser.cpp'
-SWF_ShapeParser.cpp
-Compiling 'neo\swf\SWF_Shapes.cpp'
-SWF_Shapes.cpp
-Compiling 'neo\swf\SWF_Sounds.cpp'
-SWF_Sounds.cpp
-Compiling 'neo\swf\SWF_SpriteInstance.cpp'
-SWF_SpriteInstance.cpp
-Compiling 'neo\swf\SWF_Sprites.cpp'
-SWF_Sprites.cpp
-Compiling 'neo\swf\SWF_Text.cpp'
-SWF_Text.cpp
-Compiling 'neo\swf\SWF_TextInstance.cpp'
-SWF_TextInstance.cpp
-Compiling 'neo\sys\LightweightCompression.cpp'
-LightweightCompression.cpp
-Compiling 'neo\sys\PacketProcessor.cpp'
-PacketProcessor.cpp
-Compiling 'neo\sys\Snapshot.cpp'
-Snapshot.cpp
-Compiling 'neo\sys\Snapshot_Jobs.cpp'
-Snapshot_Jobs.cpp
-Compiling 'neo\sys\SnapshotProcessor.cpp'
-SnapshotProcessor.cpp
-Compiling 'neo\sys\sys_achievements.cpp'
-sys_achievements.cpp
-Compiling 'neo\sys\sys_dedicated_server_search.cpp'
-sys_dedicated_server_search.cpp
-Compiling 'neo\sys\sys_lobby.cpp'
-sys_lobby.cpp
-Compiling 'neo\sys\sys_lobby_backend_direct.cpp'
-sys_lobby_backend_direct.cpp
-Compiling 'neo\sys\sys_lobby_migrate.cpp'
-sys_lobby_migrate.cpp
-Compiling 'neo\sys\sys_lobby_snapshot.cpp'
-sys_lobby_snapshot.cpp
-Compiling 'neo\sys\sys_lobby_users.cpp'
-sys_lobby_users.cpp
-Compiling 'neo\sys\sys_local.cpp'
-sys_local.cpp
-Compiling 'neo\sys\sys_localuser.cpp'
-sys_localuser.cpp
-Compiling 'neo\sys\sys_platform_local.cpp'
-sys_platform_local.cpp
-Compiling 'neo\sys\sys_profile.cpp'
-sys_profile.cpp
-Compiling 'neo\sys\sys_savegame.cpp'
-sys_savegame.cpp
-Compiling 'neo\sys\sys_session_callbacks.cpp'
-sys_session_callbacks.cpp
-Compiling 'neo\sys\sys_session_local.cpp'
-sys_session_local.cpp
-Compiling 'neo\sys\sys_session_savegames.cpp'
-sys_session_savegames.cpp
-Compiling 'neo\sys\sys_signin.cpp'
-sys_signin.cpp
-Compiling 'neo\sys\sys_voicechat.cpp'
-sys_voicechat.cpp
-Compiling 'neo\sys\win32\win_achievements.cpp'
-win_achievements.cpp
-Compiling 'neo\sys\win32\win_cpu.cpp'
-win_cpu.cpp
-Compiling 'neo\sys\win32\win_glimp.cpp'
-win_glimp.cpp
-Compiling 'neo\sys\win32\win_input.cpp'
-win_input.cpp
-Compiling 'neo\sys\win32\win_localuser.cpp'
-win_localuser.cpp
-Compiling 'neo\sys\win32\win_main.cpp'
-win_main.cpp
-Compiling 'neo\sys\win32\win_net.cpp'
-win_net.cpp
-Compiling 'neo\sys\win32\win_savegame.cpp'
-win_savegame.cpp
-Compiling 'neo\sys\win32\win_seh.cpp'
-win_seh.cpp
-Compiling 'neo\sys\win32\win_session_local.cpp'
-win_session_local.cpp
-Compiling 'neo\sys\win32\win_shared.cpp'
-win_shared.cpp
-Compiling 'neo\sys\win32\win_signin.cpp'
-win_signin.cpp
-Compiling 'neo\sys\win32\win_syscon.cpp'
-win_syscon.cpp
-Compiling 'neo\sys\win32\win_wndproc.cpp'
-win_wndproc.cpp
-Compiling 'neo\tools\compilers\aas\AASBuild.cpp'
-AASBuild.cpp
-Compiling 'neo\tools\compilers\aas\AASBuild_file.cpp'
-AASBuild_file.cpp
-Compiling 'neo\tools\compilers\aas\AASBuild_gravity.cpp'
-AASBuild_gravity.cpp
 
 

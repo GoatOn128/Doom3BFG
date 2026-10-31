@@ -1,19 +1,19 @@
 # Build digest
 
-commit: 9f9c5ca287e5
+commit: 5c7ef2054422
 
-- windows-x64-debug: cancelled
-- windows-x64-release: failure
-- windows-x64-release-dll: failure
-- windows-x86-debug: cancelled
+- windows-x64-debug: failure
+- windows-x64-release: cancelled
+- windows-x64-release-dll: cancelled
+- windows-x86-debug: success
 - windows-x86-release: success
 
 ## windows-x64-debug
 
-status: cancelled
+status: failure
 
 errors: 2
-warnings: 23 in 7 kinds
+warnings: 26 in 7 kinds
 
 ### errors
 
@@ -25,7 +25,6 @@ scons: *** [build\scons\windows-x64-debug-msvc\obj\DoomEXE\sys\win32\win_syscon.
 - build\scons\windows-x64-debug-msvc\obj\DoomEXE\sys\win32\win_syscon.cpp.obj
 
 ```
-Compiling 'neo\sys\win32\win_input.cpp'
 win_input.cpp
 Compiling 'neo\sys\win32\win_localuser.cpp'
 win_localuser.cpp
@@ -47,6 +46,8 @@ Compiling 'neo\sys\win32\win_syscon.cpp'
 win_syscon.cpp
 Compiling 'neo\sys\win32\win_wndproc.cpp'
 win_wndproc.cpp
+Compiling 'neo\tools\compilers\aas\AASBuild.cpp'
+AASBuild.cpp
 neo\sys\win32\win_syscon.cpp(119): warning C4311: 'type cast': pointer truncation from 'HBRUSH' to 'long'
 neo\sys\win32\win_syscon.cpp(119): warning C4302: 'type cast': truncation from 'HBRUSH' to 'long'
 neo\sys\win32\win_syscon.cpp(128): warning C4311: 'type cast': pointer truncation from 'HBRUSH' to 'long'
@@ -54,7 +55,6 @@ neo\sys\win32\win_syscon.cpp(128): warning C4302: 'type cast': truncation from '
 neo\sys\win32\win_syscon.cpp(392): error C2065: 'GWL_WNDPROC': undeclared identifier
 neo\sys\win32\win_syscon.cpp(392): warning C4311: 'type cast': pointer truncation from 'LONG (__cdecl *)(HWND,UINT,WPARAM,LPARAM)' to 'long'
 neo\sys\win32\win_syscon.cpp(392): warning C4302: 'type cast': truncation from 'LONG (__cdecl *)(HWND,UINT,WPARAM,LPARAM)' to 'long'
-Compiling 'neo\tools\compilers\aas\AASBuild.cpp'
 scons: *** [build\scons\windows-x64-debug-msvc\obj\DoomEXE\sys\win32\win_syscon.cpp.obj] Error 2
 ```
 
@@ -87,17 +87,20 @@ scons: *** [build\scons\windows-x64-debug-msvc\obj\DoomEXE\sys\win32\win_syscon.
   - neo\sys\win32\win_syscon.cpp(119): warning C4302: 'type cast': truncation from 'HBRUSH' to 'long'
   - neo\sys\win32\win_syscon.cpp(128): warning C4302: 'type cast': truncation from 'HBRUSH' to 'long'
   - neo\sys\win32\win_syscon.cpp(392): warning C4302: 'type cast': truncation from 'LONG (__cdecl *)(HWND,UINT,WPARAM,LPARAM)' to 'long'
+- [4x] C4701
+  - D:\a\Doom3BFG\Doom3BFG\neo\external\stb\stb_vorbis.h(4849) : warning C4701: potentially uninitialized local variable 'mid' used
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\aas\AASReach.cpp(267) : warning C4701: potentially uninitialized local variable 'edge1Num' used
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\amplitude\amplitude.cpp(177) : warning C4701: potentially uninitialized local variable 'format' used
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\renderbump\renderbump.cpp(1318) : warning C4701: potentially uninitialized local variable 'opt' used
 - [1x] C4101
   - neo\framework\Common.cpp(777): warning C4101: 'mouseEvents': unreferenced local variable
-- [1x] C4701
-  - D:\a\Doom3BFG\Doom3BFG\neo\external\stb\stb_vorbis.h(4849) : warning C4701: potentially uninitialized local variable 'mid' used
 
 ## windows-x64-release-dll
 
-status: failure
+status: cancelled
 
 errors: 32
-warnings: 32 in 8 kinds
+warnings: 26 in 7 kinds
 
 ### errors
 
@@ -139,12 +142,10 @@ scons: *** [build\scons\windows-x64-release-msvc\obj\Game-D3XP\d3xp\menus\MenuSc
 - build\scons\windows-x64-release-msvc\obj\DoomEXE\sys\win32\win_syscon.cpp.obj
 
 ```
-win_input.cpp
-Compiling 'neo\sys\win32\win_localuser.cpp'
-win_localuser.cpp
 Compiling 'neo\sys\win32\win_main.cpp'
-Compiling 'neo\sys\win32\win_net.cpp'
+win_localuser.cpp
 win_main.cpp
+Compiling 'neo\sys\win32\win_net.cpp'
 win_net.cpp
 Compiling 'neo\sys\win32\win_savegame.cpp'
 win_savegame.cpp
@@ -162,6 +163,8 @@ Compiling 'neo\sys\win32\win_wndproc.cpp'
 win_wndproc.cpp
 Compiling 'neo\tools\compilers\aas\AASBuild.cpp'
 AASBuild.cpp
+Compiling 'neo\tools\compilers\aas\AASBuild_file.cpp'
+AASBuild_file.cpp
 neo\sys\win32\win_syscon.cpp(119): warning C4311: 'type cast': pointer truncation from 'HBRUSH' to 'long'
 neo\sys\win32\win_syscon.cpp(119): warning C4302: 'type cast': truncation from 'HBRUSH' to 'long'
 neo\sys\win32\win_syscon.cpp(128): warning C4311: 'type cast': pointer truncation from 'HBRUSH' to 'long'
@@ -195,10 +198,10 @@ Entity.cpp
 Compiling 'neo\d3xp\Fx.cpp'
 Fx.cpp
 Compiling 'neo\d3xp\Game_local.cpp'
-Game_local.cpp
 Compiling 'neo\d3xp\Game_network.cpp'
-Compiling 'neo\d3xp\GameEdit.cpp'
+Game_local.cpp
 Game_network.cpp
+Compiling 'neo\d3xp\GameEdit.cpp'
 GameEdit.cpp
 Compiling 'neo\d3xp\gamesys\Class.cpp'
 Class.cpp
@@ -211,26 +214,26 @@ scons: *** [build\scons\windows-x64-release-msvc\obj\Game-D3XP\d3xp\Game_local.c
 - build\scons\windows-x64-release-msvc\obj\Game-D3XP\d3xp\menus\MenuHandler_Shell.cpp.obj
 
 ```
-Compiling 'neo\d3xp\Item.cpp'
-Item.cpp
 Compiling 'neo\d3xp\Leaderboards.cpp'
 Leaderboards.cpp
 Compiling 'neo\d3xp\Light.cpp'
 Light.cpp
 Compiling 'neo\d3xp\menus\MenuHandler.cpp'
-Compiling 'neo\d3xp\menus\MenuHandler_HUD.cpp'
 MenuHandler.cpp
+Compiling 'neo\d3xp\menus\MenuHandler_HUD.cpp'
 MenuHandler_HUD.cpp
 Compiling 'neo\d3xp\menus\MenuHandler_PDA.cpp'
 MenuHandler_PDA.cpp
 Compiling 'neo\d3xp\menus\MenuHandler_Scoreboard.cpp'
+MenuHandler_Scoreboard.cpp
 Compiling 'neo\d3xp\menus\MenuHandler_Shell.cpp'
 Compiling 'neo\d3xp\menus\MenuScreen.cpp'
-MenuHandler_Scoreboard.cpp
 MenuHandler_Shell.cpp
 MenuScreen.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_HUD.cpp'
 MenuScreen_HUD.cpp
+Compiling 'neo\d3xp\menus\MenuScreen_PDA_Inventory.cpp'
+MenuScreen_PDA_Inventory.cpp
 neo\d3xp\menus\MenuHandler_Shell.cpp(281): error C2653: 'idKeyInput': is not a class or namespace name
 neo\d3xp\menus\MenuHandler_Shell.cpp(281): error C3861: 'GetBinding': identifier not found
 neo\d3xp\menus\MenuHandler_Shell.cpp(283): error C2653: 'idKeyInput': is not a class or namespace name
@@ -248,13 +251,15 @@ scons: *** [build\scons\windows-x64-release-msvc\obj\Game-D3XP\d3xp\menus\MenuHa
 
 ```
 Compiling 'neo\d3xp\menus\MenuHandler_Scoreboard.cpp'
+MenuHandler_Scoreboard.cpp
 Compiling 'neo\d3xp\menus\MenuHandler_Shell.cpp'
 Compiling 'neo\d3xp\menus\MenuScreen.cpp'
-MenuHandler_Scoreboard.cpp
 MenuHandler_Shell.cpp
 MenuScreen.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_HUD.cpp'
 MenuScreen_HUD.cpp
+Compiling 'neo\d3xp\menus\MenuScreen_PDA_Inventory.cpp'
+MenuScreen_PDA_Inventory.cpp
 neo\d3xp\menus\MenuHandler_Shell.cpp(281): error C2653: 'idKeyInput': is not a class or namespace name
 neo\d3xp\menus\MenuHandler_Shell.cpp(281): error C3861: 'GetBinding': identifier not found
 neo\d3xp\menus\MenuHandler_Shell.cpp(283): error C2653: 'idKeyInput': is not a class or namespace name
@@ -266,8 +271,6 @@ neo\d3xp\menus\MenuHandler_Shell.cpp(300): error C3861: 'SetBinding': identifier
 neo\d3xp\menus\MenuHandler_Shell.cpp(328): error C2653: 'idKeyInput': is not a class or namespace name
 neo\d3xp\menus\MenuHandler_Shell.cpp(328): error C3861: 'SetBinding': identifier not found
 scons: *** [build\scons\windows-x64-release-msvc\obj\Game-D3XP\d3xp\menus\MenuHandler_Shell.cpp.obj] Error 2
-Compiling 'neo\d3xp\menus\MenuScreen_PDA_Inventory.cpp'
-MenuScreen_PDA_Inventory.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_PDA_UserData.cpp'
 MenuScreen_PDA_UserData.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_PDA_UserEmails.cpp'
@@ -283,7 +286,7 @@ scons: *** [build\scons\windows-x64-release-msvc\obj\Game-D3XP\d3xp\menus\MenuSc
 - build\scons\windows-x64-release-msvc\obj\Game-D3XP\d3xp\menus\MenuScreen_Shell_Bindings.cpp.obj
 
 ```
-MenuScreen_PDA_Inventory.cpp
+scons: *** [build\scons\windows-x64-release-msvc\obj\Game-D3XP\d3xp\menus\MenuHandler_Shell.cpp.obj] Error 2
 Compiling 'neo\d3xp\menus\MenuScreen_PDA_UserData.cpp'
 MenuScreen_PDA_UserData.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_PDA_UserEmails.cpp'
@@ -297,8 +300,8 @@ scons: *** [build\scons\windows-x64-release-msvc\obj\Game-D3XP\d3xp\menus\MenuSc
 Compiling 'neo\d3xp\menus\MenuScreen_PDA_VideoDisks.cpp'
 MenuScreen_PDA_VideoDisks.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Scoreboard.cpp'
-MenuScreen_Scoreboard.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Shell_Bindings.cpp'
+MenuScreen_Scoreboard.cpp
 MenuScreen_Shell_Bindings.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Shell_Browser.cpp'
 MenuScreen_Shell_Browser.cpp
@@ -324,8 +327,8 @@ scons: *** [build\scons\windows-x64-release-msvc\obj\Game-D3XP\d3xp\menus\MenuSc
 Compiling 'neo\d3xp\menus\MenuScreen_PDA_VideoDisks.cpp'
 MenuScreen_PDA_VideoDisks.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Scoreboard.cpp'
-MenuScreen_Scoreboard.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Shell_Bindings.cpp'
+MenuScreen_Scoreboard.cpp
 MenuScreen_Shell_Bindings.cpp
 Compiling 'neo\d3xp\menus\MenuScreen_Shell_Browser.cpp'
 MenuScreen_Shell_Browser.cpp
@@ -355,13 +358,6 @@ scons: *** [build\scons\windows-x64-release-msvc\obj\Game-D3XP\d3xp\menus\MenuSc
 
 ### warning kinds
 
-- [6x] C4702
-  - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(368) : warning C4702: unreachable code
-  - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(1048) : warning C4702: unreachable code
-  - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(1345) : warning C4702: unreachable code
-  - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(1379) : warning C4702: unreachable code
-  - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(1390) : warning C4702: unreachable code
-  - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(1422) : warning C4702: unreachable code
 - [5x] C4389
   - neo\renderer\tr_backend_draw.cpp(170): warning C4389: '!=': signed/unsigned mismatch
   - neo\renderer\tr_backend_draw.cpp(175): warning C4389: '!=': signed/unsigned mismatch
@@ -398,7 +394,7 @@ scons: *** [build\scons\windows-x64-release-msvc\obj\Game-D3XP\d3xp\menus\MenuSc
 
 ## windows-x64-release
 
-status: failure
+status: cancelled
 
 errors: 2
 warnings: 32 in 8 kinds
@@ -413,18 +409,18 @@ scons: *** [build\scons\windows-x64-release-msvc\obj\DoomEXE\sys\win32\win_sysco
 - build\scons\windows-x64-release-msvc\obj\DoomEXE\sys\win32\win_syscon.cpp.obj
 
 ```
-Compiling 'neo\sys\win32\win_main.cpp'
 win_localuser.cpp
-Compiling 'neo\sys\win32\win_net.cpp'
+Compiling 'neo\sys\win32\win_main.cpp'
 win_main.cpp
+Compiling 'neo\sys\win32\win_net.cpp'
 win_net.cpp
 Compiling 'neo\sys\win32\win_savegame.cpp'
 win_savegame.cpp
 Compiling 'neo\sys\win32\win_seh.cpp'
 win_seh.cpp
 Compiling 'neo\sys\win32\win_session_local.cpp'
-win_session_local.cpp
 Compiling 'neo\sys\win32\win_shared.cpp'
+win_session_local.cpp
 win_shared.cpp
 Compiling 'neo\sys\win32\win_signin.cpp'
 win_signin.cpp
@@ -492,10 +488,10 @@ scons: *** [build\scons\windows-x64-release-msvc\obj\DoomEXE\sys\win32\win_sysco
 
 ## windows-x86-debug
 
-status: cancelled
+status: success
 
 errors: 0
-warnings: 15 in 4 kinds
+warnings: 18 in 4 kinds
 
 ### errors
 
@@ -520,17 +516,20 @@ warnings: 15 in 4 kinds
   - neo\d3xp\Game_local.cpp(250): warning C4245: '=': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
   - neo\framework\Common_tools.cpp(40): warning C4245: 'initializing': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
   - neo\renderer\CinematicBink.cpp(59): warning C4245: '=': conversion from 'int' to 'uint32', signed/unsigned mismatch
+- [4x] C4701
+  - D:\a\Doom3BFG\Doom3BFG\neo\external\stb\stb_vorbis.h(4849) : warning C4701: potentially uninitialized local variable 'mid' used
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\aas\AASReach.cpp(267) : warning C4701: potentially uninitialized local variable 'edge1Num' used
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\amplitude\amplitude.cpp(177) : warning C4701: potentially uninitialized local variable 'format' used
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\renderbump\renderbump.cpp(1318) : warning C4701: potentially uninitialized local variable 'opt' used
 - [1x] C4101
   - neo\framework\Common.cpp(777): warning C4101: 'mouseEvents': unreferenced local variable
-- [1x] C4701
-  - D:\a\Doom3BFG\Doom3BFG\neo\external\stb\stb_vorbis.h(4849) : warning C4701: potentially uninitialized local variable 'mid' used
 
 ## windows-x86-release
 
 status: success
 
 errors: 0
-warnings: 22 in 5 kinds
+warnings: 0 in 0 kinds
 
 ### errors
 
@@ -539,32 +538,4 @@ warnings: 22 in 5 kinds
 
 
 ### warning kinds
-
-- [7x] C4389
-  - neo\d3xp\gamesys\Event.cpp(853): warning C4389: '!=': signed/unsigned mismatch
-  - neo\d3xp\gamesys\Event.cpp(943): warning C4389: '!=': signed/unsigned mismatch
-  - neo\renderer\tr_backend_draw.cpp(170): warning C4389: '!=': signed/unsigned mismatch
-  - neo\renderer\tr_backend_draw.cpp(175): warning C4389: '!=': signed/unsigned mismatch
-  - neo\renderer\tr_backend_draw.cpp(1498): warning C4389: '!=': signed/unsigned mismatch
-  - neo\renderer\tr_backend_draw.cpp(1516): warning C4389: '!=': signed/unsigned mismatch
-  - neo\renderer\tr_backend_draw.cpp(1536): warning C4389: '!=': signed/unsigned mismatch
-- [6x] C4702
-  - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(368) : warning C4702: unreachable code
-  - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(1048) : warning C4702: unreachable code
-  - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(1345) : warning C4702: unreachable code
-  - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(1379) : warning C4702: unreachable code
-  - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(1390) : warning C4702: unreachable code
-  - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(1422) : warning C4702: unreachable code
-- [4x] C4245
-  - neo\d3xp\Game_local.cpp(249): warning C4245: '=': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
-  - neo\d3xp\Game_local.cpp(250): warning C4245: '=': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
-  - neo\framework\Common_tools.cpp(40): warning C4245: 'initializing': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
-  - neo\renderer\CinematicBink.cpp(59): warning C4245: '=': conversion from 'int' to 'uint32', signed/unsigned mismatch
-- [4x] C4701
-  - D:\a\Doom3BFG\Doom3BFG\neo\external\stb\stb_vorbis.h(4849) : warning C4701: potentially uninitialized local variable 'mid' used
-  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\aas\AASReach.cpp(267) : warning C4701: potentially uninitialized local variable 'edge1Num' used
-  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\amplitude\amplitude.cpp(177) : warning C4701: potentially uninitialized local variable 'format' used
-  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\renderbump\renderbump.cpp(1318) : warning C4701: potentially uninitialized local variable 'opt' used
-- [1x] C4101
-  - neo\framework\Common.cpp(777): warning C4101: 'mouseEvents': unreferenced local variable
 
