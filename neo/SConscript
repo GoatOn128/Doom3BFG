@@ -51,9 +51,14 @@ _track_progress(main_env, doom_resources)
 # re-encoded by tooling.
 manifest_rc = os.path.join(OBJECT_ROOT, 'DoomEXE', 'doom_manifest.rc')
 os.makedirs(os.path.dirname(manifest_rc), exist_ok=True)
+manifest_path = os.path.join(
+    PROJECT_ROOT, 'sys', 'win32', 'rc', 'Doom3BFG.manifest')
+# rc scripts run C-style escapes on quoted strings, so a path with
+# ...\neo\... or ...\rc\... would collapse into control characters
+# (error RC2135: file not found). Double every backslash, matching the
+# res\\doom.ico reference in doom.rc.
 with open(manifest_rc, 'w') as rc_file:
-    rc_file.write('1 24 "%s"\n' % os.path.join(
-        PROJECT_ROOT, 'sys', 'win32', 'rc', 'Doom3BFG.manifest'))
+    rc_file.write('1 24 "%s"\n' % manifest_path.replace(os.sep, os.sep * 2))
 doom_resources.extend(main_env.RES(
     os.path.join(OBJECT_ROOT, 'DoomEXE', 'doom_manifest' + main_env.get('RESSUFFIX', '.res')),
     manifest_rc))
