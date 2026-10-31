@@ -2,19 +2,6 @@
     "configurations": [
         {
             "name": "Windows x64 Debug",
-            "compilerPath": "C:/Program Files/LLVM/bin/clang-cl.exe",
-            "compilerArgs": [
-                "-m64",
-                "/W4",
-                "/GS",
-                "/EHsc",
-                "/GR",
-                "/std:c++17",
-                "/MTd",
-                "/Z7",
-                "/Od"
-            ],
-            "intelliSenseMode": "windows-clang-x64",
             "includePath": [
                 "${workspaceFolder}/neo",
                 "${workspaceFolder}/neo/idlib",
@@ -32,27 +19,12 @@
                 "CTF",
                 "_DEBUG"
             ],
+            "intelliSenseMode": "windows-msvc-x64",
             "cStandard": "c11",
             "cppStandard": "c++17"
         },
         {
             "name": "Windows x64 Release",
-            "compilerPath": "C:/Program Files/LLVM/bin/clang-cl.exe",
-            "compilerArgs": [
-                "-m64",
-                "/W4",
-                "/GS",
-                "/EHsc",
-                "/GR",
-                "/std:c++17",
-                "/MT",
-                "/O2",
-                "/Ob2",
-                "/Gy",
-                "/GF",
-                "/Oi"
-            ],
-            "intelliSenseMode": "windows-clang-x64",
             "includePath": [
                 "${workspaceFolder}/neo",
                 "${workspaceFolder}/neo/idlib",
@@ -70,27 +42,12 @@
                 "CTF",
                 "NDEBUG"
             ],
+            "intelliSenseMode": "windows-msvc-x64",
             "cStandard": "c11",
             "cppStandard": "c++17"
         },
         {
             "name": "Windows x64 Retail",
-            "compilerPath": "C:/Program Files/LLVM/bin/clang-cl.exe",
-            "compilerArgs": [
-                "-m64",
-                "/W4",
-                "/GS",
-                "/EHsc",
-                "/GR",
-                "/std:c++17",
-                "/MT",
-                "/O2",
-                "/Ob2",
-                "/Gy",
-                "/GF",
-                "/Oi"
-            ],
-            "intelliSenseMode": "windows-clang-x64",
             "includePath": [
                 "${workspaceFolder}/neo",
                 "${workspaceFolder}/neo/idlib",
@@ -109,27 +66,12 @@
                 "NDEBUG",
                 "ID_RETAIL"
             ],
+            "intelliSenseMode": "windows-msvc-x64",
             "cStandard": "c11",
             "cppStandard": "c++17"
         },
         {
             "name": "Windows x64 Release (game dll)",
-            "compilerPath": "C:/Program Files/LLVM/bin/clang-cl.exe",
-            "compilerArgs": [
-                "-m64",
-                "/W4",
-                "/GS",
-                "/EHsc",
-                "/GR",
-                "/std:c++17",
-                "/MT",
-                "/O2",
-                "/Ob2",
-                "/Gy",
-                "/GF",
-                "/Oi"
-            ],
-            "intelliSenseMode": "windows-clang-x64",
             "includePath": [
                 "${workspaceFolder}/neo",
                 "${workspaceFolder}/neo/idlib",
@@ -146,27 +88,15 @@
                 "_D3XP",
                 "CTF",
                 "NDEBUG",
-                "GAME_DLL",
-                "__DOOM_DLL__"
+                "__DOOM_DLL__",
+                "GAME_DLL"
             ],
+            "intelliSenseMode": "windows-msvc-x64",
             "cStandard": "c11",
             "cppStandard": "c++17"
         },
         {
             "name": "Windows x86 Debug",
-            "compilerPath": "C:/Program Files/LLVM/bin/clang-cl.exe",
-            "compilerArgs": [
-                "-m32",
-                "/W4",
-                "/GS",
-                "/EHsc",
-                "/GR",
-                "/std:c++17",
-                "/MTd",
-                "/Z7",
-                "/Od"
-            ],
-            "intelliSenseMode": "windows-clang-x86",
             "includePath": [
                 "${workspaceFolder}/neo",
                 "${workspaceFolder}/neo/idlib",
@@ -185,27 +115,12 @@
                 "_DEBUG",
                 "_USE_32BIT_TIME_T"
             ],
+            "intelliSenseMode": "windows-msvc-x86",
             "cStandard": "c11",
             "cppStandard": "c++17"
         },
         {
             "name": "Windows x86 Release",
-            "compilerPath": "C:/Program Files/LLVM/bin/clang-cl.exe",
-            "compilerArgs": [
-                "-m32",
-                "/W4",
-                "/GS",
-                "/EHsc",
-                "/GR",
-                "/std:c++17",
-                "/MT",
-                "/O2",
-                "/Ob2",
-                "/Gy",
-                "/GF",
-                "/Oi"
-            ],
-            "intelliSenseMode": "windows-clang-x86",
             "includePath": [
                 "${workspaceFolder}/neo",
                 "${workspaceFolder}/neo/idlib",
@@ -224,6 +139,280 @@
                 "NDEBUG",
                 "_USE_32BIT_TIME_T"
             ],
+            "intelliSenseMode": "windows-msvc-x86",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        },
+        {
+            "name": "Windows x64 Debug (clang)",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang-cl.exe",
+            "compilerArgs": [
+                "-m64",
+                "/W4",
+                "/GS",
+                "/EHsc",
+                "/GR",
+                "/std:c++17",
+                "/MTd",
+                "/Z7",
+                "/Od"
+            ],
+            "includePath": [
+                "${workspaceFolder}/neo",
+                "${workspaceFolder}/neo/idlib",
+                "${workspaceFolder}/neo/external",
+                "${workspaceFolder}/neo/external/miniz",
+                "${workspaceFolder}/neo/external/minizip",
+                "${workspaceFolder}/neo/external/libbinkdec/include"
+            ],
+            "defines": [
+                "__DOOM__",
+                "ID_PC",
+                "_CRT_SECURE_NO_DEPRECATE",
+                "_CRT_NONSTDC_NO_DEPRECATE",
+                "_D3XP",
+                "CTF",
+                "_DEBUG"
+            ],
+            "intelliSenseMode": "windows-clang-x64",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        },
+        {
+            "name": "Windows x64 Release (clang)",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang-cl.exe",
+            "compilerArgs": [
+                "-m64",
+                "/W4",
+                "/GS",
+                "/EHsc",
+                "/GR",
+                "/std:c++17",
+                "/MT",
+                "/O2"
+            ],
+            "includePath": [
+                "${workspaceFolder}/neo",
+                "${workspaceFolder}/neo/idlib",
+                "${workspaceFolder}/neo/external",
+                "${workspaceFolder}/neo/external/miniz",
+                "${workspaceFolder}/neo/external/minizip",
+                "${workspaceFolder}/neo/external/libbinkdec/include"
+            ],
+            "defines": [
+                "__DOOM__",
+                "ID_PC",
+                "_CRT_SECURE_NO_DEPRECATE",
+                "_CRT_NONSTDC_NO_DEPRECATE",
+                "_D3XP",
+                "CTF",
+                "NDEBUG"
+            ],
+            "intelliSenseMode": "windows-clang-x64",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        },
+        {
+            "name": "Windows x64 Retail (clang)",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang-cl.exe",
+            "compilerArgs": [
+                "-m64",
+                "/W4",
+                "/GS",
+                "/EHsc",
+                "/GR",
+                "/std:c++17",
+                "/MT",
+                "/O2"
+            ],
+            "includePath": [
+                "${workspaceFolder}/neo",
+                "${workspaceFolder}/neo/idlib",
+                "${workspaceFolder}/neo/external",
+                "${workspaceFolder}/neo/external/miniz",
+                "${workspaceFolder}/neo/external/minizip",
+                "${workspaceFolder}/neo/external/libbinkdec/include"
+            ],
+            "defines": [
+                "__DOOM__",
+                "ID_PC",
+                "_CRT_SECURE_NO_DEPRECATE",
+                "_CRT_NONSTDC_NO_DEPRECATE",
+                "_D3XP",
+                "CTF",
+                "NDEBUG",
+                "ID_RETAIL"
+            ],
+            "intelliSenseMode": "windows-clang-x64",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        },
+        {
+            "name": "Windows x64 Release (game dll, clang)",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang-cl.exe",
+            "compilerArgs": [
+                "-m64",
+                "/W4",
+                "/GS",
+                "/EHsc",
+                "/GR",
+                "/std:c++17",
+                "/MT",
+                "/O2"
+            ],
+            "includePath": [
+                "${workspaceFolder}/neo",
+                "${workspaceFolder}/neo/idlib",
+                "${workspaceFolder}/neo/external",
+                "${workspaceFolder}/neo/external/miniz",
+                "${workspaceFolder}/neo/external/minizip",
+                "${workspaceFolder}/neo/external/libbinkdec/include"
+            ],
+            "defines": [
+                "__DOOM__",
+                "ID_PC",
+                "_CRT_SECURE_NO_DEPRECATE",
+                "_CRT_NONSTDC_NO_DEPRECATE",
+                "_D3XP",
+                "CTF",
+                "NDEBUG",
+                "__DOOM_DLL__",
+                "GAME_DLL"
+            ],
+            "intelliSenseMode": "windows-clang-x64",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        },
+        {
+            "name": "Windows x86 Debug (clang)",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang-cl.exe",
+            "compilerArgs": [
+                "-m32",
+                "/W4",
+                "/GS",
+                "/EHsc",
+                "/GR",
+                "/std:c++17",
+                "/MTd",
+                "/Z7",
+                "/Od"
+            ],
+            "includePath": [
+                "${workspaceFolder}/neo",
+                "${workspaceFolder}/neo/idlib",
+                "${workspaceFolder}/neo/external",
+                "${workspaceFolder}/neo/external/miniz",
+                "${workspaceFolder}/neo/external/minizip",
+                "${workspaceFolder}/neo/external/libbinkdec/include"
+            ],
+            "defines": [
+                "__DOOM__",
+                "ID_PC",
+                "_CRT_SECURE_NO_DEPRECATE",
+                "_CRT_NONSTDC_NO_DEPRECATE",
+                "_D3XP",
+                "CTF",
+                "_DEBUG",
+                "_USE_32BIT_TIME_T"
+            ],
+            "intelliSenseMode": "windows-clang-x86",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        },
+        {
+            "name": "Windows x86 Release (clang)",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang-cl.exe",
+            "compilerArgs": [
+                "-m32",
+                "/W4",
+                "/GS",
+                "/EHsc",
+                "/GR",
+                "/std:c++17",
+                "/MT",
+                "/O2"
+            ],
+            "includePath": [
+                "${workspaceFolder}/neo",
+                "${workspaceFolder}/neo/idlib",
+                "${workspaceFolder}/neo/external",
+                "${workspaceFolder}/neo/external/miniz",
+                "${workspaceFolder}/neo/external/minizip",
+                "${workspaceFolder}/neo/external/libbinkdec/include"
+            ],
+            "defines": [
+                "__DOOM__",
+                "ID_PC",
+                "_CRT_SECURE_NO_DEPRECATE",
+                "_CRT_NONSTDC_NO_DEPRECATE",
+                "_D3XP",
+                "CTF",
+                "NDEBUG",
+                "_USE_32BIT_TIME_T"
+            ],
+            "intelliSenseMode": "windows-clang-x86",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        },
+        {
+            "name": "Windows x64 Debug (gcc)",
+            "compilerPath": "gcc",
+            "compilerArgs": [
+                "-m64",
+                "-Wall",
+                "-Wextra",
+                "-fstack-protector",
+                "-std=c++17"
+            ],
+            "includePath": [
+                "${workspaceFolder}/neo",
+                "${workspaceFolder}/neo/idlib",
+                "${workspaceFolder}/neo/external",
+                "${workspaceFolder}/neo/external/miniz",
+                "${workspaceFolder}/neo/external/minizip",
+                "${workspaceFolder}/neo/external/libbinkdec/include"
+            ],
+            "defines": [
+                "__DOOM__",
+                "ID_PC",
+                "_CRT_SECURE_NO_DEPRECATE",
+                "_CRT_NONSTDC_NO_DEPRECATE",
+                "_D3XP",
+                "CTF",
+                "_DEBUG"
+            ],
+            "intelliSenseMode": "windows-gcc-x64",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        },
+        {
+            "name": "Windows x64 Release (gcc)",
+            "compilerPath": "gcc",
+            "compilerArgs": [
+                "-m64",
+                "-Wall",
+                "-Wextra",
+                "-fstack-protector",
+                "-std=c++17"
+            ],
+            "includePath": [
+                "${workspaceFolder}/neo",
+                "${workspaceFolder}/neo/idlib",
+                "${workspaceFolder}/neo/external",
+                "${workspaceFolder}/neo/external/miniz",
+                "${workspaceFolder}/neo/external/minizip",
+                "${workspaceFolder}/neo/external/libbinkdec/include"
+            ],
+            "defines": [
+                "__DOOM__",
+                "ID_PC",
+                "_CRT_SECURE_NO_DEPRECATE",
+                "_CRT_NONSTDC_NO_DEPRECATE",
+                "_D3XP",
+                "CTF",
+                "NDEBUG"
+            ],
+            "intelliSenseMode": "windows-gcc-x64",
             "cStandard": "c11",
             "cppStandard": "c++17"
         }

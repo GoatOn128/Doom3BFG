@@ -3,16 +3,8 @@
     "tasks": [
         {
             "label": "Build (x64 debug)",
-            "type": "process",
-            "command": "scons",
-            "args": [
-                "arch=x64",
-                "config=debug",
-                "-j8"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
+            "type": "shell",
+            "command": "call .\\.vscode\\scripts\\VS2026DevCmd.cmd x64 debug 8",
             "windows": {
                 "command": "cmd.exe",
                 "args": [
@@ -22,33 +14,25 @@
                     "call .\\.vscode\\scripts\\VS2026DevCmd.cmd x64 debug 8"
                 ]
             },
+            "args": [
+                "arch=x64",
+                "config=debug",
+                "-j8"
+            ],
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "problemMatcher": [
-                "$msCompile",
-                "$gcc"
-            ],
+            "problemMatcher": "$msCompile",
             "presentation": {
-                "reveal": "always",
-                "panel": "dedicated",
-                "clear": false,
-                "showReuseMessage": false
+                "clear": true,
+                "showReloadMessage": false
             }
         },
         {
             "label": "Build (x64 release)",
-            "type": "process",
-            "command": "scons",
-            "args": [
-                "arch=x64",
-                "config=release",
-                "-j8"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
+            "type": "shell",
+            "command": "call .\\.vscode\\scripts\\VS2026DevCmd.cmd x64 release 8",
             "windows": {
                 "command": "cmd.exe",
                 "args": [
@@ -58,29 +42,25 @@
                     "call .\\.vscode\\scripts\\VS2026DevCmd.cmd x64 release 8"
                 ]
             },
-            "problemMatcher": [
-                "$msCompile",
-                "$gcc"
+            "args": [
+                "arch=x64",
+                "config=release",
+                "-j8"
             ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": "$msCompile",
             "presentation": {
-                "reveal": "always",
-                "panel": "dedicated",
-                "clear": false,
-                "showReuseMessage": false
+                "clear": true,
+                "showReloadMessage": false
             }
         },
         {
             "label": "Build (x64 retail)",
-            "type": "process",
-            "command": "scons",
-            "args": [
-                "arch=x64",
-                "config=retail",
-                "-j8"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
+            "type": "shell",
+            "command": "call .\\.vscode\\scripts\\VS2026DevCmd.cmd x64 retail 8",
             "windows": {
                 "command": "cmd.exe",
                 "args": [
@@ -90,29 +70,25 @@
                     "call .\\.vscode\\scripts\\VS2026DevCmd.cmd x64 retail 8"
                 ]
             },
-            "problemMatcher": [
-                "$msCompile",
-                "$gcc"
+            "args": [
+                "arch=x64",
+                "config=retail",
+                "-j8"
             ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": "$msCompile",
             "presentation": {
-                "reveal": "always",
-                "panel": "dedicated",
-                "clear": false,
-                "showReuseMessage": false
+                "clear": true,
+                "showReloadMessage": false
             }
         },
         {
             "label": "Build (x86 debug)",
-            "type": "process",
-            "command": "scons",
-            "args": [
-                "arch=x86",
-                "config=debug",
-                "-j8"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
+            "type": "shell",
+            "command": "call .\\.vscode\\scripts\\VS2026DevCmd.cmd x86 debug 8",
             "windows": {
                 "command": "cmd.exe",
                 "args": [
@@ -122,29 +98,25 @@
                     "call .\\.vscode\\scripts\\VS2026DevCmd.cmd x86 debug 8"
                 ]
             },
-            "problemMatcher": [
-                "$msCompile",
-                "$gcc"
+            "args": [
+                "arch=x86",
+                "config=debug",
+                "-j8"
             ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": "$msCompile",
             "presentation": {
-                "reveal": "always",
-                "panel": "dedicated",
-                "clear": false,
-                "showReuseMessage": false
+                "clear": true,
+                "showReloadMessage": false
             }
         },
         {
             "label": "Build (x86 release)",
-            "type": "process",
-            "command": "scons",
-            "args": [
-                "arch=x86",
-                "config=release",
-                "-j8"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
+            "type": "shell",
+            "command": "call .\\.vscode\\scripts\\VS2026DevCmd.cmd x86 release 8",
             "windows": {
                 "command": "cmd.exe",
                 "args": [
@@ -154,29 +126,25 @@
                     "call .\\.vscode\\scripts\\VS2026DevCmd.cmd x86 release 8"
                 ]
             },
-            "problemMatcher": [
-                "$msCompile",
-                "$gcc"
+            "args": [
+                "arch=x86",
+                "config=release",
+                "-j8"
             ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": "$msCompile",
             "presentation": {
-                "reveal": "always",
-                "panel": "dedicated",
-                "clear": false,
-                "showReuseMessage": false
+                "clear": true,
+                "showReloadMessage": false
             }
         },
         {
             "label": "Build (x86 retail)",
-            "type": "process",
-            "command": "scons",
-            "args": [
-                "arch=x86",
-                "config=retail",
-                "-j8"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
+            "type": "shell",
+            "command": "call .\\.vscode\\scripts\\VS2026DevCmd.cmd x86 retail 8",
             "windows": {
                 "command": "cmd.exe",
                 "args": [
@@ -186,30 +154,25 @@
                     "call .\\.vscode\\scripts\\VS2026DevCmd.cmd x86 retail 8"
                 ]
             },
-            "problemMatcher": [
-                "$msCompile",
-                "$gcc"
+            "args": [
+                "arch=x86",
+                "config=retail",
+                "-j8"
             ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": "$msCompile",
             "presentation": {
-                "reveal": "always",
-                "panel": "dedicated",
-                "clear": false,
-                "showReuseMessage": false
+                "clear": true,
+                "showReloadMessage": false
             }
         },
         {
             "label": "Build (x64 release, game dll)",
-            "type": "process",
-            "command": "scons",
-            "args": [
-                "arch=x64",
-                "config=release",
-                "dll=1",
-                "-j8"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
+            "type": "shell",
+            "command": "call .\\.vscode\\scripts\\VS2026DevCmd.cmd x64 release 8 dll",
             "windows": {
                 "command": "cmd.exe",
                 "args": [
@@ -219,42 +182,159 @@
                     "call .\\.vscode\\scripts\\VS2026DevCmd.cmd x64 release 8 dll"
                 ]
             },
-            "problemMatcher": [
-                "$msCompile",
-                "$gcc"
+            "args": [
+                "arch=x64",
+                "config=release",
+                "dll=1",
+                "-j8"
             ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": "$msCompile",
             "presentation": {
-                "reveal": "always",
-                "panel": "dedicated",
-                "clear": false,
-                "showReuseMessage": false
+                "clear": true,
+                "showReloadMessage": false
             }
         },
         {
-            "label": "Clean",
-            "type": "process",
-            "command": "scons",
-            "args": [
-                "-c"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
+            "label": "Build (x64 debug, clang)",
+            "type": "shell",
+            "command": "call .\\.vscode\\scripts\\VS2026DevCmd.cmd x64 debug 8 \"\" clang",
             "windows": {
                 "command": "cmd.exe",
                 "args": [
                     "/d",
                     "/s",
                     "/c",
-                    "call .\\.vscode\\scripts\\VS2026DevCmd.cmd x64 clean 1"
+                    "call .\\.vscode\\scripts\\VS2026DevCmd.cmd x64 debug 8 \"\" clang"
                 ]
             },
+            "args": [
+                "arch=x64",
+                "config=debug",
+                "toolchain=clang",
+                "-j8"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "clear": true,
+                "showReloadMessage": false
+            }
+        },
+        {
+            "label": "Build (x64 release, clang)",
+            "type": "shell",
+            "command": "call .\\.vscode\\scripts\\VS2026DevCmd.cmd x64 release 8 \"\" clang",
+            "windows": {
+                "command": "cmd.exe",
+                "args": [
+                    "/d",
+                    "/s",
+                    "/c",
+                    "call .\\.vscode\\scripts\\VS2026DevCmd.cmd x64 release 8 \"\" clang"
+                ]
+            },
+            "args": [
+                "arch=x64",
+                "config=release",
+                "toolchain=clang",
+                "-j8"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "clear": true,
+                "showReloadMessage": false
+            }
+        },
+        {
+            "label": "Build (x64 debug, gcc)",
+            "type": "shell",
+            "command": "call .\\.vscode\\scripts\\VS2026DevCmd.cmd x64 debug 8 \"\" gcc",
+            "windows": {
+                "command": "cmd.exe",
+                "args": [
+                    "/d",
+                    "/s",
+                    "/c",
+                    "call .\\.vscode\\scripts\\VS2026DevCmd.cmd x64 debug 8 \"\" gcc"
+                ]
+            },
+            "args": [
+                "arch=x64",
+                "config=debug",
+                "toolchain=gcc",
+                "-j8"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "clear": true,
+                "showReloadMessage": false
+            }
+        },
+        {
+            "label": "Build (x64 release, gcc)",
+            "type": "shell",
+            "command": "call .\\.vscode\\scripts\\VS2026DevCmd.cmd x64 release 8 \"\" gcc",
+            "windows": {
+                "command": "cmd.exe",
+                "args": [
+                    "/d",
+                    "/s",
+                    "/c",
+                    "call .\\.vscode\\scripts\\VS2026DevCmd.cmd x64 release 8 \"\" gcc"
+                ]
+            },
+            "args": [
+                "arch=x64",
+                "config=release",
+                "toolchain=gcc",
+                "-j8"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "clear": true,
+                "showReloadMessage": false
+            }
+        },
+        {
+            "label": "Clean",
+            "type": "shell",
+            "command": "call .\\.vscode\\scripts\\VS2026DevCmd.cmd x64 clean",
+            "windows": {
+                "command": "cmd.exe",
+                "args": [
+                    "/d",
+                    "/s",
+                    "/c",
+                    "call .\\.vscode\\scripts\\VS2026DevCmd.cmd x64 clean"
+                ]
+            },
+            "args": [
+                "-c"
+            ],
+            "group": "build",
             "problemMatcher": [],
             "presentation": {
-                "reveal": "always",
-                "panel": "dedicated",
-                "clear": false,
-                "showReuseMessage": false
+                "clear": true,
+                "showReloadMessage": false
             }
         }
     ]

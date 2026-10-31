@@ -11,10 +11,29 @@ rem   call .\.vscode\scripts\VS2026DevCmd.cmd x86 debug 8
 rem       Loads the matching environment and runs SCons.
 rem   call .\.vscode\scripts\VS2026DevCmd.cmd x64 release 8 dll
 rem       Same, plus dll=1 so the game code builds as bin/gamex86.dll.
+rem   call .\.vscode\scripts\VS2026DevCmd.cmd x64 debug 8 "" clang
+rem       Same, but with toolchain=clang (LLVM over MSVC).
+rem   call .\.vscode\scripts\VS2026DevCmd.cmd x64 debug 8 "" gcc
+rem       Builds with MinGW gcc; Visual Studio is not used or required.
 
 set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
 set "VSINSTALL_FILE=%TEMP%\VSDevCmd_%RANDOM%_%RANDOM%.txt"
 set "VSINSTALL="
+
+rem Parse the arguments before the Visual Studio lookup: the gcc
+rem toolchain does not use Visual Studio at all and branches out early.
+set "BUILD_ARCH=%~1"
+set "BUILD_CONFIG=%~2"
+set "BUILD_JOBS=%~3"
+set "BUILD_DLL=%~4"
+set "BUILD_TOOLCHAIN=%~5"
+if not defined BUILD_TOOLCHAIN set "BUILD_TOOLCHAIN=msvc"
+if not "%~1"=="" if /i not "%BUILD_ARCH%"=="x86" if /i not "%BUILD_ARCH%"=="x64" goto bad_arch
+if not "%~1"=="" if /i not "%BUILD_CONFIG%"=="debug" if /i not "%BUILD_CONFIG%"=="release" if /i not "%BUILD_CONFIG%"=="retail" if /i not "%BUILD_CONFIG%"=="clean" goto bad_config
+if not defined BUILD_JOBS set "BUILD_JOBS=8"
+if not "%~1"=="" if defined BUILD_DLL if /i not "%BUILD_DLL%"=="dll" goto bad_dll
+if /i not "%BUILD_TOOLCHAIN%"=="msvc" if /i not "%BUILD_TOOLCHAIN%"=="clang" if /i not "%BUILD_TOOLCHAIN%"=="gcc" goto bad_toolchain
+if /i "%BUILD_TOOLCHAIN%"=="gcc" if not "%~1"=="" goto gcc_build
 
 if not exist "%VSWHERE%" goto no_vswhere
 
@@ -41,16 +60,6 @@ if not exist "%VSDEVCMD%" goto no_vsdevcmd
 
 if "%~1"=="" goto interactive
 
-set "BUILD_ARCH=%~1"
-set "BUILD_CONFIG=%~2"
-set "BUILD_JOBS=%~3"
-set "BUILD_DLL=%~4"
-
-if /i not "%BUILD_ARCH%"=="x86" if /i not "%BUILD_ARCH%"=="x64" goto bad_arch
-if /i not "%BUILD_CONFIG%"=="debug" if /i not "%BUILD_CONFIG%"=="release" if /i not "%BUILD_CONFIG%"=="retail" if /i not "%BUILD_CONFIG%"=="clean" goto bad_config
-if not defined BUILD_JOBS set "BUILD_JOBS=8"
-if defined BUILD_DLL if /i not "%BUILD_DLL%"=="dll" goto bad_dll
-
 call "%VSDEVCMD%" -arch=%BUILD_ARCH% -host_arch=x64
 if not errorlevel 1 goto developer_environment_ready
 set "VSDEV_ERROR=%ERRORLEVEL%"
@@ -64,20 +73,20 @@ if errorlevel 1 goto cd_failed
 if /i "%BUILD_CONFIG%"=="clean" goto clean
 if defined BUILD_DLL goto build_dll
 
-echo [VSDevCmd] Building arch=%BUILD_ARCH% config=%BUILD_CONFIG% jobs=%BUILD_JOBS%
-scons arch=%BUILD_ARCH% config=%BUILD_CONFIG% -j%BUILD_JOBS%
+echo [VSDevCmd] Building arch=%BUILD_ARCH% config=%BUILD_CONFIG% toolchain=%BUILD_TOOLCHAIN% jobs=%BUILD_JOBS%
+scons arch=%BUILD_ARCH% config=%BUILD_CONFIG% toolchain=%BUILD_TOOLCHAIN% -j%BUILD_JOBS%
 set "BUILD_RESULT=%ERRORLEVEL%"
 goto build_finished
 
 :build_dll
-echo [VSDevCmd] Building arch=%BUILD_ARCH% config=%BUILD_CONFIG% dll=1 jobs=%BUILD_JOBS%
-scons arch=%BUILD_ARCH% config=%BUILD_CONFIG% dll=1 -j%BUILD_JOBS%
+echo [VSDevCmd] Building arch=%BUILD_ARCH% config=%BUILD_CONFIG% toolchain=%BUILD_TOOLCHAIN% dll=1 jobs=%BUILD_JOBS%
+scons arch=%BUILD_ARCH% config=%BUILD_CONFIG% toolchain=%BUILD_TOOLCHAIN% dll=1 -j%BUILD_JOBS%
 set "BUILD_RESULT=%ERRORLEVEL%"
 goto build_finished
 
 :clean
 echo [VSDevCmd] Cleaning build outputs.
-scons -c
+scons toolchain=%BUILD_TOOLCHAIN% -c
 set "BUILD_RESULT=%ERRORLEVEL%"
 
 :build_finished
@@ -89,6 +98,35 @@ set "BUILD_ARCH="
 set "BUILD_CONFIG="
 set "BUILD_JOBS="
 set "BUILD_DLL="
+set "BUILD_TOOLCHAIN="
+exit /b %BUILD_RESULT%
+
+:gcc_build
+cd /d "%~dp0..\.."
+if errorlevel 1 goto cd_failed
+echo [VSDevCmd] Building arch=%BUILD_ARCH% config=%BUILD_CONFIG% toolchain=gcc jobs=%BUILD_JOBS%
+if /i "%BUILD_CONFIG%"=="clean" goto gcc_clean
+if defined BUILD_DLL goto gcc_build_dll
+scons arch=%BUILD_ARCH% config=%BUILD_CONFIG% toolchain=gcc -j%BUILD_JOBS%
+set "BUILD_RESULT=%ERRORLEVEL%"
+goto gcc_finished
+
+:gcc_build_dll
+scons arch=%BUILD_ARCH% config=%BUILD_CONFIG% toolchain=gcc dll=1 -j%BUILD_JOBS%
+set "BUILD_RESULT=%ERRORLEVEL%"
+goto gcc_finished
+
+:gcc_clean
+echo [VSDevCmd] Cleaning gcc build outputs.
+scons toolchain=gcc -c
+set "BUILD_RESULT=%ERRORLEVEL%"
+
+:gcc_finished
+set "BUILD_ARCH="
+set "BUILD_CONFIG="
+set "BUILD_JOBS="
+set "BUILD_DLL="
+set "BUILD_TOOLCHAIN="
 exit /b %BUILD_RESULT%
 
 :interactive
@@ -131,6 +169,10 @@ exit /b 2
 
 :bad_dll
 echo [VSDevCmd] ERROR: The fourth argument must be dll or empty.
+exit /b 2
+
+:bad_toolchain
+echo [VSDevCmd] ERROR: Toolchain must be msvc, clang, or gcc.
 exit /b 2
 
 :cd_failed
