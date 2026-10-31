@@ -150,7 +150,6 @@ uniform sampler2D samp0;
 uniform sampler2D samp1;
 
 in vec4 vofi_TexCoord0;
-in vec4 gl_FragCoord;
 in vec4 vofi_TexCoord1;
 
 out vec4 out_FragColor0;
