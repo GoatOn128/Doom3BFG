@@ -1,21 +1,25 @@
 # Doom3BFG — Copilot instructions
 
 Doom 3 BFG Edition GPL sources with a from-scratch SCons build ported from the
-original Premake scripts. Windows only. The toolchain is LLVM: clang-cl compiles,
-lld-link links, llvm-lib archives. MSVC supplies headers, libraries and the
-resource tooling environment (vcvars or msvc-dev-cmd), nothing else.
+original Premake scripts. Windows only. Three toolchains: msvc (default) builds
+with cl.exe/link.exe/lib.exe from the MSVC environment (vcvars or msvc-dev-cmd);
+clang drives LLVM clang-cl/lld-link/llvm-lib over MSVC headers and libraries;
+gcc uses a MinGW-w64 gcc/g++/windres toolchain from PATH.
 
 ## Build
 
-    scons arch=x64 config=debug
+    scons toolchain=msvc arch=x64 config=debug
+    scons toolchain=clang arch=x64 config=debug
+    scons toolchain=gcc arch=x64 config=debug
     scons arch=x86 config=release
     scons arch=x64 config=release dll=1
 
 - arch: x86 or x64 (default x64). config: debug, release or retail (default debug).
+- toolchain: msvc (default), clang, or gcc.
 - dll=1 links Game-D3XP as bin/gamex86.dll instead of a static library.
 - verbose=1 shows full compiler command lines. -jN overrides the default job count.
-- Outputs: bin/Doom3BFG.exe, bin/gamex86.dll (dll=1), static libs under build/scons/windows-<arch>-<config>/lib.
-- LLVM must be on PATH (or pass llvm_bin=<path>) and the MSVC environment must be active.
+- Outputs: bin/Doom3BFG.exe, bin/gamex86.dll (dll=1), static libs under build/scons/windows-<arch>-<config>-<toolchain>/lib.
+- toolchain=msvc needs the MSVC environment (vcvars or msvc-dev-cmd). toolchain=clang also needs LLVM on PATH or llvm_bin=<path>. toolchain=gcc needs MinGW-w64 gcc/g++/windres on PATH.
 
 ## Layout
 
@@ -28,7 +32,7 @@ resource tooling environment (vcvars or msvc-dev-cmd), nothing else.
 
 One workflow builds per push, then a second publishes its results:
 
-- build-windows (ci-windows.yml) — matrix of x86/x64 times debug/release plus an x64 release dll=1 leg, built with clang-cl.
+- build-windows (ci-windows.yml) — matrix of x86/x64 times debug/release plus an x64 release dll=1 leg, built with MSVC (the default toolchain).
 - publish (ci-publish.yml) — after the build finishes, commits build-digest.md and build-windows.log to the repo root.
 
 Working rules:

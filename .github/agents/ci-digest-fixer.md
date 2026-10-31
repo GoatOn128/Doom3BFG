@@ -20,4 +20,4 @@ Hard rules:
 - Never edit build-digest.md, build-windows.log, or any CI-owned output.
 - Formatting is manual: uncrustify.cfg describes the project style and there is no format bot. Keep formatting changes in their own commit, never mixed into a fix.
 - Never touch neo/external; it is bundled third-party code.
-- The build is Windows-only: scons arch=x86|x64 config=debug|release|retail [dll=1], compiled with clang-cl.
+- The build is Windows-only: scons toolchain=msvc|clang|gcc arch=x86|x64 config=debug|release|retail [dll=1]; MSVC is the default toolchain.
