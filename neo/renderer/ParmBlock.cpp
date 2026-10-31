@@ -1,6 +1,7 @@
 #include "precompiled.h"
 #pragma hdrstop
 
+#include <cmath>
 #include <cstring>
 #include "ParmBlock.h"
 
@@ -13,11 +14,11 @@ this is a re-implementation on this engine's idlib.
 
 static int c_redundantOperationsRemoved = 0;
 
-const idRenderProgParm * expOp_t::GetDest() const {
+const idRenderProgParm * progOp_t::GetDest() const {
 	return parmIndexDest >= INVALID_PARM_INDEX ? nullptr : renderProgParms.GetRenderParmForIndex( parmIndexDest );
 }
 
-const idRenderProgParm * expOp_t::GetA() const {
+const idRenderProgParm * progOp_t::GetA() const {
 	return parmIndexA >= INVALID_PARM_INDEX ? nullptr : renderProgParms.GetRenderParmForIndex( parmIndexA );
 }
 
@@ -39,25 +40,25 @@ static void ApplyWriteMask( parmValue_t & dest, const parmValue_t & src, int wri
 // Evaluate a single operation. parmValue is the destination; components not
 // covered by a write mask keep whatever the caller left in it, matching the
 // TNO behavior.
-static void ApplyOp( const expOp_t & operation, const parmValue_t & constant,
+static void ApplyOp( const progOp_t & operation, const parmValue_t & constant,
 					 const parmValue_t & parmA, const parmValue_t & parmB, parmValue_t & parmValue ) {
 	const int type = operation.type & 0x1F;
 	const int writeMask = ( operation.type >> 9 ) & 0x0F;
 
 	switch ( type ) {
-		case OP_TYPE_UNMASKED_MOVE_CONSTANT:
+		case PROG_OP_UNMASKED_MOVE_CONSTANT:
 			ApplyWriteMask( parmValue, constant, 0 );
 			break;
-		case OP_TYPE_MOVE_CONSTANT:
+		case PROG_OP_MOVE_CONSTANT:
 			ApplyWriteMask( parmValue, constant, writeMask );
 			break;
-		case OP_TYPE_UNMASKED_MOVE:
+		case PROG_OP_UNMASKED_MOVE:
 			ApplyWriteMask( parmValue, parmA, 0 );
 			break;
-		case OP_TYPE_MOVE:
+		case PROG_OP_MOVE:
 			ApplyWriteMask( parmValue, parmA, writeMask );
 			break;
-		case OP_TYPE_SWIZZLE:
+		case PROG_OP_SWIZZLE:
 			for ( int i = 0; i < 4; i++ ) {
 				const int swizzle = constant.swizzle[i];
 				if ( swizzle < 0 || swizzle > 3 ) {
@@ -66,44 +67,44 @@ static void ApplyOp( const expOp_t & operation, const parmValue_t & constant,
 				parmValue.value[i] = parmA.value[swizzle];
 			}
 			break;
-		case OP_TYPE_ADD:
-		case OP_TYPE_SUBTRACT:
-		case OP_TYPE_MULTIPLY:
-		case OP_TYPE_DIVIDE:
-		case OP_TYPE_MOD:
-		case OP_TYPE_GT:
-		case OP_TYPE_GE:
-		case OP_TYPE_LT:
-		case OP_TYPE_LE:
-		case OP_TYPE_EQ:
-		case OP_TYPE_NE:
-		case OP_TYPE_AND:
-		case OP_TYPE_OR: {
+		case PROG_OP_ADD:
+		case PROG_OP_SUBTRACT:
+		case PROG_OP_MULTIPLY:
+		case PROG_OP_DIVIDE:
+		case PROG_OP_MOD:
+		case PROG_OP_GT:
+		case PROG_OP_GE:
+		case PROG_OP_LT:
+		case PROG_OP_LE:
+		case PROG_OP_EQ:
+		case PROG_OP_NE:
+		case PROG_OP_AND:
+		case PROG_OP_OR: {
 			for ( int i = 0; i < 4; i++ ) {
 				const float a = parmA.value[i];
 				const float b = parmB.value[i];
 				float result = 0.0f;
 				switch ( type ) {
-					case OP_TYPE_ADD:			result = a + b; break;
-					case OP_TYPE_SUBTRACT:		result = a - b; break;
-					case OP_TYPE_MULTIPLY:		result = a * b; break;
-					case OP_TYPE_DIVIDE:		result = b != 0.0f ? a / b : 0.0f; break;
-					case OP_TYPE_MOD:			result = b != 0.0f ? idMath::Fmod( a, b ) : 0.0f; break;
-					case OP_TYPE_GT:			result = a > b ? 1.0f : 0.0f; break;
-					case OP_TYPE_GE:			result = a >= b ? 1.0f : 0.0f; break;
-					case OP_TYPE_LT:			result = a < b ? 1.0f : 0.0f; break;
-					case OP_TYPE_LE:			result = a <= b ? 1.0f : 0.0f; break;
-					case OP_TYPE_EQ:			result = a == b ? 1.0f : 0.0f; break;
-					case OP_TYPE_NE:			result = a != b ? 1.0f : 0.0f; break;
-					case OP_TYPE_AND:			result = ( a != 0.0f && b != 0.0f ) ? 1.0f : 0.0f; break;
-					case OP_TYPE_OR:			result = ( a != 0.0f || b != 0.0f ) ? 1.0f : 0.0f; break;
+					case PROG_OP_ADD:			result = a + b; break;
+					case PROG_OP_SUBTRACT:		result = a - b; break;
+					case PROG_OP_MULTIPLY:		result = a * b; break;
+					case PROG_OP_DIVIDE:		result = b != 0.0f ? a / b : 0.0f; break;
+					case PROG_OP_MOD:			result = b != 0.0f ? fmodf( a, b ) : 0.0f; break;
+					case PROG_OP_GT:			result = a > b ? 1.0f : 0.0f; break;
+					case PROG_OP_GE:			result = a >= b ? 1.0f : 0.0f; break;
+					case PROG_OP_LT:			result = a < b ? 1.0f : 0.0f; break;
+					case PROG_OP_LE:			result = a <= b ? 1.0f : 0.0f; break;
+					case PROG_OP_EQ:			result = a == b ? 1.0f : 0.0f; break;
+					case PROG_OP_NE:			result = a != b ? 1.0f : 0.0f; break;
+					case PROG_OP_AND:			result = ( a != 0.0f && b != 0.0f ) ? 1.0f : 0.0f; break;
+					case PROG_OP_OR:			result = ( a != 0.0f || b != 0.0f ) ? 1.0f : 0.0f; break;
 					default: break;
 				}
 				parmValue.value[i] = result;
 			}
 			break;
 		}
-		case OP_TYPE_DOT3:
+		case PROG_OP_DOT3:
 			parmValue.value[1] = 0.0f;
 			parmValue.value[2] = 0.0f;
 			parmValue.value[3] = 0.0f;
@@ -111,7 +112,7 @@ static void ApplyOp( const expOp_t & operation, const parmValue_t & constant,
 								 parmA.value[1] * parmB.value[1] +
 								 parmA.value[2] * parmB.value[2];
 			break;
-		case OP_TYPE_DOT4:
+		case PROG_OP_DOT4:
 			parmValue.value[1] = 0.0f;
 			parmValue.value[2] = 0.0f;
 			parmValue.value[3] = 0.0f;
@@ -152,7 +153,7 @@ void idParmBlock::CopyFrom( const idParmBlock & other ) {
 	}
 }
 
-void idParmBlock::AddOp( const expOp_t & operation, const parmValue_t & constant ) {
+void idParmBlock::AddOp( const progOp_t & operation, const parmValue_t & constant ) {
 	ops.Append( operation );
 	constants.Append( constant );
 }
@@ -224,7 +225,7 @@ void idParmBlock::ClearParm( const idRenderProgParm * parm ) {
 			continue;
 		}
 		const int type = ops[index].type & 0x1F;
-		removedComplexOperation |= ( type >= OP_TYPE_SWIZZLE );
+		removedComplexOperation |= ( type >= PROG_OP_SWIZZLE );
 		ops.RemoveIndex( index );
 		constants.RemoveIndex( index );
 		index--;
@@ -245,7 +246,7 @@ void idParmBlock::SetParm( const idRenderProgParm * parm, const parmValue_t & va
 	bool replacedComplexOperation = false;
 	if ( index < 0 ) {
 		index = ops.Num();
-		expOp_t operation;
+		progOp_t operation;
 		memset( &operation, 0, sizeof( operation ) );
 		parmValue_t constant;
 		memset( &constant, 0, sizeof( constant ) );
@@ -253,7 +254,7 @@ void idParmBlock::SetParm( const idRenderProgParm * parm, const parmValue_t & va
 		constants.Append( constant );
 	} else {
 		const int oldType = ops[index].type & 0x1F;
-		replacedComplexOperation = ( oldType >= OP_TYPE_SWIZZLE );
+		replacedComplexOperation = ( oldType >= PROG_OP_SWIZZLE );
 	}
 	ops[index].type = static_cast< unsigned short >(
 		( static_cast< int >( parm->GetType() ) << 5 ) | ( ops[index].type & 0xFE00u ) );
@@ -277,7 +278,7 @@ void idParmBlock::SetParm( const idRenderProgParm * parm, const idRenderProgParm
 	bool replacedComplexOperation = false;
 	if ( index < 0 ) {
 		index = ops.Num();
-		expOp_t operation;
+		progOp_t operation;
 		memset( &operation, 0, sizeof( operation ) );
 		parmValue_t constant;
 		memset( &constant, 0, sizeof( constant ) );
@@ -285,10 +286,10 @@ void idParmBlock::SetParm( const idRenderProgParm * parm, const idRenderProgParm
 		constants.Append( constant );
 	} else {
 		const int oldType = ops[index].type & 0x1F;
-		replacedComplexOperation = ( oldType >= OP_TYPE_SWIZZLE );
+		replacedComplexOperation = ( oldType >= PROG_OP_SWIZZLE );
 	}
 	ops[index].type = static_cast< unsigned short >(
-		( static_cast< int >( parm->GetType() ) << 5 ) | ( ops[index].type & 0xFE00u ) | OP_TYPE_UNMASKED_MOVE );
+		( static_cast< int >( parm->GetType() ) << 5 ) | ( ops[index].type & 0xFE00u ) | PROG_OP_UNMASKED_MOVE );
 	ops[index].parmIndexDest = static_cast< short >( parm->GetIndex() );
 	ops[index].parmIndexA = static_cast< short >( sourceParm->GetIndex() );
 	ops[index].parmIndexB = INVALID_PARM_INDEX;
@@ -361,7 +362,7 @@ void idParmBlock::GetRenderParmFromOps_r( parmValue_t & parmValue, int numOps,
 	parmValue_t parmB;
 	memset( &parmA, 0, sizeof( parmA ) );
 	memset( &parmB, 0, sizeof( parmB ) );
-	const expOp_t & operation = block->ops[operationIndex];
+	const progOp_t & operation = block->ops[operationIndex];
 	if ( operation.parmIndexA != INVALID_PARM_INDEX ) {
 		block->GetRenderParmFromOps_r( parmA, operationIndex, operation.parmIndexA, parent );
 	}
@@ -411,13 +412,13 @@ bool idParmBlock::IsEqualSimple( const idParmBlock & other ) const {
 	}
 	for ( int index = 0; index < other.ops.Num(); index++ ) {
 		const int type = other.ops[index].type & 0x1F;
-		if ( type != OP_TYPE_UNMASKED_MOVE_CONSTANT && type != OP_TYPE_MOVE_CONSTANT ) {
+		if ( type != PROG_OP_UNMASKED_MOVE_CONSTANT && type != PROG_OP_MOVE_CONSTANT ) {
 			return false;
 		}
 	}
 	for ( int leftIndex = 0; leftIndex < ops.Num(); leftIndex++ ) {
 		const int type = ops[leftIndex].type & 0x1F;
-		if ( type != OP_TYPE_UNMASKED_MOVE_CONSTANT && type != OP_TYPE_MOVE_CONSTANT ) {
+		if ( type != PROG_OP_UNMASKED_MOVE_CONSTANT && type != PROG_OP_MOVE_CONSTANT ) {
 			return false;
 		}
 		int rightIndex = 0;
@@ -438,8 +439,8 @@ bool idParmBlock::operator==( const idParmBlock & other ) const {
 		return false;
 	}
 	for ( int index = 0; index < ops.Num(); index++ ) {
-		const expOp_t & left = ops[index];
-		const expOp_t & right = other.ops[index];
+		const progOp_t & left = ops[index];
+		const progOp_t & right = other.ops[index];
 		if ( left.type != right.type || left.parmIndexDest != right.parmIndexDest ||
 			 left.parmIndexA != right.parmIndexA || left.parmIndexB != right.parmIndexB ) {
 			return false;

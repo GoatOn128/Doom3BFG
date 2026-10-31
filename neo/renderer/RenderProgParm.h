@@ -48,7 +48,7 @@ public:
 	const char *			GetName() const { return name; }
 	parmType_t				GetType() const { return parmType; }
 	int						GetIndex() const { return parmIndex; }
-	const parmValue_t &	GetDeclaredValue() const { return declaredValue; }
+	const parmValue_t &		GetDeclaredValue() const { return declaredValue; }
 
 private:
 	const char *			name = nullptr;
@@ -60,6 +60,12 @@ private:
 // Must match RENDERPARM_TOTAL in RenderProgs.h and the uniform register
 // list in global.inc.
 static const int RENDERPROG_NUM_BUILTIN_PARMS = 53;
+
+// Temporary expression parms used by the parm block parser. The indices
+// continue the TNO numbering just below INVALID_PARM_INDEX (2175), which is
+// defined in ParmBlock.h as "no parm".
+static const int RENDERPROG_NUM_TEMPORARY_PARMS = 32;
+static const int RENDERPROG_FIRST_TEMPORARY_PARM_INDEX = 2175 - RENDERPROG_NUM_TEMPORARY_PARMS;
 
 class idRenderProgParmState {
 public:

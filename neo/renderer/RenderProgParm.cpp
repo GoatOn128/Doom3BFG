@@ -12,7 +12,7 @@ static const char * const s_renderParmNames[RENDERPROG_NUM_BUILTIN_PARMS] = {
 	"rpDiffuseModifier",			// c2
 	"rpSpecularModifier",			// c3
 	"rpLocalLightOrigin",			// c4
-	"rpLocalViewOrigin",			// c5
+	"rpLocalViewOrigin",				// c5
 	"rpLightProjectionS",			// c6
 	"rpLightProjectionT",			// c7
 	"rpLightProjectionQ",			// c8
@@ -21,8 +21,8 @@ static const char * const s_renderParmNames[RENDERPROG_NUM_BUILTIN_PARMS] = {
 	"rpBumpMatrixT",					// c11
 	"rpDiffuseMatrixS",				// c12
 	"rpDiffuseMatrixT",				// c13
-	"rpSpecularMatrixS",			// c14
-	"rpSpecularMatrixT",			// c15
+	"rpSpecularMatrixS",				// c14
+	"rpSpecularMatrixT",				// c15
 	"rpVertexColorModulate",		// c16
 	"rpVertexColorAdd",				// c17
 	"rpColor",						// c18
@@ -62,6 +62,10 @@ static const char * const s_renderParmNames[RENDERPROG_NUM_BUILTIN_PARMS] = {
 	"rpAlphaTest"					// c52
 };
 
+// The temporary expression parm names must outlive the registry entries
+// because idRenderProgParm only stores the raw pointer.
+static idStr s_temporaryParmNames[RENDERPROG_NUM_TEMPORARY_PARMS];
+
 idRenderProgParm::idRenderProgParm( const char * name, parmType_t type, int index ) {
 	this->name = name;
 	parmType = type;
@@ -78,6 +82,13 @@ void idRenderProgParmState::EnsureBuilt() {
 	parms.SetGranularity( 64 );
 	for ( int index = 0; index < RENDERPROG_NUM_BUILTIN_PARMS; index++ ) {
 		parms.Append( idRenderProgParm( s_renderParmNames[index], PT_VECTOR, index ) );
+	}
+	// Temporary expression parms used by the parm block parser; their
+	// indices sit just below INVALID_PARM_INDEX.
+	for ( int index = 0; index < RENDERPROG_NUM_TEMPORARY_PARMS; index++ ) {
+		s_temporaryParmNames[index].Format( "temp%i", index + 1 );
+		parms.Append( idRenderProgParm( s_temporaryParmNames[index].c_str(), PT_VECTOR,
+										RENDERPROG_FIRST_TEMPORARY_PARM_INDEX + index ) );
 	}
 }
 
@@ -96,10 +107,18 @@ const idRenderProgParm * idRenderProgParmState::FindParmByName( const char * nam
 
 const idRenderProgParm * idRenderProgParmState::GetRenderParmForIndex( int index ) {
 	EnsureBuilt();
-	if ( index < 0 || index >= parms.Num() ) {
+	if ( index < 0 ) {
 		return nullptr;
 	}
-	return &parms[index];
+	// The array position no longer equals the parm index now that the
+	// temporary parms are appended after the built-in registers, so scan
+	// by index.
+	for ( int i = 0; i < parms.Num(); i++ ) {
+		if ( parms[i].GetIndex() == index ) {
+			return &parms[i];
+		}
+	}
+	return nullptr;
 }
 
 const char * idRenderProgParmState::GetParmNameForIndex( int index ) {
