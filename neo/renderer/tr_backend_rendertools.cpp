@@ -92,32 +92,32 @@ void RB_DrawBounds( const idBounds &bounds ) {
 	if ( bounds.IsCleared() ) {
 		return;
 	}
-	qglBegin( GL_LINE_LOOP );
-	qglVertex3f( bounds[0][0], bounds[0][1], bounds[0][2] );
-	qglVertex3f( bounds[0][0], bounds[1][1], bounds[0][2] );
-	qglVertex3f( bounds[1][0], bounds[1][1], bounds[0][2] );
-	qglVertex3f( bounds[1][0], bounds[0][1], bounds[0][2] );
-	qglEnd();
-	qglBegin( GL_LINE_LOOP );
-	qglVertex3f( bounds[0][0], bounds[0][1], bounds[1][2] );
-	qglVertex3f( bounds[0][0], bounds[1][1], bounds[1][2] );
-	qglVertex3f( bounds[1][0], bounds[1][1], bounds[1][2] );
-	qglVertex3f( bounds[1][0], bounds[0][1], bounds[1][2] );
-	qglEnd();
+	gladGL.Begin( GL_LINE_LOOP );
+	gladGL.Vertex3f( bounds[0][0], bounds[0][1], bounds[0][2] );
+	gladGL.Vertex3f( bounds[0][0], bounds[1][1], bounds[0][2] );
+	gladGL.Vertex3f( bounds[1][0], bounds[1][1], bounds[0][2] );
+	gladGL.Vertex3f( bounds[1][0], bounds[0][1], bounds[0][2] );
+	gladGL.End();
+	gladGL.Begin( GL_LINE_LOOP );
+	gladGL.Vertex3f( bounds[0][0], bounds[0][1], bounds[1][2] );
+	gladGL.Vertex3f( bounds[0][0], bounds[1][1], bounds[1][2] );
+	gladGL.Vertex3f( bounds[1][0], bounds[1][1], bounds[1][2] );
+	gladGL.Vertex3f( bounds[1][0], bounds[0][1], bounds[1][2] );
+	gladGL.End();
 
-	qglBegin( GL_LINES );
-	qglVertex3f( bounds[0][0], bounds[0][1], bounds[0][2] );
-	qglVertex3f( bounds[0][0], bounds[0][1], bounds[1][2] );
+	gladGL.Begin( GL_LINES );
+	gladGL.Vertex3f( bounds[0][0], bounds[0][1], bounds[0][2] );
+	gladGL.Vertex3f( bounds[0][0], bounds[0][1], bounds[1][2] );
 
-	qglVertex3f( bounds[0][0], bounds[1][1], bounds[0][2] );
-	qglVertex3f( bounds[0][0], bounds[1][1], bounds[1][2] );
+	gladGL.Vertex3f( bounds[0][0], bounds[1][1], bounds[0][2] );
+	gladGL.Vertex3f( bounds[0][0], bounds[1][1], bounds[1][2] );
 
-	qglVertex3f( bounds[1][0], bounds[0][1], bounds[0][2] );
-	qglVertex3f( bounds[1][0], bounds[0][1], bounds[1][2] );
+	gladGL.Vertex3f( bounds[1][0], bounds[0][1], bounds[0][2] );
+	gladGL.Vertex3f( bounds[1][0], bounds[0][1], bounds[1][2] );
 
-	qglVertex3f( bounds[1][0], bounds[1][1], bounds[0][2] );
-	qglVertex3f( bounds[1][0], bounds[1][1], bounds[1][2] );
-	qglEnd();
+	gladGL.Vertex3f( bounds[1][0], bounds[1][1], bounds[0][2] );
+	gladGL.Vertex3f( bounds[1][0], bounds[1][1], bounds[1][2] );
+	gladGL.End();
 }
 
 
@@ -129,7 +129,7 @@ RB_SimpleSurfaceSetup
 static void RB_SimpleSurfaceSetup( const drawSurf_t *drawSurf ) {
 	// change the matrix if needed
 	if ( drawSurf->space != backEnd.currentSpace ) {
-		qglLoadMatrixf( drawSurf->space->modelViewMatrix );
+		gladGL.LoadMatrixf( drawSurf->space->modelViewMatrix );
 		backEnd.currentSpace = drawSurf->space;
 	}
 
@@ -152,7 +152,7 @@ static void RB_SimpleWorldSetup() {
 	backEnd.currentSpace = &backEnd.viewDef->worldSpace;
 
 
-	qglLoadMatrixf( backEnd.viewDef->worldSpace.modelViewMatrix );
+	gladGL.LoadMatrixf( backEnd.viewDef->worldSpace.modelViewMatrix );
 
 	GL_Scissor( backEnd.viewDef->viewport.x1 + backEnd.viewDef->scissor.x1,
 				backEnd.viewDef->viewport.y1 + backEnd.viewDef->scissor.y1,
@@ -172,21 +172,21 @@ stenciling will matter.
 =================
 */
 void RB_PolygonClear() {
-	qglPushMatrix();
-	qglPushAttrib( GL_ALL_ATTRIB_BITS  );
-	qglLoadIdentity();
-	qglDisable( GL_TEXTURE_2D );
-	qglDisable( GL_DEPTH_TEST );
-	qglDisable( GL_CULL_FACE );
-	qglDisable( GL_SCISSOR_TEST );
-	qglBegin( GL_POLYGON );
-	qglVertex3f( -20, -20, -10 );
-	qglVertex3f( 20, -20, -10 );
-	qglVertex3f( 20, 20, -10 );
-	qglVertex3f( -20, 20, -10 );
-	qglEnd();
-	qglPopAttrib();
-	qglPopMatrix();
+	gladGL.PushMatrix();
+	gladGL.PushAttrib( GL_ALL_ATTRIB_BITS  );
+	gladGL.LoadIdentity();
+	gladGL.Disable( GL_TEXTURE_2D );
+	gladGL.Disable( GL_DEPTH_TEST );
+	gladGL.Disable( GL_CULL_FACE );
+	gladGL.Disable( GL_SCISSOR_TEST );
+	gladGL.Begin( GL_POLYGON );
+	gladGL.Vertex3f( -20, -20, -10 );
+	gladGL.Vertex3f( 20, -20, -10 );
+	gladGL.Vertex3f( 20, 20, -10 );
+	gladGL.Vertex3f( -20, 20, -10 );
+	gladGL.End();
+	gladGL.PopAttrib();
+	gladGL.PopMatrix();
 }
 
 /*
@@ -215,7 +215,7 @@ void RB_ScanStencilBuffer() {
 	memset( counts, 0, sizeof( counts ) );
 
 	stencilReadback = (byte *)R_StaticAlloc( renderSystem->GetWidth() * renderSystem->GetHeight(), TAG_RENDER_TOOLS );
-	qglReadPixels( 0, 0, renderSystem->GetWidth(), renderSystem->GetHeight(), GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, stencilReadback );
+	gladGL.ReadPixels( 0, 0, renderSystem->GetWidth(), renderSystem->GetHeight(), GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, stencilReadback );
 
 	for ( i = 0; i < renderSystem->GetWidth() * renderSystem->GetHeight(); i++ ) {
 		counts[ stencilReadback[i] ]++;
@@ -247,7 +247,7 @@ static void RB_CountStencilBuffer() {
 
 
 	stencilReadback = (byte *)R_StaticAlloc( renderSystem->GetWidth() * renderSystem->GetHeight(), TAG_RENDER_TOOLS );
-	qglReadPixels( 0, 0, renderSystem->GetWidth(), renderSystem->GetHeight(), GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, stencilReadback );
+	gladGL.ReadPixels( 0, 0, renderSystem->GetWidth(), renderSystem->GetHeight(), GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, stencilReadback );
 
 	count = 0;
 	for ( i = 0; i < renderSystem->GetWidth() * renderSystem->GetHeight(); i++ ) {
@@ -286,15 +286,15 @@ static void R_ColorByStencilBuffer() {
 	GL_Clear( true, false, false, 0, 1.0f, 1.0f, 1.0f, 1.0f );
 
 	// now draw color for each stencil value
-	qglStencilOp( GL_KEEP, GL_KEEP, GL_KEEP );
+	gladGL.StencilOp( GL_KEEP, GL_KEEP, GL_KEEP );
 	for ( i = 0; i < 6; i++ ) {
 		GL_Color( colors[i] );
 		renderProgManager.BindShader_Color();
-		qglStencilFunc( GL_EQUAL, i, 255 );
+		gladGL.StencilFunc( GL_EQUAL, i, 255 );
 		RB_PolygonClear();
 	}
 
-	qglStencilFunc( GL_ALWAYS, 0, 255 );
+	gladGL.StencilFunc( GL_ALWAYS, 0, 255 );
 }
 
 //======================================================================
@@ -392,7 +392,7 @@ static void RB_ShowIntensity() {
 	}
 
 	colorReadback = (byte *)R_StaticAlloc( renderSystem->GetWidth() * renderSystem->GetHeight() * 4, TAG_RENDER_TOOLS );
-	qglReadPixels( 0, 0, renderSystem->GetWidth(), renderSystem->GetHeight(), GL_RGBA, GL_UNSIGNED_BYTE, colorReadback );
+	gladGL.ReadPixels( 0, 0, renderSystem->GetWidth(), renderSystem->GetHeight(), GL_RGBA, GL_UNSIGNED_BYTE, colorReadback );
 
 	c = renderSystem->GetWidth() * renderSystem->GetHeight() * 4;
 	for ( i = 0; i < c; i+=4 ) {
@@ -415,19 +415,19 @@ static void RB_ShowIntensity() {
 	}
 
 	// draw it back to the screen
-	qglLoadIdentity();
-	qglMatrixMode( GL_PROJECTION );
+	gladGL.LoadIdentity();
+	gladGL.MatrixMode( GL_PROJECTION );
 	GL_State( GLS_DEPTHFUNC_ALWAYS );
-	qglPushMatrix();
-	qglLoadIdentity();
-    qglOrtho( 0, 1, 0, 1, -1, 1 );
-	qglRasterPos2f( 0, 0 );
-	qglPopMatrix();
+	gladGL.PushMatrix();
+	gladGL.LoadIdentity();
+    gladGL.Ortho( 0, 1, 0, 1, -1, 1 );
+	gladGL.RasterPos2f( 0, 0 );
+	gladGL.PopMatrix();
 	GL_Color( 1, 1, 1 );
 	globalImages->BindNull();
-	qglMatrixMode( GL_MODELVIEW );
+	gladGL.MatrixMode( GL_MODELVIEW );
 
-	qglDrawPixels( renderSystem->GetWidth(), renderSystem->GetHeight(), GL_RGBA , GL_UNSIGNED_BYTE, colorReadback );
+	gladGL.DrawPixels( renderSystem->GetWidth(), renderSystem->GetHeight(), GL_RGBA , GL_UNSIGNED_BYTE, colorReadback );
 
 	R_StaticFree( colorReadback );
 }
@@ -447,16 +447,16 @@ static void RB_ShowDepthBuffer() {
 		return;
 	}
 
-	qglPushMatrix();
-	qglLoadIdentity();
-	qglMatrixMode( GL_PROJECTION );
-	qglPushMatrix();
-	qglLoadIdentity();
-    qglOrtho( 0, 1, 0, 1, -1, 1 );
-	qglRasterPos2f( 0, 0 );
-	qglPopMatrix();
-	qglMatrixMode( GL_MODELVIEW );
-	qglPopMatrix();
+	gladGL.PushMatrix();
+	gladGL.LoadIdentity();
+	gladGL.MatrixMode( GL_PROJECTION );
+	gladGL.PushMatrix();
+	gladGL.LoadIdentity();
+    gladGL.Ortho( 0, 1, 0, 1, -1, 1 );
+	gladGL.RasterPos2f( 0, 0 );
+	gladGL.PopMatrix();
+	gladGL.MatrixMode( GL_MODELVIEW );
+	gladGL.PopMatrix();
 
 	GL_State( GLS_DEPTHFUNC_ALWAYS );
 	GL_Color( 1, 1, 1 );
@@ -465,7 +465,7 @@ static void RB_ShowDepthBuffer() {
 	depthReadback = R_StaticAlloc( renderSystem->GetWidth() * renderSystem->GetHeight()*4, TAG_RENDER_TOOLS );
 	memset( depthReadback, 0, renderSystem->GetWidth() * renderSystem->GetHeight()*4 );
 
-	qglReadPixels( 0, 0, renderSystem->GetWidth(), renderSystem->GetHeight(), GL_DEPTH_COMPONENT , GL_FLOAT, depthReadback );
+	gladGL.ReadPixels( 0, 0, renderSystem->GetWidth(), renderSystem->GetHeight(), GL_DEPTH_COMPONENT , GL_FLOAT, depthReadback );
 
 #if 0
 	for ( i = 0; i < renderSystem->GetWidth() * renderSystem->GetHeight(); i++ ) {
@@ -476,7 +476,7 @@ static void RB_ShowDepthBuffer() {
 	}
 #endif
 
-	qglDrawPixels( renderSystem->GetWidth(), renderSystem->GetHeight(), GL_RGBA , GL_UNSIGNED_BYTE, depthReadback );
+	gladGL.DrawPixels( renderSystem->GetWidth(), renderSystem->GetHeight(), GL_RGBA , GL_UNSIGNED_BYTE, depthReadback );
 	R_StaticFree( depthReadback );
 }
 
@@ -559,9 +559,9 @@ static void RB_EnterWeaponDepthHack() {
 	matrix[10] *= modelDepthHack;
 	matrix[14] *= modelDepthHack;
 
-	qglMatrixMode( GL_PROJECTION );
-	qglLoadMatrixf( matrix );
-	qglMatrixMode( GL_MODELVIEW );
+	gladGL.MatrixMode( GL_PROJECTION );
+	gladGL.LoadMatrixf( matrix );
+	gladGL.MatrixMode( GL_MODELVIEW );
 }
 
 /*
@@ -576,9 +576,9 @@ static void RB_EnterModelDepthHack( float depth ) {
 
 	matrix[14] -= depth;
 
-	qglMatrixMode( GL_PROJECTION );
-	qglLoadMatrixf( matrix );
-	qglMatrixMode( GL_MODELVIEW );
+	gladGL.MatrixMode( GL_PROJECTION );
+	gladGL.LoadMatrixf( matrix );
+	gladGL.MatrixMode( GL_MODELVIEW );
 }
 
 /*
@@ -587,9 +587,9 @@ RB_LeaveDepthHack
 ===============
 */
 static void RB_LeaveDepthHack() {
-	qglMatrixMode( GL_PROJECTION );
-	qglLoadMatrixf( backEnd.viewDef->projectionMatrix );
-	qglMatrixMode( GL_MODELVIEW );
+	gladGL.MatrixMode( GL_PROJECTION );
+	gladGL.LoadMatrixf( backEnd.viewDef->projectionMatrix );
+	gladGL.MatrixMode( GL_MODELVIEW );
 }
 
 /*
@@ -689,7 +689,7 @@ static void RB_ShowSilhouette() {
 	// clear all triangle edges to black
 	//
 	globalImages->BindNull();
-	qglDisable( GL_TEXTURE_2D );
+	gladGL.Disable( GL_TEXTURE_2D );
 
 	GL_Color( 0, 0, 0 );
 
@@ -721,11 +721,11 @@ static void RB_ShowSilhouette() {
 					continue;
 				}
 
-				qglBindBufferARB( GL_ARRAY_BUFFER_ARB, (GLuint)vertexBuffer.GetAPIObject() );
+				gladGL.BindBufferARB( GL_ARRAY_BUFFER_ARB, (GLuint)vertexBuffer.GetAPIObject() );
 				int vertOffset = vertexBuffer.GetOffset();
 
-				qglVertexPointer( 3, GL_FLOAT, sizeof( idShadowVert ), (void *)vertOffset );
-				qglBegin( GL_LINES );
+				gladGL.VertexPointer( 3, GL_FLOAT, sizeof( idShadowVert ), (void *)vertOffset );
+				gladGL.Begin( GL_LINES );
 
 				for ( int j = 0; j < tri->numIndexes; j+=3 ) {
 					int		i1 = tri->indexes[j+0];
@@ -734,15 +734,15 @@ static void RB_ShowSilhouette() {
 
 					if ( (i1 & 1) + (i2 & 1) + (i3 & 1) == 1 ) {
 						if ( (i1 & 1) + (i2 & 1) == 0 ) {
-							qglArrayElement( i1 );
-							qglArrayElement( i2 );
+							gladGL.ArrayElement( i1 );
+							gladGL.ArrayElement( i2 );
 						} else if ( (i1 & 1 ) + (i3 & 1) == 0 ) {
-							qglArrayElement( i1 );
-							qglArrayElement( i3 );
+							gladGL.ArrayElement( i1 );
+							gladGL.ArrayElement( i3 );
 						}
 					}
 				}
-				qglEnd();
+				gladGL.End();
 
 			}
 		}
@@ -824,7 +824,7 @@ static void RB_ShowSurfaceInfo( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 	}
 
 	globalImages->BindNull();
-	qglDisable( GL_TEXTURE_2D );
+	gladGL.Disable( GL_TEXTURE_2D );
 
 	GL_Color( 1, 1, 1 );
 
@@ -880,7 +880,7 @@ static void RB_ShowViewEntitys( viewEntity_t *vModels ) {
 	for ( const viewEntity_t * vModel = vModels; vModel; vModel = vModel->next ) {
 		idBounds	b;
 
-		qglLoadMatrixf( vModel->modelViewMatrix );
+		gladGL.LoadMatrixf( vModel->modelViewMatrix );
 
 		const idRenderEntityLocal * edef = vModel->entityDef;
 		if ( !edef ) {
@@ -959,7 +959,7 @@ static void RB_ShowTexturePolarity( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 
 		RB_SimpleSurfaceSetup( drawSurf );
 
-		qglBegin( GL_TRIANGLES );
+		gladGL.Begin( GL_TRIANGLES );
 		for ( j = 0; j < tri->numIndexes; j+=3 ) {
 			idDrawVert	*a, *b, *c;
 			float		d0[5], d1[5];
@@ -988,11 +988,11 @@ static void RB_ShowTexturePolarity( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 			} else {
 				GL_Color( 0, 1, 0, 0.5 );
 			}
-			qglVertex3fv( a->xyz.ToFloatPtr() );
-			qglVertex3fv( b->xyz.ToFloatPtr() );
-			qglVertex3fv( c->xyz.ToFloatPtr() );
+			gladGL.Vertex3fv( a->xyz.ToFloatPtr() );
+			gladGL.Vertex3fv( b->xyz.ToFloatPtr() );
+			gladGL.Vertex3fv( c->xyz.ToFloatPtr() );
 		}
-		qglEnd();
+		gladGL.End();
 	}
 
 	GL_State( GLS_DEFAULT );
@@ -1029,7 +1029,7 @@ static void RB_ShowUnsmoothedTangents( drawSurf_t **drawSurfs, int numDrawSurfs 
 		RB_SimpleSurfaceSetup( drawSurf );
 
 		tri = drawSurf->frontEndGeo;
-		qglBegin( GL_TRIANGLES );
+		gladGL.Begin( GL_TRIANGLES );
 		for ( j = 0; j < tri->numIndexes; j+=3 ) {
 			idDrawVert	*a, *b, *c;
 
@@ -1037,11 +1037,11 @@ static void RB_ShowUnsmoothedTangents( drawSurf_t **drawSurfs, int numDrawSurfs 
 			b = tri->verts + tri->indexes[j+1];
 			c = tri->verts + tri->indexes[j+2];
 
-			qglVertex3fv( a->xyz.ToFloatPtr() );
-			qglVertex3fv( b->xyz.ToFloatPtr() );
-			qglVertex3fv( c->xyz.ToFloatPtr() );
+			gladGL.Vertex3fv( a->xyz.ToFloatPtr() );
+			gladGL.Vertex3fv( b->xyz.ToFloatPtr() );
+			gladGL.Vertex3fv( c->xyz.ToFloatPtr() );
 		}
-		qglEnd();
+		gladGL.End();
 	}
 
 	GL_State( GLS_DEFAULT );
@@ -1078,7 +1078,7 @@ static void RB_ShowTangentSpace( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 		if ( !tri->verts ) {
 			continue;
 		}
-		qglBegin( GL_TRIANGLES );
+		gladGL.Begin( GL_TRIANGLES );
 		for ( j = 0; j < tri->numIndexes; j++ ) {
 			const idDrawVert *v;
 
@@ -1097,9 +1097,9 @@ static void RB_ShowTangentSpace( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 				GL_Color( 0.5 + 0.5 * vertexNormal[0],  0.5 + 0.5 * vertexNormal[1],
 					0.5 + 0.5 * vertexNormal[2], 0.5 );
 			}
-			qglVertex3fv( v->xyz.ToFloatPtr() );
+			gladGL.Vertex3fv( v->xyz.ToFloatPtr() );
 		}
-		qglEnd();
+		gladGL.End();
 	}
 
 	GL_State( GLS_DEFAULT );
@@ -1133,15 +1133,15 @@ static void RB_ShowVertexColor( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 		if ( !tri->verts ) {
 			continue;
 		}
-		qglBegin( GL_TRIANGLES );
+		gladGL.Begin( GL_TRIANGLES );
 		for ( j = 0; j < tri->numIndexes; j++ ) {
 			const idDrawVert *v;
 
 			v = &tri->verts[tri->indexes[j]];
-			qglColor4ubv( v->color );
-			qglVertex3fv( v->xyz.ToFloatPtr() );
+			gladGL.Color4ubv( v->color );
+			gladGL.Vertex3fv( v->xyz.ToFloatPtr() );
 		}
-		qglEnd();
+		gladGL.End();
 	}
 
 	GL_State( GLS_DEFAULT );
@@ -1193,27 +1193,27 @@ static void RB_ShowNormals( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 			continue;
 		}
 
-		qglBegin( GL_LINES );
+		gladGL.Begin( GL_LINES );
 		for ( j = 0; j < tri->numVerts; j++ ) {
 			const idVec3 normal = tri->verts[j].GetNormal();
 			const idVec3 tangent = tri->verts[j].GetTangent();
 			const idVec3 bitangent = tri->verts[j].GetBiTangent();
 			GL_Color( 0, 0, 1 );
-			qglVertex3fv( tri->verts[j].xyz.ToFloatPtr() );
+			gladGL.Vertex3fv( tri->verts[j].xyz.ToFloatPtr() );
 			VectorMA( tri->verts[j].xyz, size, normal, end );
-			qglVertex3fv( end.ToFloatPtr() );
+			gladGL.Vertex3fv( end.ToFloatPtr() );
 
 			GL_Color( 1, 0, 0 );
-			qglVertex3fv( tri->verts[j].xyz.ToFloatPtr() );
+			gladGL.Vertex3fv( tri->verts[j].xyz.ToFloatPtr() );
 			VectorMA( tri->verts[j].xyz, size, tangent, end );
-			qglVertex3fv( end.ToFloatPtr() );
+			gladGL.Vertex3fv( end.ToFloatPtr() );
 
 			GL_Color( 0, 1, 0 );
-			qglVertex3fv( tri->verts[j].xyz.ToFloatPtr() );
+			gladGL.Vertex3fv( tri->verts[j].xyz.ToFloatPtr() );
 			VectorMA( tri->verts[j].xyz, size, bitangent, end );
-			qglVertex3fv( end.ToFloatPtr() );
+			gladGL.Vertex3fv( end.ToFloatPtr() );
 		}
-		qglEnd();
+		gladGL.End();
 	}
 
 	if ( showNumbers ) {
@@ -1266,7 +1266,7 @@ static void RB_AltShowNormals( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 
 		const srfTriangles_t * tri = drawSurf->geo;
 
-		qglBegin( GL_LINES );
+		gladGL.Begin( GL_LINES );
 		for ( int j = 0; j < tri->numIndexes; j += 3 ) {
 			const idDrawVert *v[3] = {
 				&tri->verts[tri->indexes[j+0]],
@@ -1284,26 +1284,26 @@ static void RB_AltShowNormals( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 				idVec3 end;
 
 				GL_Color( 0, 0, 1 );
-				qglVertex3fv( pos.ToFloatPtr() );
+				gladGL.Vertex3fv( pos.ToFloatPtr() );
 				VectorMA( pos, r_showNormals.GetFloat(), v[k]->normal, end );
-				qglVertex3fv( end.ToFloatPtr() );
+				gladGL.Vertex3fv( end.ToFloatPtr() );
 
 				GL_Color( 1, 0, 0 );
-				qglVertex3fv( pos.ToFloatPtr() );
+				gladGL.Vertex3fv( pos.ToFloatPtr() );
 				VectorMA( pos, r_showNormals.GetFloat(), v[k]->tangents[0], end );
-				qglVertex3fv( end.ToFloatPtr() );
+				gladGL.Vertex3fv( end.ToFloatPtr() );
 
 				GL_Color( 0, 1, 0 );
-				qglVertex3fv( pos.ToFloatPtr() );
+				gladGL.Vertex3fv( pos.ToFloatPtr() );
 				VectorMA( pos, r_showNormals.GetFloat(), v[k]->tangents[1], end );
-				qglVertex3fv( end.ToFloatPtr() );
+				gladGL.Vertex3fv( end.ToFloatPtr() );
 
 				GL_Color( 1, 1, 1 );
-				qglVertex3fv( pos.ToFloatPtr() );
-				qglVertex3fv( v[k]->xyz.ToFloatPtr() );
+				gladGL.Vertex3fv( pos.ToFloatPtr() );
+				gladGL.Vertex3fv( v[k]->xyz.ToFloatPtr() );
 			}
 		}
-		qglEnd();
+		gladGL.End();
 	}
 }
 
@@ -1337,7 +1337,7 @@ static void RB_ShowTextureVectors( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 		RB_SimpleSurfaceSetup( drawSurf );
 
 		// draw non-shared edges in yellow
-		qglBegin( GL_LINES );
+		gladGL.Begin( GL_LINES );
 
 		for ( int j = 0; j < tri->numIndexes; j+= 3 ) {
 			float d0[5], d1[5];
@@ -1393,15 +1393,15 @@ static void RB_ShowTextureVectors( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 			tangents[1] = mid + tangents[1] * r_showTextureVectors.GetFloat();
 
 			GL_Color( 1, 0, 0 );
-			qglVertex3fv( mid.ToFloatPtr() );
-			qglVertex3fv( tangents[0].ToFloatPtr() );
+			gladGL.Vertex3fv( mid.ToFloatPtr() );
+			gladGL.Vertex3fv( tangents[0].ToFloatPtr() );
 
 			GL_Color( 0, 1, 0 );
-			qglVertex3fv( mid.ToFloatPtr() );
-			qglVertex3fv( tangents[1].ToFloatPtr() );
+			gladGL.Vertex3fv( mid.ToFloatPtr() );
+			gladGL.Vertex3fv( tangents[1].ToFloatPtr() );
 		}
 
-		qglEnd();
+		gladGL.End();
 	}
 }
 
@@ -1424,7 +1424,7 @@ static void RB_ShowDominantTris( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 	GL_State( GLS_DEPTHFUNC_LESS );
 
 	GL_PolygonOffset( -1, -2 );
-	qglEnable( GL_POLYGON_OFFSET_LINE );
+	gladGL.Enable( GL_POLYGON_OFFSET_LINE );
 
 	globalImages->BindNull();
 
@@ -1442,7 +1442,7 @@ static void RB_ShowDominantTris( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 		RB_SimpleSurfaceSetup( drawSurf );
 
 		GL_Color( 1, 1, 0 );
-		qglBegin( GL_LINES );
+		gladGL.Begin( GL_LINES );
 
 		for ( j = 0; j < tri->numVerts; j++ ) {
 			const idDrawVert *a, *b, *c;
@@ -1456,13 +1456,13 @@ static void RB_ShowDominantTris( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 
 			mid = ( a->xyz + b->xyz + c->xyz ) * ( 1.0f / 3.0f );
 
-			qglVertex3fv( mid.ToFloatPtr() );
-			qglVertex3fv( a->xyz.ToFloatPtr() );
+			gladGL.Vertex3fv( mid.ToFloatPtr() );
+			gladGL.Vertex3fv( a->xyz.ToFloatPtr() );
 		}
 
-		qglEnd();
+		gladGL.End();
 	}
-	qglDisable( GL_POLYGON_OFFSET_LINE );
+	gladGL.Disable( GL_POLYGON_OFFSET_LINE );
 }
 
 /*
@@ -1501,7 +1501,7 @@ static void RB_ShowEdges( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 
 		// draw non-shared edges in yellow
 		GL_Color( 1, 1, 0 );
-		qglBegin( GL_LINES );
+		gladGL.Begin( GL_LINES );
 
 		for ( j = 0; j < tri->numIndexes; j+= 3 ) {
 			for ( k = 0; k < 3; k++ ) {
@@ -1525,14 +1525,14 @@ static void RB_ShowEdges( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 
 				// if we didn't find a backwards listing, draw it in yellow
 				if ( m == tri->numIndexes ) {
-					qglVertex3fv( ac[ i1 ].xyz.ToFloatPtr() );
-					qglVertex3fv( ac[ i2 ].xyz.ToFloatPtr() );
+					gladGL.Vertex3fv( ac[ i1 ].xyz.ToFloatPtr() );
+					gladGL.Vertex3fv( ac[ i2 ].xyz.ToFloatPtr() );
 				}
 
 			}
 		}
 
-		qglEnd();
+		gladGL.End();
 
 		// draw dangling sil edges in red
 		if ( !tri->silEdges ) {
@@ -1545,7 +1545,7 @@ static void RB_ShowEdges( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 
 		GL_Color( 1, 0, 0 );
 
-		qglBegin( GL_LINES );
+		gladGL.Begin( GL_LINES );
 		for ( j = 0; j < tri->numSilEdges; j++ ) {
 			edge = tri->silEdges + j;
 
@@ -1553,10 +1553,10 @@ static void RB_ShowEdges( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 				continue;
 			}
 
-			qglVertex3fv( ac[ edge->v1 ].xyz.ToFloatPtr() );
-			qglVertex3fv( ac[ edge->v2 ].xyz.ToFloatPtr() );
+			gladGL.Vertex3fv( ac[ edge->v1 ].xyz.ToFloatPtr() );
+			gladGL.Vertex3fv( ac[ edge->v2 ].xyz.ToFloatPtr() );
 		}
-		qglEnd();
+		gladGL.End();
 	}
 }
 
@@ -1578,8 +1578,8 @@ static void RB_ShowLights() {
 	GL_State( GLS_DEFAULT );
 
 	// we use the 'vLight->invProjectMVPMatrix'
-	qglMatrixMode( GL_PROJECTION );
-	qglLoadIdentity();
+	gladGL.MatrixMode( GL_PROJECTION );
+	gladGL.LoadIdentity();
 
 	globalImages->BindNull();
 
@@ -1619,10 +1619,10 @@ static void RB_ShowLights() {
 	common->Printf( " = %i total\n", count );
 
 	// set back the default projection matrix
-	qglMatrixMode( GL_PROJECTION );
-	qglLoadMatrixf( backEnd.viewDef->projectionMatrix );
-	qglMatrixMode( GL_MODELVIEW );
-	qglLoadIdentity();
+	gladGL.MatrixMode( GL_PROJECTION );
+	gladGL.LoadMatrixf( backEnd.viewDef->projectionMatrix );
+	gladGL.MatrixMode( GL_MODELVIEW );
+	gladGL.LoadIdentity();
 }
 
 /*
@@ -1767,8 +1767,8 @@ static void RB_DrawText( const char *text, const idVec3 &origin, float scale, co
 	idVec3 org, p1, p2;
 
 	if ( text && *text ) {
-		qglBegin( GL_LINES );
-		qglColor3fv( color.ToFloatPtr() );
+		gladGL.Begin( GL_LINES );
+		gladGL.Color3fv( color.ToFloatPtr() );
 
 		if ( text[0] == '\n' ) {
 			line = 1;
@@ -1820,13 +1820,13 @@ static void RB_DrawText( const char *text, const idVec3 &origin, float scale, co
 				}
 				p2 = org + scale * simplex[charIndex][index] * -viewAxis[1] + scale * simplex[charIndex][index+1] * viewAxis[2];
 
-				qglVertex3fv( p1.ToFloatPtr() );
-				qglVertex3fv( p2.ToFloatPtr() );
+				gladGL.Vertex3fv( p1.ToFloatPtr() );
+				gladGL.Vertex3fv( p2.ToFloatPtr() );
 			}
 			org -= viewAxis[1] * ( spacing * scale );
 		}
 
-		qglEnd();
+		gladGL.End();
 	}
 }
 
@@ -1857,7 +1857,7 @@ void RB_ShowDebugText() {
 	}
 
 	// draw lines
-	qglLineWidth( width );
+	gladGL.LineWidth( width );
 
 
 	if ( !r_debugLineDepthTest.GetBool() ) {
@@ -1884,7 +1884,7 @@ void RB_ShowDebugText() {
 		}
 	}
 
-	qglLineWidth( 1 );
+	gladGL.LineWidth( 1 );
 }
 
 /*
@@ -1967,7 +1967,7 @@ void RB_ShowDebugLines() {
 	}
 
 	// draw lines
-	qglLineWidth( width );
+	gladGL.LineWidth( width );
 
 	if ( !r_debugLineDepthTest.GetBool() ) {
 		GL_State( GLS_POLYMODE_LINE | GLS_DEPTHFUNC_ALWAYS );
@@ -1975,36 +1975,36 @@ void RB_ShowDebugLines() {
 		GL_State( GLS_POLYMODE_LINE );
 	}
 
-	qglBegin( GL_LINES );
+	gladGL.Begin( GL_LINES );
 
 	line = rb_debugLines;
 	for ( i = 0; i < rb_numDebugLines; i++, line++ ) {
 		if ( !line->depthTest ) {
-			qglColor3fv( line->rgb.ToFloatPtr() );
-			qglVertex3fv( line->start.ToFloatPtr() );
-			qglVertex3fv( line->end.ToFloatPtr() );
+			gladGL.Color3fv( line->rgb.ToFloatPtr() );
+			gladGL.Vertex3fv( line->start.ToFloatPtr() );
+			gladGL.Vertex3fv( line->end.ToFloatPtr() );
 		}
 	}
-	qglEnd();
+	gladGL.End();
 
 	if ( !r_debugLineDepthTest.GetBool() ) {
 		GL_State( GLS_POLYMODE_LINE );
 	}
 
-	qglBegin( GL_LINES );
+	gladGL.Begin( GL_LINES );
 
 	line = rb_debugLines;
 	for ( i = 0; i < rb_numDebugLines; i++, line++ ) {
 		if ( line->depthTest ) {
-			qglColor4fv( line->rgb.ToFloatPtr() );
-			qglVertex3fv( line->start.ToFloatPtr() );
-			qglVertex3fv( line->end.ToFloatPtr() );
+			gladGL.Color4fv( line->rgb.ToFloatPtr() );
+			gladGL.Vertex3fv( line->start.ToFloatPtr() );
+			gladGL.Vertex3fv( line->end.ToFloatPtr() );
 		}
 	}
 
-	qglEnd();
+	gladGL.End();
 
-	qglLineWidth( 1 );
+	gladGL.LineWidth( 1 );
 	GL_State( GLS_DEFAULT );
 }
 
@@ -2079,7 +2079,7 @@ void RB_ShowDebugPolygons() {
 
 	globalImages->BindNull();
 
-	qglDisable( GL_TEXTURE_2D );
+	gladGL.Disable( GL_TEXTURE_2D );
 
 	if ( r_debugPolygonFilled.GetBool() ) {
 		GL_State( GLS_POLYGON_OFFSET | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHMASK );
@@ -2093,24 +2093,24 @@ void RB_ShowDebugPolygons() {
 	for ( i = 0; i < rb_numDebugPolygons; i++, poly++ ) {
 //		if ( !poly->depthTest ) {
 
-			qglColor4fv( poly->rgb.ToFloatPtr() );
+			gladGL.Color4fv( poly->rgb.ToFloatPtr() );
 
-			qglBegin( GL_POLYGON );
+			gladGL.Begin( GL_POLYGON );
 
 			for ( j = 0; j < poly->winding.GetNumPoints(); j++) {
-				qglVertex3fv( poly->winding[j].ToFloatPtr() );
+				gladGL.Vertex3fv( poly->winding[j].ToFloatPtr() );
 			}
 
-			qglEnd();
+			gladGL.End();
 //		}
 	}
 
 	GL_State( GLS_DEFAULT );
 
 	if ( r_debugPolygonFilled.GetBool() ) {
-		qglDisable( GL_POLYGON_OFFSET_FILL );
+		gladGL.Disable( GL_POLYGON_OFFSET_FILL );
 	} else {
-		qglDisable( GL_POLYGON_OFFSET_LINE );
+		gladGL.Disable( GL_POLYGON_OFFSET_LINE );
 	}
 
 	GL_State( GLS_DEFAULT );
@@ -2128,19 +2128,19 @@ void RB_ShowCenterOfProjection() {
 
 	const int w = backEnd.viewDef->scissor.GetWidth();
 	const int h = backEnd.viewDef->scissor.GetHeight();
-	qglClearColor( 1, 0, 0, 1 );
+	gladGL.ClearColor( 1, 0, 0, 1 );
 	for ( float f = 0.0f ; f <= 1.0f ; f += 0.125f ) {
-		qglScissor( w * f - 1 , 0, 3, h );
-		qglClear( GL_COLOR_BUFFER_BIT );
-		qglScissor( 0, h * f - 1 , w, 3 );
-		qglClear( GL_COLOR_BUFFER_BIT );
+		gladGL.Scissor( w * f - 1 , 0, 3, h );
+		gladGL.Clear( GL_COLOR_BUFFER_BIT );
+		gladGL.Scissor( 0, h * f - 1 , w, 3 );
+		gladGL.Clear( GL_COLOR_BUFFER_BIT );
 	}
-	qglClearColor( 0, 1, 0, 1 );
+	gladGL.ClearColor( 0, 1, 0, 1 );
 	float f = 0.5f;
-	qglScissor( w * f - 1 , 0, 3, h );
-	qglClear( GL_COLOR_BUFFER_BIT );
-	qglScissor( 0, h * f - 1 , w, 3 );
-	qglClear( GL_COLOR_BUFFER_BIT );
+	gladGL.Scissor( w * f - 1 , 0, 3, h );
+	gladGL.Clear( GL_COLOR_BUFFER_BIT );
+	gladGL.Scissor( 0, h * f - 1 , w, 3 );
+	gladGL.Clear( GL_COLOR_BUFFER_BIT );
 
 	GL_Scissor( backEnd.viewDef->viewport.x1 + backEnd.viewDef->scissor.x1,
 		backEnd.viewDef->viewport.y1 + backEnd.viewDef->scissor.y1,
@@ -2256,20 +2256,20 @@ void RB_TestGamma() {
 		}
 	}
 
-	qglLoadIdentity();
+	gladGL.LoadIdentity();
 
-	qglMatrixMode( GL_PROJECTION );
+	gladGL.MatrixMode( GL_PROJECTION );
 	GL_State( GLS_DEPTHFUNC_ALWAYS );
 	GL_Color( 1, 1, 1 );
-	qglPushMatrix();
-	qglLoadIdentity();
-	qglDisable( GL_TEXTURE_2D );
-    qglOrtho( 0, 1, 0, 1, -1, 1 );
-	qglRasterPos2f( 0.01f, 0.01f );
-	qglDrawPixels( G_WIDTH, G_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, image );
-	qglPopMatrix();
-	qglEnable( GL_TEXTURE_2D );
-	qglMatrixMode( GL_MODELVIEW );
+	gladGL.PushMatrix();
+	gladGL.LoadIdentity();
+	gladGL.Disable( GL_TEXTURE_2D );
+    gladGL.Ortho( 0, 1, 0, 1, -1, 1 );
+	gladGL.RasterPos2f( 0.01f, 0.01f );
+	gladGL.DrawPixels( G_WIDTH, G_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, image );
+	gladGL.PopMatrix();
+	gladGL.Enable( GL_TEXTURE_2D );
+	gladGL.MatrixMode( GL_MODELVIEW );
 }
 
 
@@ -2306,19 +2306,19 @@ static void RB_TestGammaBias() {
 		}
 	}
 
-	qglLoadIdentity();
-	qglMatrixMode( GL_PROJECTION );
+	gladGL.LoadIdentity();
+	gladGL.MatrixMode( GL_PROJECTION );
 	GL_State( GLS_DEPTHFUNC_ALWAYS );
 	GL_Color( 1, 1, 1 );
-	qglPushMatrix();
-	qglLoadIdentity();
-	qglDisable( GL_TEXTURE_2D );
-    qglOrtho( 0, 1, 0, 1, -1, 1 );
-	qglRasterPos2f( 0.01f, 0.01f );
-	qglDrawPixels( G_WIDTH, G_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, image );
-	qglPopMatrix();
-	qglEnable( GL_TEXTURE_2D );
-	qglMatrixMode( GL_MODELVIEW );
+	gladGL.PushMatrix();
+	gladGL.LoadIdentity();
+	gladGL.Disable( GL_TEXTURE_2D );
+    gladGL.Ortho( 0, 1, 0, 1, -1, 1 );
+	gladGL.RasterPos2f( 0.01f, 0.01f );
+	gladGL.DrawPixels( G_WIDTH, G_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, image );
+	gladGL.PopMatrix();
+	gladGL.Enable( GL_TEXTURE_2D );
+	gladGL.MatrixMode( GL_MODELVIEW );
 }
 
 /*
@@ -2406,10 +2406,10 @@ void RB_TestImage() {
 	float projMatrixTranspose[16];
 	R_MatrixTranspose( finalOrtho, projMatrixTranspose );
 	renderProgManager.SetRenderParms( RENDERPARM_MVPMATRIX_X, projMatrixTranspose, 4 );
-	qglMatrixMode( GL_PROJECTION );
-	qglLoadMatrixf( finalOrtho );
-	qglMatrixMode( GL_MODELVIEW );
-	qglLoadIdentity();
+	gladGL.MatrixMode( GL_PROJECTION );
+	gladGL.LoadMatrixf( finalOrtho );
+	gladGL.MatrixMode( GL_MODELVIEW );
+	gladGL.LoadIdentity();
 
 	// Set Color
 	GL_Color( 1, 1, 1, 1 );
@@ -2465,7 +2465,7 @@ void RB_DrawExpandedTriangles( const srfTriangles_t *tri, const float radius, co
 		dir[1].Normalize();
 		dir[2].Normalize();
 
-		qglBegin( GL_LINE_LOOP );
+		gladGL.Begin( GL_LINE_LOOP );
 
 		for ( j = 0; j < 3; j++ ) {
 			k = ( j + 1 ) % 3;
@@ -2480,22 +2480,22 @@ void RB_DrawExpandedTriangles( const srfTriangles_t *tri, const float radius, co
 			dir[5].Normalize();
 
 			point = p[k] + dir[j] * radius;
-			qglVertex3f( point[0], point[1], point[2] );
+			gladGL.Vertex3f( point[0], point[1], point[2] );
 
 			point = p[k] + dir[3] * radius;
-			qglVertex3f( point[0], point[1], point[2] );
+			gladGL.Vertex3f( point[0], point[1], point[2] );
 
 			point = p[k] + dir[4] * radius;
-			qglVertex3f( point[0], point[1], point[2] );
+			gladGL.Vertex3f( point[0], point[1], point[2] );
 
 			point = p[k] + dir[5] * radius;
-			qglVertex3f( point[0], point[1], point[2] );
+			gladGL.Vertex3f( point[0], point[1], point[2] );
 
 			point = p[k] + dir[k] * radius;
-			qglVertex3f( point[0], point[1], point[2] );
+			gladGL.Vertex3f( point[0], point[1], point[2] );
 		}
 
-		qglEnd();
+		gladGL.End();
 	}
 }
 
@@ -2552,7 +2552,7 @@ void RB_ShowTrace( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 			continue;
 		}
 
-		qglLoadMatrixf( surf->space->modelViewMatrix );
+		gladGL.LoadMatrixf( surf->space->modelViewMatrix );
 
 		// highlight the surface
 		GL_State( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );

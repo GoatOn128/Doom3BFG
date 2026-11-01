@@ -265,7 +265,7 @@ static void R_CheckPortableExtensions() {
 	// GL_EXT_texture_filter_anisotropic
 	glConfig.anisotropicFilterAvailable = R_CheckExtension( "GL_EXT_texture_filter_anisotropic" );
 	if ( glConfig.anisotropicFilterAvailable ) {
-		qglGetFloatv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &glConfig.maxTextureAnisotropy );
+		gladGL.GetFloatv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &glConfig.maxTextureAnisotropy );
 		common->Printf( "   maxTextureAnisotropy: %f\n", glConfig.maxTextureAnisotropy );
 	} else {
 		glConfig.maxTextureAnisotropy = 1;
@@ -300,12 +300,12 @@ static void R_CheckPortableExtensions() {
 	glConfig.glslAvailable = true;
 
 
-	qglGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, (GLint *)&glConfig.maxTextureImageUnits);
+	gladGL.GetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, (GLint *)&glConfig.maxTextureImageUnits);
 
 	// GL_ARB_uniform_buffer_object is in gl 3.2 core
 	glConfig.uniformBufferAvailable = true;
 
-	qglGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, (GLint *)&glConfig.uniformBufferOffsetAlignment);
+	gladGL.GetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, (GLint *)&glConfig.uniformBufferOffsetAlignment);
 	if ( glConfig.uniformBufferOffsetAlignment < 256 ) {
 		glConfig.uniformBufferOffsetAlignment = 256;
 	}
@@ -336,7 +336,7 @@ static void R_CheckPortableExtensions() {
 	if ( glConfig.debugOutputAvailable ) {
 
 		if ( r_debugContext.GetInteger() >= 1 ) {
-			qglDebugMessageCallbackARB( DebugCallback, NULL );
+			gladGL.DebugMessageCallbackARB( DebugCallback, NULL );
 		}
 		if ( r_debugContext.GetInteger() >= 2 ) {
 			// force everything to happen in the main thread instead of in a separate driver thread
@@ -344,7 +344,7 @@ static void R_CheckPortableExtensions() {
 		}
 		if ( r_debugContext.GetInteger() >= 3 ) {
 			// enable all the low priority messages
-			qglDebugMessageControlARB( GL_DONT_CARE,
+			gladGL.DebugMessageControlARB( GL_DONT_CARE,
 				GL_DONT_CARE,
 				GL_DEBUG_SEVERITY_LOW_ARB,
 				0, NULL, true );
@@ -357,8 +357,8 @@ static void R_CheckPortableExtensions() {
 	}
 
 	// generate one global Vertex Array Object (VAO)
-	qglGenVertexArrays( 1, &glConfig.global_vao );
-	qglBindVertexArray( glConfig.global_vao );
+	gladGL.GenVertexArrays( 1, &glConfig.global_vao );
+	gladGL.BindVertexArray( glConfig.global_vao );
 }
 
 
@@ -513,21 +513,21 @@ void R_InitOpenGL() {
 	}
 
 	// get our config strings
-	glConfig.vendor_string = (const char *)qglGetString( GL_VENDOR );
-	glConfig.renderer_string = (const char *)qglGetString( GL_RENDERER );
-	glConfig.version_string = (const char *)qglGetString( GL_VERSION );
-	glConfig.shading_language_string = (const char *)qglGetString( GL_SHADING_LANGUAGE_VERSION );
-	glConfig.extensions_string = (const char *)qglGetString( GL_EXTENSIONS );
+	glConfig.vendor_string = (const char *)gladGL.GetString( GL_VENDOR );
+	glConfig.renderer_string = (const char *)gladGL.GetString( GL_RENDERER );
+	glConfig.version_string = (const char *)gladGL.GetString( GL_VERSION );
+	glConfig.shading_language_string = (const char *)gladGL.GetString( GL_SHADING_LANGUAGE_VERSION );
+	glConfig.extensions_string = (const char *)gladGL.GetString( GL_EXTENSIONS );
 
 	if ( glConfig.extensions_string == NULL ) {
 		// As of OpenGL 3.2, glGetStringi is required to obtain the available extensions
 
 		// Build the extensions string
 		GLint numExtensions;
-		qglGetIntegerv( GL_NUM_EXTENSIONS, &numExtensions );
+		gladGL.GetIntegerv( GL_NUM_EXTENSIONS, &numExtensions );
 		extensions_string.Clear();
 		for ( int i = 0; i < numExtensions; i++ ) {
-			extensions_string.Append( (const char*)qglGetStringi( GL_EXTENSIONS, i ) );
+			extensions_string.Append( (const char*)gladGL.GetStringi( GL_EXTENSIONS, i ) );
 			// the now deprecated glGetString method usaed to create a single string with each extension separated by a space
 			if ( i < numExtensions - 1 ) {
 				extensions_string.Append( ' ' );
@@ -545,7 +545,7 @@ void R_InitOpenGL() {
 
 	// OpenGL driver constants
 	GLint temp;
-	qglGetIntegerv( GL_MAX_TEXTURE_SIZE, &temp );
+	gladGL.GetIntegerv( GL_MAX_TEXTURE_SIZE, &temp );
 	glConfig.maxTextureSize = temp;
 
 	// stubbed or broken drivers may have reported 0...
@@ -584,7 +584,7 @@ void GL_CheckErrors() {
 
 	// check for up to 10 errors pending
 	for ( i = 0 ; i < 10 ; i++ ) {
-		err = qglGetError();
+		err = gladGL.GetError();
 		if ( err == GL_NO_ERROR ) {
 			return;
 		}
@@ -863,8 +863,8 @@ void R_ReadTiledPixels( int width, int height, byte *buffer, renderView_t *ref =
 				h = height - yo;
 			}
 
-			qglReadBuffer( GL_FRONT );
-			qglReadPixels( 0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, temp );
+			gladGL.ReadBuffer( GL_FRONT );
+			gladGL.ReadPixels( 0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, temp );
 
 			int	row = ( w * 3 + 3 ) & ~3;		// OpenGL pads to dword boundaries
 
@@ -1119,7 +1119,7 @@ void R_StencilShot() {
 
 	idTempArray< byte > byteBuffer( pix );
 
-	qglReadPixels( 0, 0, width, height, GL_STENCIL_INDEX , GL_UNSIGNED_BYTE, byteBuffer.Ptr() );
+	gladGL.ReadPixels( 0, 0, width, height, GL_STENCIL_INDEX , GL_UNSIGNED_BYTE, byteBuffer.Ptr() );
 
 	for ( i = 0 ; i < pix ; i++ ) {
 		buffer[18+i*3] =
@@ -1128,7 +1128,7 @@ void R_StencilShot() {
 		buffer[18+i*3+2] = byteBuffer[i];
 	}
 
-	// fill in the header (this is vertically flipped, which qglReadPixels emits)
+	// fill in the header (this is vertically flipped, which gladGL.ReadPixels emits)
 	buffer[2] = 2;		// uncompressed type
 	buffer[12] = width & 255;
 	buffer[13] = width >> 8;
@@ -1489,7 +1489,7 @@ void R_VidRestart_f( const idCmdArgs &args ) {
 	tr.viewDef = NULL;
 
 	// check for problems
-	int err = qglGetError();
+	int err = gladGL.GetError();
 	if ( err != GL_NO_ERROR ) {
 		common->Printf( "glGetError() = 0x%x\n", err );
 	}
@@ -2074,7 +2074,7 @@ void idRenderSystemLocal::InitOpenGL() {
 		// Reloading images here causes the rendertargets to get deleted. Figure out how to handle this properly on 360
 		globalImages->ReloadImages( true );
 
-		int err = qglGetError();
+		int err = gladGL.GetError();
 		if ( err != GL_NO_ERROR ) {
 			common->Printf( "glGetError() = 0x%x\n", err );
 		}

@@ -321,7 +321,7 @@ void idRenderProgManager::BindDecl( idDeclRenderProg * decl ) {
 	currentUsesJoints = false;
 	currentOptionalSkinning = false;
 	if ( decl == nullptr ) {
-		qglUseProgram( 0 );
+		gladGL.UseProgram( 0 );
 		return;
 	}
 	decl->EnsureUploaded();
@@ -329,12 +329,12 @@ void idRenderProgManager::BindDecl( idDeclRenderProg * decl ) {
 		// the decl has no generated code to upload; keep no program bound so
 		// the draw is skipped instead of drawing with the wrong program
 		common->Warning( "renderprog %s has no GL program", decl->GetName() );
-		qglUseProgram( 0 );
+		gladGL.UseProgram( 0 );
 		currentDecl = nullptr;
 		return;
 	}
 	RENDERLOG_PRINTF( "Binding GLSL Program %s\n", decl->GetName() );
-	qglUseProgram( decl->GetProgram() );
+	gladGL.UseProgram( decl->GetProgram() );
 	currentUsesJoints = decl->UsesJoints();
 	// optional skinning means the vertex program branches on the
 	// rpEnableSkinning parm; only the heat haze shaders do
@@ -425,7 +425,7 @@ void idRenderProgManager::Unbind() {
 	currentUsesJoints = false;
 	currentOptionalSkinning = false;
 
-	qglUseProgram( 0 );
+	gladGL.UseProgram( 0 );
 }
 
 /*
@@ -518,13 +518,13 @@ void idRenderProgManager::CommitUniforms() {
 	for ( int index = 0; index < data.vertexParms.Num(); index++ ) {
 		const int location = decl->GetVertexUniformLocation( index );
 		if ( location != 0 ) {
-			qglUniform4fv( location - 1, 1, glslUniforms[data.vertexParms[index]].ToFloatPtr() );
+			gladGL.Uniform4fv( location - 1, 1, glslUniforms[data.vertexParms[index]].ToFloatPtr() );
 		}
 	}
 	for ( int index = 0; index < data.fragmentParms.Num(); index++ ) {
 		const int location = decl->GetFragmentUniformLocation( index );
 		if ( location != 0 ) {
-			qglUniform4fv( location - 1, 1, glslUniforms[data.fragmentParms[index]].ToFloatPtr() );
+			gladGL.Uniform4fv( location - 1, 1, glslUniforms[data.fragmentParms[index]].ToFloatPtr() );
 		}
 	}
 }

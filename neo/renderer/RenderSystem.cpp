@@ -116,12 +116,12 @@ void idRenderSystemLocal::RenderCommandBuffers( const emptyCommand_t * const cmd
 	if ( !r_skipBackEnd.GetBool() ) {
 		if ( glConfig.timerQueryAvailable ) {
 			if ( tr.timerQueryId == 0 ) {
-				qglGenQueriesARB( 1, & tr.timerQueryId );
+				gladGL.GenQueriesARB( 1, & tr.timerQueryId );
 			}
-			qglBeginQueryARB( GL_TIME_ELAPSED_EXT, tr.timerQueryId );
+			gladGL.BeginQueryARB( GL_TIME_ELAPSED_EXT, tr.timerQueryId );
 			RB_ExecuteBackEndCommands( cmdHead );
-			qglEndQueryARB( GL_TIME_ELAPSED_EXT );
-			qglFlush();
+			gladGL.EndQueryARB( GL_TIME_ELAPSED_EXT );
+			gladGL.Flush();
 		} else {
 			RB_ExecuteBackEndCommands( cmdHead );
 		}
@@ -238,9 +238,9 @@ static void R_CheckCvars() {
 		r_useSeamlessCubeMap.ClearModified();
 		if ( glConfig.seamlessCubeMapAvailable ) {
 			if ( r_useSeamlessCubeMap.GetBool() ) {
-				qglEnable( GL_TEXTURE_CUBE_MAP_SEAMLESS );
+				gladGL.Enable( GL_TEXTURE_CUBE_MAP_SEAMLESS );
 			} else {
-				qglDisable( GL_TEXTURE_CUBE_MAP_SEAMLESS );
+				gladGL.Disable( GL_TEXTURE_CUBE_MAP_SEAMLESS );
 			}
 		}
 	}
@@ -250,9 +250,9 @@ static void R_CheckCvars() {
 		r_useSRGB.ClearModified();
 		if ( glConfig.sRGBFramebufferAvailable ) {
 			if ( r_useSRGB.GetBool() ) {
-				qglEnable( GL_FRAMEBUFFER_SRGB );
+				gladGL.Enable( GL_FRAMEBUFFER_SRGB );
 			} else {
-				qglDisable( GL_FRAMEBUFFER_SRGB );
+				gladGL.Disable( GL_FRAMEBUFFER_SRGB );
 			}
 		}
 	}
@@ -260,9 +260,9 @@ static void R_CheckCvars() {
 
 	if ( r_multiSamples.IsModified() ) {
 		if ( r_multiSamples.GetInteger() > 0 ) {
-			qglEnable( GL_MULTISAMPLE_ARB );
+			gladGL.Enable( GL_MULTISAMPLE_ARB );
 		} else {
-			qglDisable( GL_MULTISAMPLE_ARB );
+			gladGL.Disable( GL_MULTISAMPLE_ARB );
 		}
 	}
 }
@@ -650,7 +650,7 @@ void idRenderSystemLocal::SwapCommandBuffers_FinishRendering(
 	if ( glConfig.timerQueryAvailable ) {
 		GLuint64EXT drawingTimeNanoseconds = 0;
 		if ( tr.timerQueryId != 0 ) {
-			qglGetQueryObjectui64vEXT( tr.timerQueryId, GL_QUERY_RESULT, &drawingTimeNanoseconds );
+			gladGL.GetQueryObjectui64vEXT( tr.timerQueryId, GL_QUERY_RESULT, &drawingTimeNanoseconds );
 		}
 		if ( gpuMicroSec != NULL ) {
 			*gpuMicroSec = drawingTimeNanoseconds / 1000;
@@ -933,13 +933,13 @@ void idRenderSystemLocal::CaptureRenderToFile( const char *fileName, bool fixAlp
 	guiModel->Clear();
 	RenderCommandBuffers( frameData->cmdHead );
 
-	qglReadBuffer( GL_BACK );
+	gladGL.ReadBuffer( GL_BACK );
 
 	// include extra space for OpenGL padding to word boundaries
 	int	c = ( rc.GetWidth() + 3 ) * rc.GetHeight();
 	byte *data = (byte *)R_StaticAlloc( c * 3 );
 
-	qglReadPixels( rc.x1, rc.y1, rc.GetWidth(), rc.GetHeight(), GL_RGB, GL_UNSIGNED_BYTE, data );
+	gladGL.ReadPixels( rc.x1, rc.y1, rc.GetWidth(), rc.GetHeight(), GL_RGB, GL_UNSIGNED_BYTE, data );
 
 	byte *data2 = (byte *)R_StaticAlloc( c * 4 );
 
