@@ -1786,3 +1786,393 @@ srfTriangles_t* R_MakeTestImageTriangles() {
 	tempVerts[0].xyz[2] = 0;
 	tempVerts[0].SetTexCoord( 0.0, 0.0f );
 
+	tempVerts[1].xyz[0] = 1.0f;
+	tempVerts[1].xyz[1] = 0.0f;
+	tempVerts[1].xyz[2] = 0;
+	tempVerts[1].SetTexCoord( 1.0f, 0.0f );
+
+	tempVerts[2].xyz[0] = 1.0f;
+	tempVerts[2].xyz[1] = 1.0f;
+	tempVerts[2].xyz[2] = 0;
+	tempVerts[2].SetTexCoord( 1.0f, 1.0f );
+
+	tempVerts[3].xyz[0] = 0.0f;
+	tempVerts[3].xyz[1] = 1.0f;
+	tempVerts[3].xyz[2] = 0;
+	tempVerts[3].SetTexCoord( 0.0f, 1.0f );
+
+	for ( int i = 0; i < 4; i++ ) {
+		tempVerts[i].SetColor( 0xFFFFFFFF );
+	}
+	return tri;
+}
+
+/*
+===============
+idRenderSystemLocal::Init
+===============
+*/
+void idRenderSystemLocal::Init() {
+
+	common->Printf( "------- Initializing renderSystem --------\n" );
+
+	// clear all our internal state
+	viewCount = 1;		// so cleared structures never match viewCount
+	// we used to memset tr, but now that it is a class, we can't, so
+	// there may be other state we need to reset
+
+	ambientLightVector[0] = 0.5f;
+	ambientLightVector[1] = 0.5f - 0.385f;
+	ambientLightVector[2] = 0.8925f;
+	ambientLightVector[3] = 1.0f;
+
+	memset( &backEnd, 0, sizeof( backEnd ) );
+
+	R_InitCvars();
+
+	R_InitCommands();
+
+	guiModel = new (TAG_RENDER) idGuiModel;
+	guiModel->Clear();
+	tr_guiModel = guiModel;	// for DeviceContext fast path
+
+	globalImages->Init();
+
+	idCinematic::InitCinematic( );
+
+	// build brightness translation tables
+	R_SetColorMappings();
+
+	R_InitMaterials();
+
+	renderModelManager->Init();
+
+	// set the identity space
+	identitySpace.modelMatrix[0*4+0] = 1.0f;
+	identitySpace.modelMatrix[1*4+1] = 1.0f;
+	identitySpace.modelMatrix[2*4+2] = 1.0f;
+
+	// make sure the tr.unitSquareTriangles data is current in the vertex / index cache
+	if ( unitSquareTriangles == NULL ) {
+		unitSquareTriangles = R_MakeFullScreenTris();
+	}
+	// make sure the tr.zeroOneCubeTriangles data is current in the vertex / index cache
+	if ( zeroOneCubeTriangles == NULL ) {
+		zeroOneCubeTriangles = R_MakeZeroOneCubeTris();
+	}
+	// make sure the tr.testImageTriangles data is current in the vertex / index cache
+	if ( testImageTriangles == NULL )  {
+		testImageTriangles = R_MakeTestImageTriangles();
+	}
+
+	frontEndJobList = parallelJobManager->AllocJobList( JOBLIST_RENDERER_FRONTEND, JOBLIST_PRIORITY_MEDIUM, 2048, 0, NULL );
+
+	// make sure the command buffers are ready to accept the first screen update
+	SwapCommandBuffers( NULL, NULL, NULL, NULL );
+
+	common->Printf( "renderSystem initialized.\n" );
+	common->Printf( "--------------------------------------\n" );
+}
+
+/*
+===============
+idRenderSystemLocal::Shutdown
+===============
+*/
+void idRenderSystemLocal::Shutdown() {
+	common->Printf( "idRenderSystem::Shutdown()\n" );
+
+	fonts.DeleteContents();
+
+	if ( R_IsInitialized() ) {
+		globalImages->PurgeAllImages();
+	}
+
+	renderModelManager->Shutdown();
+
+	// If testVideo is currently playing, make sure cinematic is deleted before ShutdownCinematic()
+	if ( tr.testVideo ) {
+		delete tr.testVideo;
+		tr.testVideo = NULL;
+	}
+
+	idCinematic::ShutdownCinematic( );
+
+	globalImages->Shutdown();
+
+	// free frame memory
+	R_ShutdownFrameData();
+
+	UnbindBufferObjects();
+
+	// free the vertex cache, which should have nothing allocated now
+	vertexCache.Shutdown();
+
+	RB_ShutdownDebugTools();
+
+	delete guiModel;
+
+	parallelJobManager->FreeJobList( frontEndJobList );
+
+	Clear();
+
+	ShutdownOpenGL();
+}
+
+/*
+========================
+idRenderSystemLocal::ResetGuiModels
+========================
+*/
+void idRenderSystemLocal::ResetGuiModels() {
+	delete guiModel;
+	guiModel = new (TAG_RENDER) idGuiModel;
+	guiModel->Clear();
+	guiModel->BeginFrame();
+	tr_guiModel = guiModel;	// for DeviceContext fast path
+}
+
+/*
+========================
+idRenderSystemLocal::BeginLevelLoad
+========================
+*/
+void idRenderSystemLocal::BeginLevelLoad() {
+	globalImages->BeginLevelLoad();
+	renderModelManager->BeginLevelLoad();
+
+	// Re-Initialize the Default Materials if needed.
+	R_InitMaterials();
+}
+
+/*
+========================
+idRenderSystemLocal::LoadLevelImages
+========================
+*/
+void idRenderSystemLocal::LoadLevelImages() {
+	globalImages->LoadLevelImages( false );
+}
+
+/*
+========================
+idRenderSystemLocal::Preload
+========================
+*/
+void idRenderSystemLocal::Preload( const idPreloadManifest &manifest, const char *mapName ) {
+	globalImages->Preload( manifest, true );
+	uiManager->Preload( mapName );
+	renderModelManager->Preload( manifest );
+}
+
+/*
+========================
+idRenderSystemLocal::EndLevelLoad
+========================
+*/
+void idRenderSystemLocal::EndLevelLoad() {
+	renderModelManager->EndLevelLoad();
+	globalImages->EndLevelLoad();
+}
+
+/*
+========================
+idRenderSystemLocal::BeginAutomaticBackgroundSwaps
+========================
+*/
+void idRenderSystemLocal::BeginAutomaticBackgroundSwaps( autoRenderIconType_t icon ) {
+}
+
+/*
+========================
+idRenderSystemLocal::EndAutomaticBackgroundSwaps
+========================
+*/
+void idRenderSystemLocal::EndAutomaticBackgroundSwaps() {
+}
+
+/*
+========================
+idRenderSystemLocal::AreAutomaticBackgroundSwapsRunning
+========================
+*/
+bool idRenderSystemLocal::AreAutomaticBackgroundSwapsRunning( autoRenderIconType_t * icon ) const {
+	return false;
+}
+
+/*
+============
+idRenderSystemLocal::RegisterFont
+============
+*/
+idFont * idRenderSystemLocal::RegisterFont( const char * fontName ) {
+	idStrStatic< MAX_OSPATH > baseFontName = fontName;
+	baseFontName.Replace( "fonts/", "" );
+	for ( int i = 0; i < fonts.Num(); i++ ) {
+		if ( idStr::Icmp( fonts[i]->GetName(), baseFontName ) == 0 ) {
+			fonts[i]->Touch();
+			return fonts[i];
+		}
+	}
+	idFont * newFont = new (TAG_FONT) idFont( baseFontName );
+	fonts.Append( newFont );
+	return newFont;
+}
+
+/*
+========================
+idRenderSystemLocal::ResetFonts
+========================
+*/
+void idRenderSystemLocal::ResetFonts() {
+	fonts.DeleteContents( true );
+}
+/*
+========================
+idRenderSystemLocal::InitOpenGL
+========================
+*/
+void idRenderSystemLocal::InitOpenGL() {
+	// if OpenGL isn't started, start it now
+	if ( !R_IsInitialized() ) {
+		R_InitOpenGL();
+
+		// Reloading images here causes the rendertargets to get deleted. Figure out how to handle this properly on 360
+		globalImages->ReloadImages( true );
+
+		int err = gladGL.GetError();
+		if ( err != GL_NO_ERROR ) {
+			common->Printf( "glGetError() = 0x%x\n", err );
+		}
+	}
+}
+
+/*
+========================
+idRenderSystemLocal::ShutdownOpenGL
+========================
+*/
+void idRenderSystemLocal::ShutdownOpenGL() {
+	// free the context and close the window
+	R_ShutdownFrameData();
+	GLimp_Shutdown();
+	r_initialized = false;
+}
+
+/*
+========================
+idRenderSystemLocal::IsOpenGLRunning
+========================
+*/
+bool idRenderSystemLocal::IsOpenGLRunning() const {
+	return R_IsInitialized();
+}
+
+/*
+========================
+idRenderSystemLocal::IsFullScreen
+========================
+*/
+bool idRenderSystemLocal::IsFullScreen() const {
+	return glConfig.isFullscreen != 0;
+}
+
+/*
+========================
+idRenderSystemLocal::GetWidth
+========================
+*/
+int idRenderSystemLocal::GetWidth() const {
+	return glConfig.nativeScreenWidth;
+}
+
+/*
+========================
+idRenderSystemLocal::GetHeight
+========================
+*/
+int idRenderSystemLocal::GetHeight() const {
+	return glConfig.nativeScreenHeight;
+}
+
+/*
+========================
+idRenderSystemLocal::GetPixelAspect
+========================
+*/
+float idRenderSystemLocal::GetPixelAspect() const {
+	return glConfig.pixelAspect;
+}
+
+/*
+========================
+idRenderSystemLocal::CalcFov
+
+Calculates the horizontal and vertical field of view based on a horizontal field of view and custom aspect ratio
+========================
+*/
+void idRenderSystemLocal::CalcFov( float base_fov, float &fov_x, float &fov_y ) const {
+	float	x;
+	float	y;
+	float	ratio_x;
+	float	ratio_y;
+
+	// first, calculate the vertical fov based on a 640x480 view
+	x = 640.0f / tan( base_fov / 360.0f * idMath::PI );
+	y = atan2( 480.0f, x );
+	fov_y = y * 360.0f / idMath::PI;
+
+	// FIXME: somehow, this is happening occasionally
+	assert( fov_y > 0 );
+	if ( fov_y <= 0 ) {
+		idLib::Error( "idRenderSystemLocal::CalcFov: bad result, fov_y == %f, base_fov == %f", fov_y, base_fov );
+	}
+
+	switch( r_aspectRatio.GetInteger() ) {
+	default :
+	case -1 :
+		// auto mode => use aspect ratio from resolution, assuming screen's pixels are squares
+		ratio_x = renderSystem->GetWidth();
+		ratio_y = renderSystem->GetHeight();
+		if(ratio_x <= 0.0f || ratio_y <= 0.0f)
+		{
+			// for some reason (maybe this is a dedicated server?) GetWidth()/GetHeight()
+			// returned 0. Assume default 4:3 to avoid assert()/Error() below.
+			fov_x = base_fov;
+			return;
+		}
+		break;
+	case 0 :
+		// 4:3
+		fov_x = base_fov;
+		return;
+		break;
+
+	case 1 :
+		// 16:9
+		ratio_x = 16.0f;
+		ratio_y = 9.0f;
+		break;
+
+	case 2 :
+		// 16:10
+		ratio_x = 16.0f;
+		ratio_y = 10.0f;
+		break;
+	}
+
+	y = ratio_y / tan( fov_y / 360.0f * idMath::PI );
+	fov_x = atan2( ratio_x, y ) * 360.0f / idMath::PI;
+
+	if ( fov_x < base_fov ) {
+		fov_x = base_fov;
+		x = ratio_x / tan( fov_x / 360.0f * idMath::PI );
+		fov_y = atan2( ratio_y, x ) * 360.0f / idMath::PI;
+	}
+
+	// FIXME: somehow, this is happening occasionally
+	assert( ( fov_x > 0 ) && ( fov_y > 0 ) );
+	if ( ( fov_y <= 0 ) || ( fov_x <= 0 ) ) {
+		idLib::Error( "idGameLocal::CalcFov: bad result" );
+	}
+}

@@ -1769,3 +1769,1047 @@ static void RB_DrawInteractions() {
 			// stencil shadows only affect surfaces that contribute to the view depth
 			// buffer and translucent surfaces do not contribute to the view depth buffer.
 
+			RB_RenderInteractions( vLight->translucentInteractions, vLight, GLS_DEPTHFUNC_LESS, false, false );
+
+			renderLog.CloseBlock();
+		}
+
+		renderLog.CloseBlock();
+	}
+
+	// disable stencil shadow test
+	GL_State( GLS_DEFAULT );
+
+	// unbind texture units
+	for ( int i = 0; i < 5; i++ ) {
+		GL_SelectTexture( i );
+		globalImages->BindNull();
+	}
+	GL_SelectTexture( 0 );
+
+	// reset depth bounds
+	if ( useLightDepthBounds ) {
+		GL_DepthBoundsTest( 0.0f, 0.0f );
+	}
+
+	renderLog.CloseBlock();
+	renderLog.CloseMainBlock();
+}
+
+/*
+=============================================================================================
+
+NON-INTERACTION SHADER PASSES
+
+=============================================================================================
+*/
+
+/*
+=====================
+RB_DrawShaderPasses
+
+Draw non-light dependent passes
+=====================
+*/
+static int RB_DrawShaderPasses( const drawSurf_t * const * const drawSurfs, const int numDrawSurfs ) {
+	// only obey skipAmbient if we are rendering a view
+	if ( backEnd.viewDef->viewEntitys && r_skipAmbient.GetBool() ) {
+		return numDrawSurfs;
+	}
+
+	renderLog.OpenBlock( "RB_DrawShaderPasses" );
+
+	GL_SelectTexture( 1 );
+	globalImages->BindNull();
+
+	GL_SelectTexture( 0 );
+
+	backEnd.currentSpace = (const viewEntity_t *)1;	// using NULL makes /analyze think surf->space needs to be checked...
+
+	int i = 0;
+	for ( ; i < numDrawSurfs; i++ ) {
+		const drawSurf_t * surf = drawSurfs[i];
+		const idMaterial * shader = surf->material;
+
+		if ( !shader->HasAmbient() ) {
+			continue;
+		}
+
+		if ( shader->IsPortalSky() ) {
+			continue;
+		}
+
+		// some deforms may disable themselves by setting numIndexes = 0
+		if ( surf->numIndexes == 0 ) {
+			continue;
+		}
+
+		if ( shader->SuppressInSubview() ) {
+			continue;
+		}
+
+		if ( backEnd.viewDef->isXraySubview && surf->space->entityDef ) {
+			if ( surf->space->entityDef->parms.xrayIndex != 2 ) {
+				continue;
+			}
+		}
+
+		// we need to draw the post process shaders after we have drawn the fog lights
+		if ( shader->GetSort() >= SS_POST_PROCESS && !backEnd.currentRenderCopied ) {
+			break;
+		}
+
+		renderLog.OpenBlock( shader->GetName() );
+
+		// change the matrix and other space related vars if needed
+		if ( surf->space != backEnd.currentSpace ) {
+			backEnd.currentSpace = surf->space;
+
+			const viewEntity_t *space = backEnd.currentSpace;
+			RB_SetMVP( space->mvp );
+
+			// set eye position in local space
+			idVec4 localViewOrigin( 1.0f );
+			R_GlobalPointToLocal( space->modelMatrix, backEnd.viewDef->renderView.vieworg, localViewOrigin.ToVec3() );
+			SetVertexParm( RENDERPARM_LOCALVIEWORIGIN, localViewOrigin.ToFloatPtr() );
+
+			// set model Matrix
+			float modelMatrixTranspose[16];
+			R_MatrixTranspose( space->modelMatrix, modelMatrixTranspose );
+			SetVertexParms( RENDERPARM_MODELMATRIX_X, modelMatrixTranspose, 4 );
+
+			// Set ModelView Matrix
+			float modelViewMatrixTranspose[16];
+			R_MatrixTranspose( space->modelViewMatrix, modelViewMatrixTranspose );
+			SetVertexParms( RENDERPARM_MODELVIEWMATRIX_X, modelViewMatrixTranspose, 4 );
+		}
+
+		// change the scissor if needed
+		if ( !backEnd.currentScissor.Equals( surf->scissorRect ) && r_useScissor.GetBool() ) {
+			GL_Scissor( backEnd.viewDef->viewport.x1 + surf->scissorRect.x1,
+						backEnd.viewDef->viewport.y1 + surf->scissorRect.y1,
+						surf->scissorRect.x2 + 1 - surf->scissorRect.x1,
+						surf->scissorRect.y2 + 1 - surf->scissorRect.y1 );
+			backEnd.currentScissor = surf->scissorRect;
+		}
+
+		// get the expressions for conditionals / color / texcoords
+		const float	*regs = surf->shaderRegisters;
+
+		// set face culling appropriately
+		if ( surf->space->isGuiSurface ) {
+			GL_Cull( CT_TWO_SIDED );
+		} else {
+			GL_Cull( shader->GetCullType() );
+		}
+
+		uint64 surfGLState = surf->extraGLState;
+
+		// set polygon offset if necessary
+		if ( shader->TestMaterialFlag(MF_POLYGONOFFSET) ) {
+			GL_PolygonOffset( r_offsetFactor.GetFloat(), r_offsetUnits.GetFloat() * shader->GetPolygonOffset() );
+			surfGLState = GLS_POLYGON_OFFSET;
+		}
+
+		for ( int stage = 0; stage < shader->GetNumStages(); stage++ ) {
+			const shaderStage_t *pStage = shader->GetStage(stage);
+
+			// check the enable condition
+			if ( regs[ pStage->conditionRegister ] == 0 ) {
+				continue;
+			}
+
+			// skip the stages involved in lighting
+			if ( pStage->lighting != SL_AMBIENT ) {
+				continue;
+			}
+
+			uint64 stageGLState = surfGLState;
+			if ( ( surfGLState & GLS_OVERRIDE ) == 0 ) {
+				stageGLState |= pStage->drawStateBits;
+			}
+
+			// skip if the stage is ( GL_ZERO, GL_ONE ), which is used for some alpha masks
+			if ( ( stageGLState & ( GLS_SRCBLEND_BITS | GLS_DSTBLEND_BITS ) ) == ( GLS_SRCBLEND_ZERO | GLS_DSTBLEND_ONE ) ) {
+				continue;
+			}
+
+			// see if we are a new-style stage
+			newShaderStage_t *newStage = pStage->newStage;
+			if ( newStage != NULL ) {
+				//--------------------------
+				//
+				// new style stages
+				//
+				//--------------------------
+				if ( r_skipNewAmbient.GetBool() ) {
+					continue;
+				}
+				renderLog.OpenBlock( "New Shader Stage" );
+
+				GL_State( stageGLState );
+
+				renderProgManager.BindShader( newStage->glslProgram );
+
+				for ( int j = 0; j < newStage->numVertexParms; j++ ) {
+					float parm[4];
+					parm[0] = regs[ newStage->vertexParms[j][0] ];
+					parm[1] = regs[ newStage->vertexParms[j][1] ];
+					parm[2] = regs[ newStage->vertexParms[j][2] ];
+					parm[3] = regs[ newStage->vertexParms[j][3] ];
+					SetVertexParm( (renderParm_t)( RENDERPARM_USER + j ), parm );
+				}
+
+				// set rpEnableSkinning if the shader has optional support for skinning
+				if ( surf->jointCache && renderProgManager.ShaderHasOptionalSkinning() ) {
+					const idVec4 skinningParm( 1.0f );
+					SetVertexParm( RENDERPARM_ENABLE_SKINNING, skinningParm.ToFloatPtr() );
+				}
+
+				// bind texture units
+				for ( int j = 0; j < newStage->numFragmentProgramImages; j++ ) {
+					idImage * image = newStage->fragmentProgramImages[j];
+					if ( image != NULL ) {
+						GL_SelectTexture( j );
+						image->Bind();
+					}
+				}
+
+				// draw it
+				RB_DrawElementsWithCounters( surf );
+
+				// unbind texture units
+				for ( int j = 0; j < newStage->numFragmentProgramImages; j++ ) {
+					idImage * image = newStage->fragmentProgramImages[j];
+					if ( image != NULL ) {
+						GL_SelectTexture( j );
+						globalImages->BindNull();
+					}
+				}
+
+				// clear rpEnableSkinning if it was set
+				if ( surf->jointCache && renderProgManager.ShaderHasOptionalSkinning() ) {
+					const idVec4 skinningParm( 0.0f );
+					SetVertexParm( RENDERPARM_ENABLE_SKINNING, skinningParm.ToFloatPtr() );
+				}
+
+				GL_SelectTexture( 0 );
+				renderProgManager.Unbind();
+
+				renderLog.CloseBlock();
+				continue;
+			}
+
+			//--------------------------
+			//
+			// old style stages
+			//
+			//--------------------------
+
+			// set the color
+			float color[4];
+			color[0] = regs[ pStage->color.registers[0] ];
+			color[1] = regs[ pStage->color.registers[1] ];
+			color[2] = regs[ pStage->color.registers[2] ];
+			color[3] = regs[ pStage->color.registers[3] ];
+
+			// skip the entire stage if an add would be black
+			if ( ( stageGLState & ( GLS_SRCBLEND_BITS | GLS_DSTBLEND_BITS ) ) == ( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE )
+				&& color[0] <= 0 && color[1] <= 0 && color[2] <= 0 ) {
+				continue;
+			}
+
+			// skip the entire stage if a blend would be completely transparent
+			if ( ( stageGLState & ( GLS_SRCBLEND_BITS | GLS_DSTBLEND_BITS ) ) == ( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA )
+				&& color[3] <= 0 ) {
+				continue;
+			}
+
+			stageVertexColor_t svc = pStage->vertexColor;
+
+			renderLog.OpenBlock( "Old Shader Stage" );
+			GL_Color( color );
+
+			if ( surf->space->isGuiSurface ) {
+				// Force gui surfaces to always be SVC_MODULATE
+				svc = SVC_MODULATE;
+
+				// use special shaders for bink cinematics
+				if ( pStage->texture.cinematic ) {
+					if ( ( stageGLState & GLS_OVERRIDE ) != 0 ) {
+						// This is a hack... Only SWF Guis set GLS_OVERRIDE
+						// Old style guis do not, and we don't want them to use the new GUI renederProg
+						renderProgManager.BindShader_BinkGUI();
+					} else {
+						renderProgManager.BindShader_Bink();
+					}
+				} else {
+					if ( ( stageGLState & GLS_OVERRIDE ) != 0 ) {
+						// This is a hack... Only SWF Guis set GLS_OVERRIDE
+						// Old style guis do not, and we don't want them to use the new GUI renderProg
+						renderProgManager.BindShader_GUI();
+					} else {
+						if ( surf->jointCache ) {
+							renderProgManager.BindShader_TextureVertexColorSkinned();
+						} else {
+							renderProgManager.BindShader_TextureVertexColor();
+						}
+					}
+				}
+			} else if ( ( pStage->texture.texgen == TG_SCREEN ) || ( pStage->texture.texgen == TG_SCREEN2 ) ) {
+				renderProgManager.BindShader_TextureTexGenVertexColor();
+			} else if ( pStage->texture.cinematic ) {
+				renderProgManager.BindShader_Bink();
+			} else {
+				if ( surf->jointCache ) {
+					renderProgManager.BindShader_TextureVertexColorSkinned();
+				} else {
+					renderProgManager.BindShader_TextureVertexColor();
+				}
+			}
+
+			RB_SetVertexColorParms( svc );
+
+			// bind the texture
+			RB_BindVariableStageImage( &pStage->texture, regs );
+
+			// set privatePolygonOffset if necessary
+			if ( pStage->privatePolygonOffset ) {
+				GL_PolygonOffset( r_offsetFactor.GetFloat(), r_offsetUnits.GetFloat() * pStage->privatePolygonOffset );
+				stageGLState |= GLS_POLYGON_OFFSET;
+			}
+
+			// set the state
+			GL_State( stageGLState );
+
+			RB_PrepareStageTexturing( pStage, surf );
+
+			// draw it
+			RB_DrawElementsWithCounters( surf );
+
+			RB_FinishStageTexturing( pStage, surf );
+
+			// unset privatePolygonOffset if necessary
+			if ( pStage->privatePolygonOffset ) {
+				GL_PolygonOffset( r_offsetFactor.GetFloat(), r_offsetUnits.GetFloat() * shader->GetPolygonOffset() );
+			}
+			renderLog.CloseBlock();
+		}
+
+		renderLog.CloseBlock();
+	}
+
+	GL_Cull( CT_FRONT_SIDED );
+	GL_Color( 1.0f, 1.0f, 1.0f );
+
+	renderLog.CloseBlock();
+	return i;
+}
+
+/*
+=============================================================================================
+
+BLEND LIGHT PROJECTION
+
+=============================================================================================
+*/
+
+/*
+=====================
+RB_T_BlendLight
+=====================
+*/
+static void RB_T_BlendLight( const drawSurf_t *drawSurfs, const viewLight_t * vLight ) {
+	backEnd.currentSpace = NULL;
+
+	for ( const drawSurf_t * drawSurf = drawSurfs; drawSurf != NULL; drawSurf = drawSurf->nextOnLight ) {
+		if ( drawSurf->scissorRect.IsEmpty() ) {
+			continue;	// !@# FIXME: find out why this is sometimes being hit!
+						// temporarily jump over the scissor and draw so the gl error callback doesn't get hit
+		}
+
+		if ( !backEnd.currentScissor.Equals( drawSurf->scissorRect ) && r_useScissor.GetBool() ) {
+			// change the scissor
+			GL_Scissor( backEnd.viewDef->viewport.x1 + drawSurf->scissorRect.x1,
+						backEnd.viewDef->viewport.y1 + drawSurf->scissorRect.y1,
+						drawSurf->scissorRect.x2 + 1 - drawSurf->scissorRect.x1,
+						drawSurf->scissorRect.y2 + 1 - drawSurf->scissorRect.y1 );
+			backEnd.currentScissor = drawSurf->scissorRect;
+		}
+
+		if ( drawSurf->space != backEnd.currentSpace ) {
+			// change the matrix
+			RB_SetMVP( drawSurf->space->mvp );
+
+			// change the light projection matrix
+			idPlane	lightProjectInCurrentSpace[4];
+			for ( int i = 0; i < 4; i++ ) {
+				R_GlobalPlaneToLocal( drawSurf->space->modelMatrix, vLight->lightProject[i], lightProjectInCurrentSpace[i] );
+			}
+
+			SetVertexParm( RENDERPARM_TEXGEN_0_S, lightProjectInCurrentSpace[0].ToFloatPtr() );
+			SetVertexParm( RENDERPARM_TEXGEN_0_T, lightProjectInCurrentSpace[1].ToFloatPtr() );
+			SetVertexParm( RENDERPARM_TEXGEN_0_Q, lightProjectInCurrentSpace[2].ToFloatPtr() );
+			SetVertexParm( RENDERPARM_TEXGEN_1_S, lightProjectInCurrentSpace[3].ToFloatPtr() );	// falloff
+
+			backEnd.currentSpace = drawSurf->space;
+		}
+
+		RB_DrawElementsWithCounters( drawSurf );
+	}
+}
+
+/*
+=====================
+RB_BlendLight
+
+Dual texture together the falloff and projection texture with a blend
+mode to the framebuffer, instead of interacting with the surface texture
+=====================
+*/
+static void RB_BlendLight( const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2, const viewLight_t * vLight ) {
+	if ( drawSurfs == NULL ) {
+		return;
+	}
+	if ( r_skipBlendLights.GetBool() ) {
+		return;
+	}
+	renderLog.OpenBlock( vLight->lightShader->GetName() );
+
+	const idMaterial * lightShader = vLight->lightShader;
+	const float	* regs = vLight->shaderRegisters;
+
+	// texture 1 will get the falloff texture
+	GL_SelectTexture( 1 );
+	vLight->falloffImage->Bind();
+
+	// texture 0 will get the projected texture
+	GL_SelectTexture( 0 );
+
+	renderProgManager.BindShader_BlendLight();
+
+	for ( int i = 0; i < lightShader->GetNumStages(); i++ ) {
+		const shaderStage_t	*stage = lightShader->GetStage(i);
+
+		if ( !regs[ stage->conditionRegister ] ) {
+			continue;
+		}
+
+		GL_State( GLS_DEPTHMASK | stage->drawStateBits | GLS_DEPTHFUNC_EQUAL );
+
+		GL_SelectTexture( 0 );
+		stage->texture.image->Bind();
+
+		if ( stage->texture.hasMatrix ) {
+			RB_LoadShaderTextureMatrix( regs, &stage->texture );
+		}
+
+		// get the modulate values from the light, including alpha, unlike normal lights
+		float lightColor[4];
+		lightColor[0] = regs[ stage->color.registers[0] ];
+		lightColor[1] = regs[ stage->color.registers[1] ];
+		lightColor[2] = regs[ stage->color.registers[2] ];
+		lightColor[3] = regs[ stage->color.registers[3] ];
+		GL_Color( lightColor );
+
+		RB_T_BlendLight( drawSurfs, vLight );
+		RB_T_BlendLight( drawSurfs2, vLight );
+	}
+
+	GL_SelectTexture( 1 );
+	globalImages->BindNull();
+
+	GL_SelectTexture( 0 );
+
+	renderProgManager.Unbind();
+	renderLog.CloseBlock();
+}
+
+/*
+=========================================================================================================
+
+FOG LIGHTS
+
+=========================================================================================================
+*/
+
+/*
+=====================
+RB_T_BasicFog
+=====================
+*/
+static void RB_T_BasicFog( const drawSurf_t *drawSurfs, const idPlane fogPlanes[4], const idRenderMatrix * inverseBaseLightProject ) {
+	backEnd.currentSpace = NULL;
+
+	for ( const drawSurf_t * drawSurf = drawSurfs; drawSurf != NULL; drawSurf = drawSurf->nextOnLight ) {
+		if ( drawSurf->scissorRect.IsEmpty() ) {
+			continue;	// !@# FIXME: find out why this is sometimes being hit!
+						// temporarily jump over the scissor and draw so the gl error callback doesn't get hit
+		}
+
+		if ( !backEnd.currentScissor.Equals( drawSurf->scissorRect ) && r_useScissor.GetBool() ) {
+			// change the scissor
+			GL_Scissor( backEnd.viewDef->viewport.x1 + drawSurf->scissorRect.x1,
+						backEnd.viewDef->viewport.y1 + drawSurf->scissorRect.y1,
+						drawSurf->scissorRect.x2 + 1 - drawSurf->scissorRect.x1,
+						drawSurf->scissorRect.y2 + 1 - drawSurf->scissorRect.y1 );
+			backEnd.currentScissor = drawSurf->scissorRect;
+		}
+
+		if ( drawSurf->space != backEnd.currentSpace ) {
+			idPlane localFogPlanes[4];
+			if ( inverseBaseLightProject == NULL ) {
+				RB_SetMVP( drawSurf->space->mvp );
+				for ( int i = 0; i < 4; i++ ) {
+					R_GlobalPlaneToLocal( drawSurf->space->modelMatrix, fogPlanes[i], localFogPlanes[i] );
+				}
+			} else {
+				idRenderMatrix invProjectMVPMatrix;
+				idRenderMatrix::Multiply( backEnd.viewDef->worldSpace.mvp, *inverseBaseLightProject, invProjectMVPMatrix );
+				RB_SetMVP( invProjectMVPMatrix );
+				for ( int i = 0; i < 4; i++ ) {
+					inverseBaseLightProject->InverseTransformPlane( fogPlanes[i], localFogPlanes[i], false );
+				}
+			}
+
+			SetVertexParm( RENDERPARM_TEXGEN_0_S, localFogPlanes[0].ToFloatPtr() );
+			SetVertexParm( RENDERPARM_TEXGEN_0_T, localFogPlanes[1].ToFloatPtr() );
+			SetVertexParm( RENDERPARM_TEXGEN_1_T, localFogPlanes[2].ToFloatPtr() );
+			SetVertexParm( RENDERPARM_TEXGEN_1_S, localFogPlanes[3].ToFloatPtr() );
+
+			backEnd.currentSpace = ( inverseBaseLightProject == NULL ) ? drawSurf->space : NULL;
+		}
+
+		if ( drawSurf->jointCache ) {
+			renderProgManager.BindShader_FogSkinned();
+		} else {
+			renderProgManager.BindShader_Fog();
+		}
+
+		RB_DrawElementsWithCounters( drawSurf );
+	}
+}
+
+/*
+==================
+RB_FogPass
+==================
+*/
+static void RB_FogPass( const drawSurf_t * drawSurfs,  const drawSurf_t * drawSurfs2, const viewLight_t * vLight ) {
+	renderLog.OpenBlock( vLight->lightShader->GetName() );
+
+	// find the current color and density of the fog
+	const idMaterial * lightShader = vLight->lightShader;
+	const float * regs = vLight->shaderRegisters;
+	// assume fog shaders have only a single stage
+	const shaderStage_t * stage = lightShader->GetStage( 0 );
+
+	float lightColor[4];
+	lightColor[0] = regs[ stage->color.registers[0] ];
+	lightColor[1] = regs[ stage->color.registers[1] ];
+	lightColor[2] = regs[ stage->color.registers[2] ];
+	lightColor[3] = regs[ stage->color.registers[3] ];
+
+	GL_Color( lightColor );
+
+	// calculate the falloff planes
+	float a;
+
+	// if they left the default value on, set a fog distance of 500
+	if ( lightColor[3] <= 1.0f ) {
+		a = -0.5f / DEFAULT_FOG_DISTANCE;
+	} else {
+		// otherwise, distance = alpha color
+		a = -0.5f / lightColor[3];
+	}
+
+	// texture 0 is the falloff image
+	GL_SelectTexture( 0 );
+	globalImages->fogImage->Bind();
+
+	// texture 1 is the entering plane fade correction
+	GL_SelectTexture( 1 );
+	globalImages->fogEnterImage->Bind();
+
+	// S is based on the view origin
+	const float s = vLight->fogPlane.Distance( backEnd.viewDef->renderView.vieworg );
+
+	const float FOG_SCALE = 0.001f;
+
+	idPlane fogPlanes[4];
+
+	// S-0
+	fogPlanes[0][0] = a * backEnd.viewDef->worldSpace.modelViewMatrix[0*4+2];
+	fogPlanes[0][1] = a * backEnd.viewDef->worldSpace.modelViewMatrix[1*4+2];
+	fogPlanes[0][2] = a * backEnd.viewDef->worldSpace.modelViewMatrix[2*4+2];
+	fogPlanes[0][3] = a * backEnd.viewDef->worldSpace.modelViewMatrix[3*4+2] + 0.5f;
+
+	// T-0
+	fogPlanes[1][0] = 0.0f;//a * backEnd.viewDef->worldSpace.modelViewMatrix[0*4+0];
+	fogPlanes[1][1] = 0.0f;//a * backEnd.viewDef->worldSpace.modelViewMatrix[1*4+0];
+	fogPlanes[1][2] = 0.0f;//a * backEnd.viewDef->worldSpace.modelViewMatrix[2*4+0];
+	fogPlanes[1][3] = 0.5f;//a * backEnd.viewDef->worldSpace.modelViewMatrix[3*4+0] + 0.5f;
+
+	// T-1 will get a texgen for the fade plane, which is always the "top" plane on unrotated lights
+	fogPlanes[2][0] = FOG_SCALE * vLight->fogPlane[0];
+	fogPlanes[2][1] = FOG_SCALE * vLight->fogPlane[1];
+	fogPlanes[2][2] = FOG_SCALE * vLight->fogPlane[2];
+	fogPlanes[2][3] = FOG_SCALE * vLight->fogPlane[3] + FOG_ENTER;
+
+	// S-1
+	fogPlanes[3][0] = 0.0f;
+	fogPlanes[3][1] = 0.0f;
+	fogPlanes[3][2] = 0.0f;
+	fogPlanes[3][3] = FOG_SCALE * s + FOG_ENTER;
+
+	// draw it
+	GL_State( GLS_DEPTHMASK | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHFUNC_EQUAL );
+	RB_T_BasicFog( drawSurfs, fogPlanes, NULL );
+	RB_T_BasicFog( drawSurfs2, fogPlanes, NULL );
+
+	// the light frustum bounding planes aren't in the depth buffer, so use depthfunc_less instead
+	// of depthfunc_equal
+	GL_State( GLS_DEPTHMASK | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHFUNC_LESS );
+	GL_Cull( CT_BACK_SIDED );
+
+	backEnd.zeroOneCubeSurface.space = &backEnd.viewDef->worldSpace;
+	backEnd.zeroOneCubeSurface.scissorRect = backEnd.viewDef->scissor;
+	RB_T_BasicFog( &backEnd.zeroOneCubeSurface, fogPlanes, &vLight->inverseBaseLightProject );
+
+	GL_Cull( CT_FRONT_SIDED );
+
+	GL_SelectTexture( 1 );
+	globalImages->BindNull();
+
+	GL_SelectTexture( 0 );
+
+	renderProgManager.Unbind();
+
+	renderLog.CloseBlock();
+}
+
+/*
+==================
+RB_FogAllLights
+==================
+*/
+static void RB_FogAllLights() {
+	if ( r_skipFogLights.GetBool() || r_showOverDraw.GetInteger() != 0
+		 || backEnd.viewDef->isXraySubview /* don't fog in xray mode*/ ) {
+		return;
+	}
+	renderLog.OpenMainBlock( MRB_FOG_ALL_LIGHTS );
+	renderLog.OpenBlock( "RB_FogAllLights" );
+
+	// force fog plane to recalculate
+	backEnd.currentSpace = NULL;
+
+	for ( viewLight_t * vLight = backEnd.viewDef->viewLights; vLight != NULL; vLight = vLight->next ) {
+		if ( vLight->lightShader->IsFogLight() ) {
+			RB_FogPass( vLight->globalInteractions, vLight->localInteractions, vLight );
+		} else if ( vLight->lightShader->IsBlendLight() ) {
+			RB_BlendLight( vLight->globalInteractions, vLight->localInteractions, vLight );
+		}
+	}
+
+	renderLog.CloseBlock();
+	renderLog.CloseMainBlock();
+}
+
+/*
+=========================================================================================================
+
+BACKEND COMMANDS
+
+=========================================================================================================
+*/
+
+/*
+==================
+RB_DrawViewInternal
+==================
+*/
+void RB_DrawViewInternal( const viewDef_t * viewDef ) {
+	renderLog.OpenBlock( "RB_DrawViewInternal" );
+
+	//-------------------------------------------------
+	// guis can wind up referencing purged images that need to be loaded.
+	// this used to be in the gui emit code, but now that it can be running
+	// in a separate thread, it must not try to load images, so do it here.
+	//-------------------------------------------------
+	drawSurf_t **drawSurfs = (drawSurf_t **)&viewDef->drawSurfs[0];
+	const int numDrawSurfs = viewDef->numDrawSurfs;
+
+	for ( int i = 0; i < numDrawSurfs; i++ ) {
+		const drawSurf_t * ds = viewDef->drawSurfs[ i ];
+		if ( ds->material != NULL ) {
+			const_cast<idMaterial *>( ds->material )->EnsureNotPurged();
+		}
+	}
+
+	//-------------------------------------------------
+	// RB_BeginDrawingView
+	//
+	// Any mirrored or portaled views have already been drawn, so prepare
+	// to actually render the visible surfaces for this view
+	//
+	// clear the z buffer, set the projection matrix, etc
+	//-------------------------------------------------
+
+	// set the window clipping
+	GL_Viewport( viewDef->viewport.x1,
+		viewDef->viewport.y1,
+		viewDef->viewport.x2 + 1 - viewDef->viewport.x1,
+		viewDef->viewport.y2 + 1 - viewDef->viewport.y1 );
+
+	// the scissor may be smaller than the viewport for subviews
+	GL_Scissor( backEnd.viewDef->viewport.x1 + viewDef->scissor.x1,
+				backEnd.viewDef->viewport.y1 + viewDef->scissor.y1,
+				viewDef->scissor.x2 + 1 - viewDef->scissor.x1,
+				viewDef->scissor.y2 + 1 - viewDef->scissor.y1 );
+	backEnd.currentScissor = viewDef->scissor;
+
+	backEnd.glState.faceCulling = -1;		// force face culling to set next time
+
+	// ensures that depth writes are enabled for the depth clear
+	GL_State( GLS_DEFAULT );
+
+
+	// Clear the depth buffer and clear the stencil to 128 for stencil shadows as well as gui masking
+	GL_Clear( false, true, true, STENCIL_SHADOW_TEST_VALUE, 0.0f, 0.0f, 0.0f, 0.0f );
+
+	// normal face culling
+	GL_Cull( CT_FRONT_SIDED );
+
+#ifdef USE_CORE_PROFILE
+	// bind one global Vertex Array Object (VAO)
+	gladGL.BindVertexArray( glConfig.global_vao );
+#endif
+
+	//------------------------------------
+	// sets variables that can be used by all programs
+	//------------------------------------
+	{
+		//
+		// set eye position in global space
+		//
+		float parm[4];
+		parm[0] = backEnd.viewDef->renderView.vieworg[0];
+		parm[1] = backEnd.viewDef->renderView.vieworg[1];
+		parm[2] = backEnd.viewDef->renderView.vieworg[2];
+		parm[3] = 1.0f;
+
+		SetVertexParm( RENDERPARM_GLOBALEYEPOS, parm ); // rpGlobalEyePos
+
+		// sets overbright to make world brighter
+		// This value is baked into the specularScale and diffuseScale values so
+		// the interaction programs don't need to perform the extra multiply,
+		// but any other renderprogs that want to obey the brightness value
+		// can reference this.
+		float overbright = r_lightScale.GetFloat() * 0.5f;
+		parm[0] = overbright;
+		parm[1] = overbright;
+		parm[2] = overbright;
+		parm[3] = overbright;
+		SetFragmentParm( RENDERPARM_OVERBRIGHT, parm );
+
+		// Set Projection Matrix
+		float projMatrixTranspose[16];
+		R_MatrixTranspose( backEnd.viewDef->projectionMatrix, projMatrixTranspose );
+		SetVertexParms( RENDERPARM_PROJMATRIX_X, projMatrixTranspose, 4 );
+	}
+
+	//-------------------------------------------------
+	// fill the depth buffer and clear color buffer to black except on subviews
+	//-------------------------------------------------
+	RB_FillDepthBufferFast( drawSurfs, numDrawSurfs );
+
+	//-------------------------------------------------
+	// main light renderer
+	//-------------------------------------------------
+	RB_DrawInteractions();
+
+	//-------------------------------------------------
+	// now draw any non-light dependent shading passes
+	//-------------------------------------------------
+	int processed = 0;
+	if ( !r_skipShaderPasses.GetBool() ) {
+		renderLog.OpenMainBlock( MRB_DRAW_SHADER_PASSES );
+		processed = RB_DrawShaderPasses( drawSurfs, numDrawSurfs );
+		renderLog.CloseMainBlock();
+	}
+
+	//-------------------------------------------------
+	// fog and blend lights, drawn after emissive surfaces
+	// so they are properly dimmed down
+	//-------------------------------------------------
+	RB_FogAllLights();
+
+	//-------------------------------------------------
+	// capture the depth for the motion blur before rendering any post process surfaces that may contribute to the depth
+	//-------------------------------------------------
+	if ( r_motionBlur.GetInteger() > 0 ) {
+		const idScreenRect & viewport = backEnd.viewDef->viewport;
+		globalImages->currentDepthImage->CopyDepthbuffer( viewport.x1, viewport.y1, viewport.GetWidth(), viewport.GetHeight() );
+	}
+
+	//-------------------------------------------------
+	// now draw any screen warping post-process effects using _currentRender
+	//-------------------------------------------------
+	if ( processed < numDrawSurfs && !r_skipPostProcess.GetBool() ) {
+		int x = backEnd.viewDef->viewport.x1;
+		int y = backEnd.viewDef->viewport.y1;
+		int	w = backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1;
+		int	h = backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1;
+
+		RENDERLOG_PRINTF( "Resolve to %i x %i buffer\n", w, h );
+
+		GL_SelectTexture( 0 );
+
+		// resolve the screen
+		globalImages->currentRenderImage->CopyFramebuffer( x, y, w, h );
+		backEnd.currentRenderCopied = true;
+
+		// RENDERPARM_SCREENCORRECTIONFACTOR amd RENDERPARM_WINDOWCOORD overlap
+		// diffuseScale and specularScale
+
+		// screen power of two correction factor (no longer relevant now)
+		float screenCorrectionParm[4];
+		screenCorrectionParm[0] = 1.0f;
+		screenCorrectionParm[1] = 1.0f;
+		screenCorrectionParm[2] = 0.0f;
+		screenCorrectionParm[3] = 1.0f;
+		SetFragmentParm( RENDERPARM_SCREENCORRECTIONFACTOR, screenCorrectionParm ); // rpScreenCorrectionFactor
+
+		// window coord to 0.0 to 1.0 conversion
+		float windowCoordParm[4];
+		windowCoordParm[0] = 1.0f / w;
+		windowCoordParm[1] = 1.0f / h;
+		windowCoordParm[2] = 0.0f;
+		windowCoordParm[3] = 1.0f;
+		SetFragmentParm( RENDERPARM_WINDOWCOORD, windowCoordParm ); // rpWindowCoord
+
+		// render the remaining surfaces
+		renderLog.OpenMainBlock( MRB_DRAW_SHADER_PASSES_POST );
+		RB_DrawShaderPasses( drawSurfs + processed, numDrawSurfs - processed );
+		renderLog.CloseMainBlock();
+	}
+
+	//-------------------------------------------------
+	// render debug tools
+	//-------------------------------------------------
+	RB_RenderDebugTools( drawSurfs, numDrawSurfs );
+
+	renderLog.CloseBlock();
+}
+
+/*
+==================
+RB_MotionBlur
+
+Experimental feature
+==================
+*/
+void RB_MotionBlur() {
+	if ( !backEnd.viewDef->viewEntitys ) {
+		// 3D views only
+		return;
+	}
+	if ( r_motionBlur.GetInteger() <= 0 ) {
+		return;
+	}
+	if ( backEnd.viewDef->isSubview ) {
+		return;
+	}
+
+	GL_CheckErrors();
+
+	// clear the alpha buffer and draw only the hands + weapon into it so
+	// we can avoid blurring them
+	gladGL.ClearColor( 0, 0, 0, 1 );
+	GL_State( GLS_COLORMASK | GLS_DEPTHMASK );
+	gladGL.Clear( GL_COLOR_BUFFER_BIT );
+	GL_Color( 0, 0, 0, 0 );
+	GL_SelectTexture( 0 );
+	globalImages->blackImage->Bind();
+	backEnd.currentSpace = NULL;
+
+	drawSurf_t **drawSurfs = (drawSurf_t **)&backEnd.viewDef->drawSurfs[0];
+	for ( int surfNum = 0; surfNum < backEnd.viewDef->numDrawSurfs; surfNum++ ) {
+		const drawSurf_t * surf = drawSurfs[ surfNum ];
+
+		if ( !surf->space->weaponDepthHack && !surf->space->skipMotionBlur && !surf->material->HasSubview() ) {
+			// Apply motion blur to this object
+			continue;
+		}
+
+		const idMaterial * shader = surf->material;
+		if ( shader->Coverage() == MC_TRANSLUCENT ) {
+			// muzzle flash, etc
+			continue;
+		}
+
+		// set mvp matrix
+		if ( surf->space != backEnd.currentSpace ) {
+			RB_SetMVP( surf->space->mvp );
+			backEnd.currentSpace = surf->space;
+		}
+
+		// this could just be a color, but we don't have a skinned color-only prog
+		if ( surf->jointCache ) {
+			renderProgManager.BindShader_TextureVertexColorSkinned();
+		} else {
+			renderProgManager.BindShader_TextureVertexColor();
+		}
+
+		// draw it solid
+		RB_DrawElementsWithCounters( surf );
+	}
+	GL_State( GLS_DEPTHFUNC_ALWAYS );
+
+	// copy off the color buffer and the depth buffer for the motion blur prog
+	// we use the viewport dimensions for copying the buffers in case resolution scaling is enabled.
+	const idScreenRect & viewport = backEnd.viewDef->viewport;
+	globalImages->currentRenderImage->CopyFramebuffer( viewport.x1, viewport.y1, viewport.GetWidth(), viewport.GetHeight() );
+
+	// derive the matrix to go from current pixels to previous frame pixels
+	idRenderMatrix	inverseMVP;
+	idRenderMatrix::Inverse( backEnd.viewDef->worldSpace.mvp, inverseMVP );
+
+	idRenderMatrix	motionMatrix;
+	idRenderMatrix::Multiply( backEnd.prevMVP[0], inverseMVP, motionMatrix );
+
+	backEnd.prevMVP[0] = backEnd.viewDef->worldSpace.mvp;
+
+	RB_SetMVP( motionMatrix );
+
+	GL_State( GLS_DEPTHFUNC_ALWAYS );
+	GL_Cull( CT_TWO_SIDED );
+
+	renderProgManager.BindShader_MotionBlur();
+
+	// let the fragment program know how many samples we are going to use
+	idVec4 samples( (float)( 1 << r_motionBlur.GetInteger() ) );
+	SetFragmentParm( RENDERPARM_OVERBRIGHT, samples.ToFloatPtr() );
+
+	GL_SelectTexture( 0 );
+	globalImages->currentRenderImage->Bind();
+	GL_SelectTexture( 1 );
+	globalImages->currentDepthImage->Bind();
+
+	RB_DrawElementsWithCounters( &backEnd.unitSquareSurface );
+	GL_CheckErrors();
+}
+
+/*
+==================
+RB_DrawView
+==================
+*/
+void RB_DrawView( const void *data ) {
+	const drawSurfsCommand_t * cmd = (const drawSurfsCommand_t *)data;
+
+	backEnd.viewDef = cmd->viewDef;
+
+	// we will need to do a new copyTexSubImage of the screen
+	// when a SS_POST_PROCESS material is used
+	backEnd.currentRenderCopied = false;
+
+	// if there aren't any drawsurfs, do nothing
+	if ( !backEnd.viewDef->numDrawSurfs ) {
+		return;
+	}
+
+	// skip render bypasses everything that has models, assuming
+	// them to be 3D views, but leaves 2D rendering visible
+	if ( r_skipRender.GetBool() && backEnd.viewDef->viewEntitys ) {
+		return;
+	}
+
+	// skip render context sets the wgl context to NULL,
+	// which should factor out the API cost, under the assumption
+	// that all gl calls just return if the context isn't valid
+	if ( r_skipRenderContext.GetBool() && backEnd.viewDef->viewEntitys ) {
+		GLimp_DeactivateContext();
+	}
+
+	backEnd.pc.c_surfaces += backEnd.viewDef->numDrawSurfs;
+
+	RB_ShowOverdraw();
+
+	// render the scene
+	RB_DrawViewInternal( cmd->viewDef );
+
+	RB_MotionBlur();
+
+	// restore the context for 2D drawing if we were stubbing it out
+	if ( r_skipRenderContext.GetBool() && backEnd.viewDef->viewEntitys ) {
+		GLimp_ActivateContext();
+		GL_SetDefaultState();
+	}
+}
+
+/*
+==================
+RB_CopyRender
+
+Copy part of the current framebuffer to an image
+==================
+*/
+void RB_CopyRender( const void *data ) {
+	const copyRenderCommand_t * cmd = (const copyRenderCommand_t *)data;
+
+	if ( r_skipCopyTexture.GetBool() ) {
+		return;
+	}
+
+	RENDERLOG_PRINTF( "***************** RB_CopyRender *****************\n" );
+
+	if ( cmd->image ) {
+		cmd->image->CopyFramebuffer( cmd->x, cmd->y, cmd->imageWidth, cmd->imageHeight );
+	}
+
+	if ( cmd->clearColorAfterCopy ) {
+		GL_Clear( true, false, false, STENCIL_SHADOW_TEST_VALUE, 0, 0, 0, 0 );
+	}
+}
+
+/*
+==================
+RB_PostProcess
+
+==================
+*/
+extern idCVar rs_enable;
+void RB_PostProcess( const void * data ) {
+
+	// only do the post process step if resolution scaling is enabled. Prevents the unnecessary copying of the framebuffer and
+	// corresponding full screen quad pass.
+	if ( rs_enable.GetInteger() == 0 ) {
+		return;
+	}
+
+	// resolve the scaled rendering to a temporary texture
+	postProcessCommand_t * cmd = (postProcessCommand_t *)data;
+	const idScreenRect & viewport = cmd->viewDef->viewport;
+	globalImages->currentRenderImage->CopyFramebuffer( viewport.x1, viewport.y1, viewport.GetWidth(), viewport.GetHeight() );
+
+	GL_State( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO | GLS_DEPTHMASK | GLS_DEPTHFUNC_ALWAYS );
+	GL_Cull( CT_TWO_SIDED );
+
+	int screenWidth = renderSystem->GetWidth();
+	int screenHeight = renderSystem->GetHeight();
+
+	// set the window clipping
+	GL_Viewport( 0, 0, screenWidth, screenHeight );
+	GL_Scissor( 0, 0, screenWidth, screenHeight );
+
+	GL_SelectTexture( 0 );
+	globalImages->currentRenderImage->Bind();
+	renderProgManager.BindShader_PostProcess();
+
+	// Draw
+	RB_DrawElementsWithCounters( &backEnd.unitSquareSurface );
+
+	renderLog.CloseBlock();
+}
