@@ -305,3 +305,4 @@ healthcheckdb
 
 # SCons object cache
 .scons_cache/
+.sconsign.dblite
