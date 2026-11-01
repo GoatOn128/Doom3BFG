@@ -72,24 +72,11 @@ struct glconfig_t {
 	int					depthBits;
 	int					stencilBits;
 
-	bool				multitextureAvailable;
-	bool				directStateAccess;
 	bool				textureCompressionAvailable;
 	bool				anisotropicFilterAvailable;
-	bool				textureLODBiasAvailable;
-	bool				seamlessCubeMapAvailable;
-	bool				sRGBFramebufferAvailable;
-	bool				vertexBufferObjectAvailable;
-	bool				mapBufferRangeAvailable;
-	bool				vertexArrayObjectAvailable;
-	bool				drawElementsBaseVertexAvailable;
-	bool				glslAvailable;
-	bool				uniformBufferAvailable;
-	bool				twoSidedStencilAvailable;
 	bool				depthBoundsTestAvailable;
 	bool				syncAvailable;
 	bool				timerQueryAvailable;
-	bool				occlusionQueryAvailable;
 	bool				debugOutputAvailable;
 	bool				swapControlTearAvailable;
 

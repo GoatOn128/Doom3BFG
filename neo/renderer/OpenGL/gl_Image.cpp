@@ -235,7 +235,7 @@ void idImage::SetTexParameters() {
 			gladGL.TexParameterf(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1 );
 		}
 	}
-	if ( glConfig.textureLODBiasAvailable && ( usage != TD_FONT ) ) {
+	if ( usage != TD_FONT ) {
 		// use a blurring LOD bias in combination with high anisotropy to fix our aliasing grate textures...
 		gladGL.TexParameterf(target, GL_TEXTURE_LOD_BIAS_EXT, r_lodBias.GetFloat() );
 	}

@@ -236,24 +236,20 @@ static void R_CheckCvars() {
 	extern idCVar r_useSeamlessCubeMap;
 	if ( r_useSeamlessCubeMap.IsModified() ) {
 		r_useSeamlessCubeMap.ClearModified();
-		if ( glConfig.seamlessCubeMapAvailable ) {
-			if ( r_useSeamlessCubeMap.GetBool() ) {
-				gladGL.Enable( GL_TEXTURE_CUBE_MAP_SEAMLESS );
-			} else {
-				gladGL.Disable( GL_TEXTURE_CUBE_MAP_SEAMLESS );
-			}
+		if ( r_useSeamlessCubeMap.GetBool() ) {
+			gladGL.Enable( GL_TEXTURE_CUBE_MAP_SEAMLESS );
+		} else {
+			gladGL.Disable( GL_TEXTURE_CUBE_MAP_SEAMLESS );
 		}
 	}
 
 	extern idCVar r_useSRGB;
 	if ( r_useSRGB.IsModified() ) {
 		r_useSRGB.ClearModified();
-		if ( glConfig.sRGBFramebufferAvailable ) {
-			if ( r_useSRGB.GetBool() ) {
-				gladGL.Enable( GL_FRAMEBUFFER_SRGB );
-			} else {
-				gladGL.Disable( GL_FRAMEBUFFER_SRGB );
-			}
+		if ( r_useSRGB.GetBool() ) {
+			gladGL.Enable( GL_FRAMEBUFFER_SRGB );
+		} else {
+			gladGL.Disable( GL_FRAMEBUFFER_SRGB );
 		}
 	}
 

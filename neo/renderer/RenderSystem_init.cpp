@@ -252,14 +252,8 @@ static void R_CheckPortableExtensions() {
 		glConfig.vendor = VENDOR_INTEL;
 	}
 
-	// GL_ARB_multitexture is in gl 3.2 core
-	glConfig.multitextureAvailable = true;
-	// ClientActiveTexture is not in the core profile, but it is not used here
-
-	// GL_EXT_direct_state_access
-	glConfig.directStateAccess = R_CheckExtension( "GL_EXT_direct_state_access");
-
-	// GL_ARB_texture_compression is in gl 3.2 core, so check only GL_EXT_texture_compression_s3tc
+	// GL_ARB_texture_compression is core, but GL_EXT_texture_compression_s3tc
+	// is not part of the core profile, so it still has to be checked here
 	glConfig.textureCompressionAvailable = R_CheckExtension( "GL_EXT_texture_compression_s3tc" );
 
 	// GL_EXT_texture_filter_anisotropic
@@ -271,47 +265,17 @@ static void R_CheckPortableExtensions() {
 		glConfig.maxTextureAnisotropy = 1;
 	}
 
-	// texture lod bias is in gl 3.2 core
-	glConfig.textureLODBiasAvailable = true;
-
-	// GL_ARB_seamless_cube_map is in gl 3.2 core
-	glConfig.seamlessCubeMapAvailable = true;
+	// seamless cube maps and sRGB framebuffers are core since GL 3.2; the
+	// r_useSeamlessCubeMap and r_useSRGB cvars are applied by CheckCvars()
 	r_useSeamlessCubeMap.SetModified();		// the CheckCvars() next frame will enable / disable it
-
-	// GL_ARB_framebuffer_sRGB is in gl 3.2 core
-	glConfig.sRGBFramebufferAvailable = true;
 	r_useSRGB.SetModified();		// the CheckCvars() next frame will enable / disable it
 
-	// GL_ARB_vertex_buffer_object is in gl 3.2 core
-	glConfig.vertexBufferObjectAvailable = true;
-
-	// GL_ARB_map_buffer_range is in gl 3.2 core
-	glConfig.mapBufferRangeAvailable = true;
-
-	// GL_ARB_vertex_array_object is in gl 3.2 core
-	glConfig.vertexArrayObjectAvailable = true;
-
-	// GL_ARB_draw_elements_base_vertex is in gl 3.2 core
-	glConfig.drawElementsBaseVertexAvailable = true;
-
-	// GL_ARB_vertex_program and GL_ARB_fragment_program aren't needed
-
-	// GLSL: gl 3.2 <-> glsl 1.5
-	glConfig.glslAvailable = true;
-
-
 	gladGL.GetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, (GLint *)&glConfig.maxTextureImageUnits);
-
-	// GL_ARB_uniform_buffer_object is in gl 3.2 core
-	glConfig.uniformBufferAvailable = true;
 
 	gladGL.GetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, (GLint *)&glConfig.uniformBufferOffsetAlignment);
 	if ( glConfig.uniformBufferOffsetAlignment < 256 ) {
 		glConfig.uniformBufferOffsetAlignment = 256;
 	}
-
-	// separate stencil is in gl 3.2 core
-	glConfig.twoSidedStencilAvailable = true;
 
 	// GL_EXT_depth_bounds_test
 	glConfig.depthBoundsTestAvailable = R_CheckExtension( "GL_EXT_depth_bounds_test" );
@@ -320,10 +284,6 @@ static void R_CheckPortableExtensions() {
 	glConfig.syncAvailable = (glConfig.vendor != VENDOR_INTEL) || r_skipIntelWorkarounds.GetBool();
 		// as of 5/24/2012 (driver version 15.26.12.64.2761) sync objects
 		// do not appear to work for the Intel HD 4000 graphics
-
-	// GL_ARB_occlusion_query is in gl 3.2 core
-	glConfig.occlusionQueryAvailable = true;
-	// defined in GL_ARB_occlusion_query, which is required for GL_EXT_timer_query
 
 	// GL_ARB_timer_query or GL_EXT_timer_query
 	glConfig.timerQueryAvailable = R_CheckExtension( "GL_ARB_timer_query" );
