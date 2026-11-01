@@ -31,6 +31,24 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "../tr_local.h"
 
+// global wrapper state
+wrapperContext_t wrapperContext;
+wrapperConfig_t wrapperConfig;
+wrapperStats_t wrapperStats;
+
+// GPU frame timing state, driven through GL_StartFrame/GL_EndFrame/GL_WaitForEndFrame
+enum gpuTimeQueryState_t {
+	TIME_QUERY_INVALID = 0,
+	TIME_QUERY_STARTED,
+	TIME_QUERY_STOPPED
+};
+
+static GLuint						frameTimeQueryId = 0;
+static gpuTimeQueryState_t			frameTimeQueryPending = TIME_QUERY_INVALID;
+static uint64						frameStartGPUTimeMicroSec = 0;
+static uint64						frameEndGPUTimeMicroSec = 0;
+static uint64						gpuToCpuTimeDeltaMicroSec = 0;
+
 /*
 ====================
 GL_SelectTexture
@@ -126,7 +144,7 @@ GL_DepthBoundsTest
 ========================
 */
 void GL_DepthBoundsTest( const float zmin, const float zmax ) {
-	if ( !glConfig.depthBoundsTestAvailable || zmin > zmax ) {
+	if ( !glConfig.depthBoundsTestAvailable || wrapperContext.disableDepthBoundsTest || zmin > zmax ) {
 		return;
 	}
 
@@ -273,7 +291,7 @@ This routine is responsible for setting the most commonly changed state
 void GL_State( uint64 stateBits, bool forceGlState ) {
 	uint64 diff = stateBits ^ backEnd.glState.glStateBits;
 
-	if ( !r_useStateCaching.GetBool() || forceGlState ) {
+	if ( !r_useStateCaching.GetBool() || forceGlState || wrapperConfig.disableStateCaching ) {
 		// make sure everything is set all the time, so we
 		// can see if our delta checking is screwing up
 		diff = 0xFFFFFFFFFFFFFFFF;
@@ -491,4 +509,148 @@ GL_GetCurrentStateMinusStencil
 */
 uint64 GL_GetCurrentStateMinusStencil() {
 	return GL_GetCurrentState() & ~(GLS_STENCIL_OP_BITS|GLS_STENCIL_FUNC_BITS|GLS_STENCIL_FUNC_REF_BITS|GLS_STENCIL_FUNC_MASK_BITS);
+}
+
+/*
+========================
+GL_SetWrapperContext
+========================
+*/
+void GL_SetWrapperContext( const wrapperContext_t & context ) {
+	wrapperContext = context;
+}
+
+/*
+========================
+GL_SetWrapperConfig
+========================
+*/
+void GL_SetWrapperConfig( const wrapperConfig_t & config ) {
+	wrapperConfig = config;
+}
+
+/*
+========================
+GL_SetTimeDelta
+
+Offset between the GPU clock and the CPU clock in microseconds, applied to the
+timestamps returned by GL_GetLastFrameTime()
+========================
+*/
+void GL_SetTimeDelta( uint64 delta ) {
+	gpuToCpuTimeDeltaMicroSec = delta;
+}
+
+/*
+========================
+GL_StartFrame
+
+Inserts a timing mark for the start of the GPU frame by beginning a
+GL_TIME_ELAPSED_EXT query around the rest of the frame
+========================
+*/
+void GL_StartFrame( int /* frame */ ) {
+	if ( !wrapperContext.useTimerQuery ) {
+		return;
+	}
+	if ( frameTimeQueryId == 0 ) {
+		gladGL.GenQueriesARB( 1, & frameTimeQueryId );
+	}
+	if ( frameTimeQueryPending == TIME_QUERY_STOPPED ) {
+		// reclaim the previous frame's query before reusing the id
+		GL_WaitForEndFrame();
+	}
+	if ( frameTimeQueryPending == TIME_QUERY_INVALID ) {
+		gladGL.BeginQueryARB( GL_TIME_ELAPSED_EXT, frameTimeQueryId );
+		frameTimeQueryPending = TIME_QUERY_STARTED;
+	}
+}
+
+/*
+========================
+GL_EndFrame
+
+Inserts a timing mark for the end of the GPU frame
+========================
+*/
+void GL_EndFrame() {
+	if ( frameTimeQueryPending == TIME_QUERY_STARTED ) {
+		gladGL.EndQueryARB( GL_TIME_ELAPSED_EXT );
+		gladGL.Flush();
+		frameTimeQueryPending = TIME_QUERY_STOPPED;
+	}
+}
+
+/*
+========================
+GL_WaitForEndFrame
+
+Reads back the timer query of the last frame; blocks until the GPU has
+reached the end frame mark. The fence/swap wait itself is done by
+GL_BlockingSwapBuffers() before this is called.
+========================
+*/
+void GL_WaitForEndFrame() {
+	if ( !wrapperContext.useTimerQuery || frameTimeQueryPending != TIME_QUERY_STOPPED ) {
+		return;
+	}
+	GLuint64EXT gpuFrameNanoseconds = 0;
+	gladGL.GetQueryObjectui64vEXT( frameTimeQueryId, GL_QUERY_RESULT, &gpuFrameNanoseconds );
+	frameEndGPUTimeMicroSec = Sys_Microseconds() + gpuToCpuTimeDeltaMicroSec;
+	frameStartGPUTimeMicroSec = frameEndGPUTimeMicroSec - gpuFrameNanoseconds / 1000;
+	frameTimeQueryPending = TIME_QUERY_INVALID;
+}
+
+/*
+========================
+GL_GetLastFrameTime
+
+GPU time between GL_StartFrame() and GL_EndFrame() of the last frame,
+expressed on the CPU clock (plus the GL_SetTimeDelta() offset)
+========================
+*/
+void GL_GetLastFrameTime( uint64 & startGPUTimeMicroSec, uint64 & endGPUTimeMicroSec ) {
+	if ( wrapperContext.useTimerQuery ) {
+		startGPUTimeMicroSec = frameStartGPUTimeMicroSec;
+		endGPUTimeMicroSec = frameEndGPUTimeMicroSec;
+	} else {
+		startGPUTimeMicroSec = 0;
+		endGPUTimeMicroSec = 0;
+	}
+}
+
+/*
+========================
+GL_Flush
+========================
+*/
+void GL_Flush() {
+	gladGL.Flush();
+}
+
+/*
+========================
+GL_Finish
+========================
+*/
+void GL_Finish() {
+	gladGL.Finish();
+}
+
+/*
+========================
+GL_GetCurrentStats
+========================
+*/
+wrapperStats_t GL_GetCurrentStats() {
+	return wrapperStats;
+}
+
+/*
+========================
+GL_ClearStats
+========================
+*/
+void GL_ClearStats() {
+	memset( &wrapperStats, 0, sizeof( wrapperStats ) );
 }

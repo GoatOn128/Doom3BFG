@@ -114,17 +114,9 @@ void idRenderSystemLocal::RenderCommandBuffers( const emptyCommand_t * const cmd
 	// r_skipRender is usually more usefull, because it will still
 	// draw 2D graphics
 	if ( !r_skipBackEnd.GetBool() ) {
-		if ( glConfig.timerQueryAvailable ) {
-			if ( tr.timerQueryId == 0 ) {
-				gladGL.GenQueriesARB( 1, & tr.timerQueryId );
-			}
-			gladGL.BeginQueryARB( GL_TIME_ELAPSED_EXT, tr.timerQueryId );
-			RB_ExecuteBackEndCommands( cmdHead );
-			gladGL.EndQueryARB( GL_TIME_ELAPSED_EXT );
-			gladGL.Flush();
-		} else {
-			RB_ExecuteBackEndCommands( cmdHead );
-		}
+		GL_StartFrame( tr.frameCount );
+		RB_ExecuteBackEndCommands( cmdHead );
+		GL_EndFrame();
 	}
 
 	// pass in null for now - we may need to do some map specific hackery in the future
@@ -642,14 +634,14 @@ void idRenderSystemLocal::SwapCommandBuffers_FinishRendering(
 		GL_BlockingSwapBuffers();
 	}
 
-	// read back the start and end timer queries from the previous frame
+	// read back the GPU frame time of the previous frame through the graphics API wrapper
 	if ( glConfig.timerQueryAvailable ) {
-		GLuint64EXT drawingTimeNanoseconds = 0;
-		if ( tr.timerQueryId != 0 ) {
-			gladGL.GetQueryObjectui64vEXT( tr.timerQueryId, GL_QUERY_RESULT, &drawingTimeNanoseconds );
-		}
+		GL_WaitForEndFrame();
+		uint64 gpuStartMicroSec = 0;
+		uint64 gpuEndMicroSec = 0;
+		GL_GetLastFrameTime( gpuStartMicroSec, gpuEndMicroSec );
 		if ( gpuMicroSec != NULL ) {
-			*gpuMicroSec = drawingTimeNanoseconds / 1000;
+			*gpuMicroSec = gpuEndMicroSec - gpuStartMicroSec;
 		}
 	}
 

@@ -71,6 +71,10 @@ static const int OCCLUSION_QUERY_TOO_OLD				= -1;
 #define USE_CORE_PROFILE
 
 struct wrapperContext_t {
+	// the GPU supports timer queries and the engine wants GPU frame timing
+	bool			useTimerQuery;
+	// ignore GL_DepthBoundsTest() requests (debugging aid for drivers with broken EXT_depth_bounds_test)
+	bool			disableDepthBoundsTest;
 };
 
 
@@ -114,6 +118,11 @@ struct wrapperStats_t {
 	int				c_drawIndices;
 	int				c_drawVertices;
 };
+
+// global wrapper state, set through GL_SetWrapperContext() / GL_SetWrapperConfig()
+extern wrapperContext_t wrapperContext;
+extern wrapperConfig_t wrapperConfig;
+extern wrapperStats_t wrapperStats;
 
 /*
 ================================================================================================

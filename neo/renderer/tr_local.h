@@ -808,8 +808,6 @@ public:
 	drawSurf_t				testImageSurface_;
 
 	idParallelJobList *		frontEndJobList;
-
-	unsigned				timerQueryId;		// for GL_TIME_ELAPSED_EXT queries
 };
 
 extern backEndState_t		backEnd;
