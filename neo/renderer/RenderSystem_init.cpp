@@ -226,8 +226,8 @@ DebugCallback
 For ARB_debug_output
 ========================
 */
-static void CALLBACK DebugCallback(unsigned int source, unsigned int type,
-								   unsigned int id, unsigned int severity, int length, const char * message, void * userParam) {
+static void CALLBACK DebugCallback( GLenum source, GLenum type,
+								   GLuint id, GLenum severity, GLsizei length, const GLchar * message, const void * userParam) {
 	// it probably isn't safe to do an idLib::Printf at this point
 	OutputDebugString( message );
 	OutputDebugString( "\n" );
@@ -340,7 +340,7 @@ static void R_CheckPortableExtensions() {
 		}
 		if ( r_debugContext.GetInteger() >= 2 ) {
 			// force everything to happen in the main thread instead of in a separate driver thread
-			glEnable( GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB );
+			gladGL.Enable( GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB );
 		}
 		if ( r_debugContext.GetInteger() >= 3 ) {
 			// enable all the low priority messages

@@ -65,23 +65,23 @@ void GL_Cull( int cullType ) {
 	}
 
 	if ( cullType == CT_TWO_SIDED ) {
-		qglDisable( GL_CULL_FACE );
+		gladGL.Disable( GL_CULL_FACE );
 	} else  {
 		if ( backEnd.glState.faceCulling == CT_TWO_SIDED ) {
-			qglEnable( GL_CULL_FACE );
+			gladGL.Enable( GL_CULL_FACE );
 		}
 
 		if ( cullType == CT_BACK_SIDED ) {
 			if ( backEnd.viewDef->isMirror ) {
-				qglCullFace( GL_FRONT );
+				gladGL.CullFace( GL_FRONT );
 			} else {
-				qglCullFace( GL_BACK );
+				gladGL.CullFace( GL_BACK );
 			}
 		} else {
 			if ( backEnd.viewDef->isMirror ) {
-				qglCullFace( GL_BACK );
+				gladGL.CullFace( GL_BACK );
 			} else {
-				qglCullFace( GL_FRONT );
+				gladGL.CullFace( GL_FRONT );
 			}
 		}
 	}
@@ -95,7 +95,7 @@ GL_Scissor
 ====================
 */
 void GL_Scissor( int x /* left*/, int y /* bottom */, int w, int h ) {
-	qglScissor( x, y, w, h );
+	gladGL.Scissor( x, y, w, h );
 }
 
 /*
@@ -104,7 +104,7 @@ GL_Viewport
 ====================
 */
 void GL_Viewport( int x /* left */, int y /* bottom */, int w, int h ) {
-	qglViewport( x, y, w, h );
+	gladGL.Viewport( x, y, w, h );
 }
 
 /*
@@ -116,7 +116,7 @@ void GL_PolygonOffset( float scale, float bias ) {
 	backEnd.glState.polyOfsScale = scale;
 	backEnd.glState.polyOfsBias = bias;
 	if ( backEnd.glState.glStateBits & GLS_POLYGON_OFFSET ) {
-		qglPolygonOffset( scale, bias );
+		gladGL.PolygonOffset( scale, bias );
 	}
 }
 
@@ -131,10 +131,10 @@ void GL_DepthBoundsTest( const float zmin, const float zmax ) {
 	}
 
 	if ( zmin == 0.0f && zmax == 0.0f ) {
-		qglDisable( GL_DEPTH_BOUNDS_TEST_EXT );
+		gladGL.Disable( GL_DEPTH_BOUNDS_TEST_EXT );
 	} else {
-		qglEnable( GL_DEPTH_BOUNDS_TEST_EXT );
-		qglDepthBoundsEXT( zmin, zmax );
+		gladGL.Enable( GL_DEPTH_BOUNDS_TEST_EXT );
+		gladGL.DepthBoundsEXT( zmin, zmax );
 	}
 }
 
@@ -206,17 +206,17 @@ GL_Clear
 void GL_Clear( bool color, bool depth, bool stencil, byte stencilValue, float r, float g, float b, float a ) {
 	int clearFlags = 0;
 	if ( color ) {
-		qglClearColor( r, g, b, a );
+		gladGL.ClearColor( r, g, b, a );
 		clearFlags |= GL_COLOR_BUFFER_BIT;
 	}
 	if ( depth ) {
 		clearFlags |= GL_DEPTH_BUFFER_BIT;
 	}
 	if ( stencil ) {
-		qglClearStencil( stencilValue );
+		gladGL.ClearStencil( stencilValue );
 		clearFlags |= GL_STENCIL_BUFFER_BIT;
 	}
-	qglClear( clearFlags );
+	gladGL.Clear( clearFlags );
 }
 
 /*
@@ -230,36 +230,36 @@ may touch, including the editor.
 void GL_SetDefaultState() {
 	RENDERLOG_PRINTF( "--- GL_SetDefaultState ---\n" );
 
-	qglClearDepth( 1.0f );
+	gladGL.ClearDepth( 1.0f );
 
 	// make sure our GL state vector is set correctly
 	memset( &backEnd.glState, 0, sizeof( backEnd.glState ) );
 	GL_State( 0, true );
 
 	// These are changed by GL_Cull
-	qglCullFace( GL_FRONT_AND_BACK );
-	qglEnable( GL_CULL_FACE );
+	gladGL.CullFace( GL_FRONT_AND_BACK );
+	gladGL.Enable( GL_CULL_FACE );
 
 	// These are changed by GL_State
-	qglColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
-	qglBlendFunc( GL_ONE, GL_ZERO );
-	qglDepthMask( GL_TRUE );
-	qglDepthFunc( GL_LESS );
-	qglDisable( GL_STENCIL_TEST );
-	qglDisable( GL_POLYGON_OFFSET_FILL );
-	qglDisable( GL_POLYGON_OFFSET_LINE );
-	qglPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+	gladGL.ColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
+	gladGL.BlendFunc( GL_ONE, GL_ZERO );
+	gladGL.DepthMask( GL_TRUE );
+	gladGL.DepthFunc( GL_LESS );
+	gladGL.Disable( GL_STENCIL_TEST );
+	gladGL.Disable( GL_POLYGON_OFFSET_FILL );
+	gladGL.Disable( GL_POLYGON_OFFSET_LINE );
+	gladGL.PolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 
 	// These should never be changed
-	qglShadeModel( GL_SMOOTH );
-	qglEnable( GL_DEPTH_TEST );
-	qglEnable( GL_BLEND );
-	qglEnable( GL_SCISSOR_TEST );
-	qglDrawBuffer( GL_BACK );
-	qglReadBuffer( GL_BACK );
+	gladGL.ShadeModel( GL_SMOOTH );
+	gladGL.Enable( GL_DEPTH_TEST );
+	gladGL.Enable( GL_BLEND );
+	gladGL.Enable( GL_SCISSOR_TEST );
+	gladGL.DrawBuffer( GL_BACK );
+	gladGL.ReadBuffer( GL_BACK );
 
 	if ( r_useScissor.GetBool() ) {
-		qglScissor( 0, 0, renderSystem->GetWidth(), renderSystem->GetHeight() );
+		gladGL.Scissor( 0, 0, renderSystem->GetWidth(), renderSystem->GetHeight() );
 	}
 }
 
@@ -286,10 +286,10 @@ void GL_State( uint64 stateBits, bool forceGlState ) {
 	//
 	if ( diff & GLS_DEPTHFUNC_BITS ) {
 		switch ( stateBits & GLS_DEPTHFUNC_BITS ) {
-			case GLS_DEPTHFUNC_EQUAL:	qglDepthFunc( GL_EQUAL ); break;
-			case GLS_DEPTHFUNC_ALWAYS:	qglDepthFunc( GL_ALWAYS ); break;
-			case GLS_DEPTHFUNC_LESS:	qglDepthFunc( GL_LEQUAL ); break;
-			case GLS_DEPTHFUNC_GREATER:	qglDepthFunc( GL_GEQUAL ); break;
+			case GLS_DEPTHFUNC_EQUAL:	gladGL.DepthFunc( GL_EQUAL ); break;
+			case GLS_DEPTHFUNC_ALWAYS:	gladGL.DepthFunc( GL_ALWAYS ); break;
+			case GLS_DEPTHFUNC_LESS:	gladGL.DepthFunc( GL_LEQUAL ); break;
+			case GLS_DEPTHFUNC_GREATER:	gladGL.DepthFunc( GL_GEQUAL ); break;
 		}
 	}
 
@@ -330,10 +330,10 @@ void GL_State( uint64 stateBits, bool forceGlState ) {
 
 		// Only actually update GL's blend func if blending is enabled.
 		if ( srcFactor == GL_ONE && dstFactor == GL_ZERO ) {
-			qglDisable( GL_BLEND );
+			gladGL.Disable( GL_BLEND );
 		} else {
-			qglEnable( GL_BLEND );
-			qglBlendFunc( srcFactor, dstFactor );
+			gladGL.Enable( GL_BLEND );
+			gladGL.BlendFunc( srcFactor, dstFactor );
 		}
 	}
 
@@ -342,9 +342,9 @@ void GL_State( uint64 stateBits, bool forceGlState ) {
 	//
 	if ( diff & GLS_DEPTHMASK ) {
 		if ( stateBits & GLS_DEPTHMASK ) {
-			qglDepthMask( GL_FALSE );
+			gladGL.DepthMask( GL_FALSE );
 		} else {
-			qglDepthMask( GL_TRUE );
+			gladGL.DepthMask( GL_TRUE );
 		}
 	}
 
@@ -356,7 +356,7 @@ void GL_State( uint64 stateBits, bool forceGlState ) {
 		GLboolean g = ( stateBits & GLS_GREENMASK ) ? GL_FALSE : GL_TRUE;
 		GLboolean b = ( stateBits & GLS_BLUEMASK ) ? GL_FALSE : GL_TRUE;
 		GLboolean a = ( stateBits & GLS_ALPHAMASK ) ? GL_FALSE : GL_TRUE;
-		qglColorMask( r, g, b, a );
+		gladGL.ColorMask( r, g, b, a );
 	}
 
 	//
@@ -364,9 +364,9 @@ void GL_State( uint64 stateBits, bool forceGlState ) {
 	//
 	if ( diff & GLS_POLYMODE_LINE ) {
 		if ( stateBits & GLS_POLYMODE_LINE ) {
-			qglPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+			gladGL.PolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 		} else {
-			qglPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+			gladGL.PolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 		}
 	}
 
@@ -375,12 +375,12 @@ void GL_State( uint64 stateBits, bool forceGlState ) {
 	//
 	if ( diff & GLS_POLYGON_OFFSET ) {
 		if ( stateBits & GLS_POLYGON_OFFSET ) {
-			qglPolygonOffset( backEnd.glState.polyOfsScale, backEnd.glState.polyOfsBias );
-			qglEnable( GL_POLYGON_OFFSET_FILL );
-			qglEnable( GL_POLYGON_OFFSET_LINE );
+			gladGL.PolygonOffset( backEnd.glState.polyOfsScale, backEnd.glState.polyOfsBias );
+			gladGL.Enable( GL_POLYGON_OFFSET_FILL );
+			gladGL.Enable( GL_POLYGON_OFFSET_LINE );
 		} else {
-			qglDisable( GL_POLYGON_OFFSET_FILL );
-			qglDisable( GL_POLYGON_OFFSET_LINE );
+			gladGL.Disable( GL_POLYGON_OFFSET_FILL );
+			gladGL.Disable( GL_POLYGON_OFFSET_LINE );
 		}
 	}
 
@@ -390,7 +390,7 @@ void GL_State( uint64 stateBits, bool forceGlState ) {
 	//
 	if ( diff & ( GLS_ALPHATEST_FUNC_BITS | GLS_ALPHATEST_FUNC_REF_BITS ) ) {
 		if ( ( stateBits & GLS_ALPHATEST_FUNC_BITS ) != 0 ) {
-			qglEnable( GL_ALPHA_TEST );
+			gladGL.Enable( GL_ALPHA_TEST );
 
 			GLenum func = GL_ALWAYS;
 			switch ( stateBits & GLS_ALPHATEST_FUNC_BITS ) {
@@ -400,9 +400,9 @@ void GL_State( uint64 stateBits, bool forceGlState ) {
 				default: assert( false );
 			}
 			GLclampf ref = ( ( stateBits & GLS_ALPHATEST_FUNC_REF_BITS ) >> GLS_ALPHATEST_FUNC_REF_SHIFT ) / (float)0xFF;
-			qglAlphaFunc( func, ref );
+			gladGL.AlphaFunc( func, ref );
 		} else {
-			qglDisable( GL_ALPHA_TEST );
+			gladGL.Disable( GL_ALPHA_TEST );
 		}
 	}
 #endif
@@ -412,9 +412,9 @@ void GL_State( uint64 stateBits, bool forceGlState ) {
 	//
 	if ( diff & ( GLS_STENCIL_FUNC_BITS | GLS_STENCIL_OP_BITS ) ) {
 		if ( ( stateBits & ( GLS_STENCIL_FUNC_BITS | GLS_STENCIL_OP_BITS ) ) != 0 ) {
-			qglEnable( GL_STENCIL_TEST );
+			gladGL.Enable( GL_STENCIL_TEST );
 		} else {
-			qglDisable( GL_STENCIL_TEST );
+			gladGL.Disable( GL_STENCIL_TEST );
 		}
 	}
 	if ( diff & ( GLS_STENCIL_FUNC_BITS | GLS_STENCIL_FUNC_REF_BITS | GLS_STENCIL_FUNC_MASK_BITS ) ) {
@@ -432,7 +432,7 @@ void GL_State( uint64 stateBits, bool forceGlState ) {
 			case GLS_STENCIL_FUNC_GEQUAL:		func = GL_GEQUAL; break;
 			case GLS_STENCIL_FUNC_ALWAYS:		func = GL_ALWAYS; break;
 		}
-		qglStencilFunc( func, ref, mask );
+		gladGL.StencilFunc( func, ref, mask );
 	}
 	if ( diff & ( GLS_STENCIL_OP_FAIL_BITS | GLS_STENCIL_OP_ZFAIL_BITS | GLS_STENCIL_OP_PASS_BITS ) ) {
 		GLenum sFail = 0;
@@ -469,7 +469,7 @@ void GL_State( uint64 stateBits, bool forceGlState ) {
 			case GLS_STENCIL_OP_PASS_INCR_WRAP:	pass = GL_INCR_WRAP; break;
 			case GLS_STENCIL_OP_PASS_DECR_WRAP:	pass = GL_DECR_WRAP; break;
 		}
-		qglStencilOp( sFail, zFail, pass );
+		gladGL.StencilOp( sFail, zFail, pass );
 	}
 
 	backEnd.glState.glStateBits = stateBits;

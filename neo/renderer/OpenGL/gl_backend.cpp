@@ -61,12 +61,12 @@ static void RB_DrawFlickerBox() {
 		return;
 	}
 	if ( tr.frameCount & 1 ) {
-		qglClearColor( 1, 0, 0, 1 );
+		gladGL.ClearColor( 1, 0, 0, 1 );
 	} else {
-		qglClearColor( 0, 1, 0, 1 );
+		gladGL.ClearColor( 0, 1, 0, 1 );
 	}
-	qglScissor( 0, 0, 256, 256 );
-	qglClear( GL_COLOR_BUFFER_BIT );
+	gladGL.Scissor( 0, 0, 256, 256 );
+	gladGL.Clear( GL_COLOR_BUFFER_BIT );
 }
 
 /*
@@ -115,7 +115,7 @@ const void GL_BlockingSwapBuffers() {
 	if ( !glConfig.syncAvailable ) {
 		int syncType = r_intelWorkaroundsSyncType.GetInteger();
 		if ( syncType == 0 || syncType == 3 || syncType == 4 ) {
-			qglFinish();
+			gladGL.Finish();
 		}
 	}
 
@@ -134,15 +134,15 @@ const void GL_BlockingSwapBuffers() {
 	if ( glConfig.syncAvailable ) {
 		swapIndex ^= 1;
 
-		if ( qglIsSync( renderSync[swapIndex] ) ) {
-			qglDeleteSync( renderSync[swapIndex] );
+		if ( gladGL.IsSync( renderSync[swapIndex] ) ) {
+			gladGL.DeleteSync( renderSync[swapIndex] );
 		}
 		// draw something tiny to ensure the sync is after the swap
 		const int start = Sys_Milliseconds();
-		qglScissor( 0, 0, 1, 1 );
-		qglEnable( GL_SCISSOR_TEST );
-		qglClear( GL_COLOR_BUFFER_BIT );
-		renderSync[swapIndex] = qglFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
+		gladGL.Scissor( 0, 0, 1, 1 );
+		gladGL.Enable( GL_SCISSOR_TEST );
+		gladGL.Clear( GL_COLOR_BUFFER_BIT );
+		renderSync[swapIndex] = gladGL.FenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
 		const int end = Sys_Milliseconds();
 		if ( r_showSwapBuffers.GetBool() && end - start > 1 ) {
 			common->Printf( "%i msec to start fence\n", end - start );
@@ -155,9 +155,9 @@ const void GL_BlockingSwapBuffers() {
 			syncToWaitOn = renderSync[!swapIndex];
 		}
 
-		if ( qglIsSync( syncToWaitOn ) ) {
+		if ( gladGL.IsSync( syncToWaitOn ) ) {
 			for ( GLenum r = GL_TIMEOUT_EXPIRED; r == GL_TIMEOUT_EXPIRED; ) {
-				r = qglClientWaitSync( syncToWaitOn, GL_SYNC_FLUSH_COMMANDS_BIT, 1000 * 1000 );
+				r = gladGL.ClientWaitSync( syncToWaitOn, GL_SYNC_FLUSH_COMMANDS_BIT, 1000 * 1000 );
 			}
 		}
 	} else {
@@ -165,11 +165,11 @@ const void GL_BlockingSwapBuffers() {
 		if ( syncType > 0 ) {
 			if ( syncType == 2 || syncType == 4 ) {
 				// draw something tiny to ensure the sync is after the swap
-				qglScissor( 0, 0, 1, 1 );
-				qglEnable( GL_SCISSOR_TEST );
-				qglClear( GL_COLOR_BUFFER_BIT );
+				gladGL.Scissor( 0, 0, 1, 1 );
+				gladGL.Enable( GL_SCISSOR_TEST );
+				gladGL.Clear( GL_COLOR_BUFFER_BIT );
 			}
-			qglFinish();
+			gladGL.Finish();
 		}
 	}
 
@@ -249,9 +249,9 @@ void RB_ExecuteBackEndCommands( const emptyCommand_t *cmds ) {
 	RB_DrawFlickerBox();
 
 	// Fix for the steam overlay not showing up while in game without Shell/Debug/Console/Menu also rendering
-	qglColorMask( 1, 1, 1, 1 );
+	gladGL.ColorMask( 1, 1, 1, 1 );
 
-	qglFlush();
+	gladGL.Flush();
 
 	// stop rendering on this thread
 	uint64 backEndFinishTime = Sys_Microseconds();
@@ -264,31 +264,3 @@ void RB_ExecuteBackEndCommands( const emptyCommand_t *cmds ) {
 	renderLog.EndFrame();
 }
 
-/*
-=============
-RB_SetGL2D
-
-This is not used by the normal game paths, just by some tools
-=============
-*/
-void RB_SetGL2D() {
-	// set 2D virtual screen size
-	qglViewport( 0, 0, glConfig.nativeScreenWidth, glConfig.nativeScreenHeight );
-	if ( r_useScissor.GetBool() ) {
-		qglScissor( 0, 0, glConfig.nativeScreenWidth, glConfig.nativeScreenHeight );
-	}
-	qglMatrixMode( GL_PROJECTION );
-	qglLoadIdentity();
-	qglOrtho( 0, 640, 480, 0, 0, 1 );		// always assume 640x480 virtual coordinates
-	qglMatrixMode( GL_MODELVIEW );
-	qglLoadIdentity();
-
-	GL_State( GLS_DEPTHFUNC_ALWAYS |
-			  GLS_SRCBLEND_SRC_ALPHA |
-			  GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );
-
-	GL_Cull( CT_TWO_SIDED );
-
-	qglDisable( GL_DEPTH_TEST );
-	qglDisable( GL_STENCIL_TEST );
-}

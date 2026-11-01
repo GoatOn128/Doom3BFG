@@ -600,7 +600,7 @@ does a glLoadMatrixf after optionally applying the low-latency bypass matrix
 =============
 */
 static void RB_LoadMatrixWithBypass( const float m[16] ) {
-	glLoadMatrixf( m );
+	gladGL.LoadMatrixf( m );
 }
 
 /*
@@ -2161,19 +2161,19 @@ void RB_ShowLines() {
 		return;
 	}
 
-	glEnable( GL_SCISSOR_TEST );
-	glClearColor( 0, 0, 1, 1 );
+	gladGL.Enable( GL_SCISSOR_TEST );
+	gladGL.ClearColor( 0, 0, 1, 1 );
 
 	const int start = ( r_showLines.GetInteger() > 2 );	// 1,3 = horizontal, 2,4 = vertical
 	if ( r_showLines.GetInteger() == 1 || r_showLines.GetInteger() == 3 ) {
 		for ( int i = start ; i < tr.GetHeight() ; i+=2 ) {
-			glScissor( 0, i, tr.GetWidth(), 1 );
-			glClear( GL_COLOR_BUFFER_BIT );
+			gladGL.Scissor( 0, i, tr.GetWidth(), 1 );
+			gladGL.Clear( GL_COLOR_BUFFER_BIT );
 		}
 	} else {
 		for ( int i = start ; i < tr.GetWidth() ; i+=2 ) {
-			glScissor( i, 0, 1, tr.GetHeight() );
-			glClear( GL_COLOR_BUFFER_BIT );
+			gladGL.Scissor( i, 0, 1, tr.GetHeight() );
+			gladGL.Clear( GL_COLOR_BUFFER_BIT );
 		}
 	}
 }
