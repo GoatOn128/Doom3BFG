@@ -669,3 +669,65 @@ GL_ClearStats
 void GL_ClearStats() {
 	memset( &wrapperStats, 0, sizeof( wrapperStats ) );
 }
+
+/*
+========================
+GL_BeginQuery
+
+Begins a GL_SAMPLES_PASSED query and hands out the query number used to fetch
+the deferred result. A query number of 0 means queries are disabled and
+GL_GetDeferredQueryResult() will treat the object as visible. The caller is
+expected to draw the proxy geometry between GL_BeginQuery() and GL_EndQuery().
+========================
+*/
+void GL_BeginQuery( int64 * queryNumber ) {
+	if ( !wrapperContext.useOcclusionQueries ) {
+		*queryNumber = 0;
+		return;
+	}
+	gladGL.BeginQueryARB( GL_SAMPLES_PASSED, wrapperContext.occlusionQueries[currentOcclusionQuery % MAX_OCCLUSION_QUERIES] );
+	*queryNumber = currentOcclusionQuery;
+	wrapperStats.c_queriesIssued++;
+}
+
+/*
+========================
+GL_EndQuery
+========================
+*/
+void GL_EndQuery() {
+	gladGL.EndQueryARB( GL_SAMPLES_PASSED );
+	currentOcclusionQuery++;
+}
+
+/*
+========================
+GL_GetDeferredQueryResult
+
+Returns the number of samples that passed for a query from a previous frame,
+or OCCLUSION_QUERY_TOO_OLD when the query is from more than MAX_OCCLUSION_QUERIES
+queries ago and its object was reused in the meantime. The caller is expected
+to treat a negative result as unknown and re-issue the query.
+========================
+*/
+int GL_GetDeferredQueryResult( int64 queryNumber ) {
+	if ( !wrapperContext.useOcclusionQueries || queryNumber == 0 ) {
+		return 1;
+	}
+	if ( currentOcclusionQuery - queryNumber >= MAX_OCCLUSION_QUERIES ) {
+		wrapperStats.c_queriesTooOld++;
+		return OCCLUSION_QUERY_TOO_OLD;
+	}
+	GLuint query = wrapperContext.occlusionQueries[queryNumber % MAX_OCCLUSION_QUERIES];
+	GLuint result = 0;
+	if ( wrapperConfig.waitForOcclusionQuery ) {
+		gladGL.GetQueryObjectuivARB( query, GL_QUERY_RESULT_AVAILABLE, &result );
+		while ( result == 0 ) {
+			wrapperStats.c_queriesWaitTime++;
+			gladGL.GetQueryObjectuivARB( query, GL_QUERY_RESULT_AVAILABLE, &result );
+		}
+	}
+	gladGL.GetQueryObjectuivARB( query, GL_QUERY_RESULT, &result );
+	wrapperStats.c_queriesPassed += ( result != 0 ) ? 1 : 0;
+	return (int)result;
+}
