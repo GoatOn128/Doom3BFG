@@ -518,6 +518,15 @@ GL_SetWrapperContext
 */
 void GL_SetWrapperContext( const wrapperContext_t & context ) {
 	wrapperContext = context;
+	if ( wrapperContext.useOcclusionQueries ) {
+		// regenerate the query pool when the wrapper context is set, which matches
+		// context recreation on a vid restart; deleting object names that belonged
+		// to a destroyed context is silently ignored by OpenGL
+		if ( wrapperContext.occlusionQueries[0] != 0 ) {
+			gladGL.DeleteQueriesARB( MAX_OCCLUSION_QUERIES, wrapperContext.occlusionQueries );
+		}
+		gladGL.GenQueriesARB( MAX_OCCLUSION_QUERIES, wrapperContext.occlusionQueries );
+	}
 }
 
 /*

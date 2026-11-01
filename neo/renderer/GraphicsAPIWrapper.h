@@ -75,6 +75,10 @@ struct wrapperContext_t {
 	bool			useTimerQuery;
 	// ignore GL_DepthBoundsTest() requests (debugging aid for drivers with broken EXT_depth_bounds_test)
 	bool			disableDepthBoundsTest;
+	// the engine wants deferred occlusion queries for visibility testing
+	bool			useOcclusionQueries;
+	// ring buffer of GL query object names, filled in by GL_SetWrapperContext()
+	GLuint			occlusionQueries[MAX_OCCLUSION_QUERIES];
 };
 
 
@@ -92,6 +96,8 @@ struct wrapperConfig_t {
 	bool			stripFragmentBranches;
 	bool			skipDetailTris;
 	bool			singleTriangle;
+	// occlusion query readback behavior: spin on the result instead of taking whatever is ready
+	bool			waitForOcclusionQuery;
 	// values for polygon offset
 	float			polyOfsFactor;
 	float			polyOfsUnits;
