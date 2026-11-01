@@ -57,6 +57,11 @@ typedef HGLRC (WINAPI *PFNWGLCREATECONTEXTATTRIBSARBPROC)( HDC hDC, HGLRC hShare
 #define WGL_STENCIL_BITS_ARB						0x2023
 #define WGL_SAMPLE_BUFFERS_ARB						0x2042
 #define WGL_SAMPLES_ARB								0x2043
+// WGL_ARB_pixel_format selection attributes used by GLW_ChoosePixelFormat
+#define WGL_DRAW_TO_WINDOW_ARB						0x2001
+#define WGL_PIXEL_TYPE_ARB							0x2003
+#define WGL_SUPPORT_OPENGL_ARB						0x2010
+#define WGL_TYPE_RGBA_ARB							0x202B
 #endif
 #include "win_input.h"
 
