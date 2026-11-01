@@ -1045,11 +1045,11 @@ void idRenderWorldLocal::ShowPortals() {
 				GL_Color( 0, 1, 0 );
 			}
 
-			qglBegin( GL_LINE_LOOP );
+			gladGL.Begin( GL_LINE_LOOP );
 			for ( j = 0; j < w->GetNumPoints(); j++ ) {
-				qglVertex3fv( (*w)[j].ToFloatPtr() );
+				gladGL.Vertex3fv( (*w)[j].ToFloatPtr() );
 			}
-			qglEnd();
+			gladGL.End();
 		}
 	}
 }
