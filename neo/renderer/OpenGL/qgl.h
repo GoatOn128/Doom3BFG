@@ -30,11 +30,20 @@ If you have questions concerning this license or the applicable additional terms
 */
 
 #ifndef __QGL_H__
+/*
+** QGL.H
+
+Transition shim over the glad 2 loader. All GL entry points now live in the
+global gladGL function-pointer context, which win_glimp.cpp loads right after
+the rendering context is created and made current. The old qgl* names are
+kept as macros so the existing call sites compile unchanged while the qgl
+function-pointer wrapper is removed in stages.
+*/
+
+#ifndef __QGL_H__
 #define __QGL_H__
 
-
-#include <gl/gl.h>
-
+#include <glad/gl.h>
 
 #ifndef APIENTRY
 #define APIENTRY
@@ -43,125 +52,157 @@ If you have questions concerning this license or the applicable additional terms
 #define WINAPI
 #endif
 
-// only use local glext.h if we are not using the system one already
-// http://oss.sgi.com/projects/ogl-sample/ABI/
-#ifndef GL_GLEXT_VERSION
-
-#include "glext.h"
-
-#endif
+// the global GL function-pointer context; loaded with
+// gladLoaderLoadGLContext( &gladGL ) once the context is current
+extern GladGLContext gladGL;
 
 typedef void (*GLExtension_t)(void);
 
 #ifdef __cplusplus
-	extern "C" {
+extern "C" {
 #endif
 
 GLExtension_t GLimp_ExtensionPointer( const char *name );
 
 #ifdef __cplusplus
-	}
+}
 #endif
 
-// GL_EXT_direct_state_access
-extern PFNGLBINDMULTITEXTUREEXTPROC			qglBindMultiTextureEXT;
+#ifdef _WIN32
+#define qwglCreateContext wglCreateContext
+#define qwglDeleteContext wglDeleteContext
+#define qwglMakeCurrent	wglMakeCurrent
+#define qwglSwapBuffers SwapBuffers
+#define qwglGetProcAddress wglGetProcAddress
+#endif
 
-// GL_ARB_texture_compression
-extern PFNGLCOMPRESSEDTEXIMAGE2DARBPROC		qglCompressedTexImage2DARB;
-extern PFNGLCOMPRESSEDTEXSUBIMAGE2DARBPROC	qglCompressedTexSubImage2DARB;
-extern PFNGLGETCOMPRESSEDTEXIMAGEARBPROC	qglGetCompressedTexImageARB;
-
-// GL_ARB_vertex_buffer_object
-extern PFNGLBINDBUFFERARBPROC				qglBindBufferARB;
-extern PFNGLBINDBUFFERRANGEPROC				qglBindBufferRange;
-extern PFNGLDELETEBUFFERSARBPROC			qglDeleteBuffersARB;
-extern PFNGLGENBUFFERSARBPROC				qglGenBuffersARB;
-extern PFNGLISBUFFERARBPROC					qglIsBufferARB;
-extern PFNGLBUFFERDATAARBPROC				qglBufferDataARB;
-extern PFNGLBUFFERSUBDATAARBPROC			qglBufferSubDataARB;
-extern PFNGLGETBUFFERSUBDATAARBPROC			qglGetBufferSubDataARB;
-extern PFNGLMAPBUFFERARBPROC				qglMapBufferARB;
-extern PFNGLUNMAPBUFFERARBPROC				qglUnmapBufferARB;
-extern PFNGLGETBUFFERPARAMETERIVARBPROC		qglGetBufferParameterivARB;
-extern PFNGLGETBUFFERPOINTERVARBPROC		qglGetBufferPointervARB;
-extern PFNGLCOPYBUFFERSUBDATAPROC			qglCopyBufferSubDataARB;
-
-// GL_ARB_map_buffer_Range
-extern PFNGLMAPBUFFERRANGEPROC				qglMapBufferRange;
-
-// GL_ARB_draw_elements_base_vertex
-extern PFNGLDRAWELEMENTSBASEVERTEXPROC		qglDrawElementsBaseVertex;
-
-// GL_ARB_vertex_array_object
-extern PFNGLGENVERTEXARRAYSPROC				qglGenVertexArrays;
-extern PFNGLBINDVERTEXARRAYPROC				qglBindVertexArray;
-extern PFNGLDELETEVERTEXARRAYSPROC			qglDeleteVertexArrays;
-
-// GL_ARB_vertex_program / GL_ARB_fragment_program
-extern PFNGLVERTEXATTRIBPOINTERARBPROC		qglVertexAttribPointerARB;
-extern PFNGLENABLEVERTEXATTRIBARRAYARBPROC	qglEnableVertexAttribArrayARB;
-extern PFNGLDISABLEVERTEXATTRIBARRAYARBPROC	qglDisableVertexAttribArrayARB;
-
-// GLSL / OpenGL 2.0
-extern PFNGLCREATESHADERPROC				qglCreateShader;
-extern PFNGLDELETESHADERPROC				qglDeleteShader;
-extern PFNGLSHADERSOURCEPROC				qglShaderSource;
-extern PFNGLCOMPILESHADERPROC				qglCompileShader;
-extern PFNGLGETSHADERIVPROC					qglGetShaderiv;
-extern PFNGLGETSHADERINFOLOGPROC			qglGetShaderInfoLog;
-extern PFNGLCREATEPROGRAMPROC				qglCreateProgram;
-extern PFNGLDELETEPROGRAMPROC				qglDeleteProgram;
-extern PFNGLATTACHSHADERPROC				qglAttachShader;
-extern PFNGLDETACHSHADERPROC				qglDetachShader;
-extern PFNGLLINKPROGRAMPROC					qglLinkProgram;
-extern PFNGLUSEPROGRAMPROC					qglUseProgram;
-extern PFNGLGETPROGRAMIVPROC				qglGetProgramiv;
-extern PFNGLGETPROGRAMINFOLOGPROC			qglGetProgramInfoLog;
-extern PFNGLPROGRAMPARAMETERIPROC			qglProgramParameteri;
-extern PFNGLBINDATTRIBLOCATIONPROC			qglBindAttribLocation;
-extern PFNGLGETUNIFORMLOCATIONPROC			qglGetUniformLocation;
-extern PFNGLUNIFORM1IPROC					qglUniform1i;
-extern PFNGLUNIFORM4FVPROC					qglUniform4fv;
-extern PFNGLBINDFRAGDATALOCATIONPROC		qglBindFragDataLocation;
-
-// GL_ARB_uniform_buffer_object
-extern PFNGLGETUNIFORMBLOCKINDEXPROC		qglGetUniformBlockIndex;
-extern PFNGLUNIFORMBLOCKBINDINGPROC			qglUniformBlockBinding;
-
-// GL_ATI_separate_stencil / OpenGL 2.0 separate stencil
-extern PFNGLSTENCILOPSEPARATEATIPROC		qglStencilOpSeparate;
-extern PFNGLSTENCILFUNCSEPARATEATIPROC		qglStencilFuncSeparate;
-
-// GL_EXT_depth_bounds_test
-extern PFNGLDEPTHBOUNDSEXTPROC              qglDepthBoundsEXT;
-
-// GL_ARB_sync
-extern PFNGLFENCESYNCPROC					qglFenceSync;
-extern PFNGLISSYNCPROC						qglIsSync;
-extern PFNGLCLIENTWAITSYNCPROC				qglClientWaitSync;
-extern PFNGLDELETESYNCPROC					qglDeleteSync;
-
-// GL_ARB_occlusion_query
-extern PFNGLGENQUERIESARBPROC				qglGenQueriesARB;
-extern PFNGLDELETEQUERIESARBPROC			qglDeleteQueriesARB;
-extern PFNGLISQUERYARBPROC					qglIsQueryARB;
-extern PFNGLBEGINQUERYARBPROC				qglBeginQueryARB;
-extern PFNGLENDQUERYARBPROC					qglEndQueryARB;
-extern PFNGLGETQUERYIVARBPROC				qglGetQueryivARB;
-extern PFNGLGETQUERYOBJECTIVARBPROC			qglGetQueryObjectivARB;
-extern PFNGLGETQUERYOBJECTUIVARBPROC		qglGetQueryObjectuivARB;
-
-// GL_ARB_timer_query / GL_EXT_timer_query
-extern PFNGLGETQUERYOBJECTUI64VEXTPROC		qglGetQueryObjectui64vEXT;
-
-// GL_ARB_debug_output
-extern PFNGLDEBUGMESSAGECONTROLARBPROC		qglDebugMessageControlARB;
-extern PFNGLDEBUGMESSAGEINSERTARBPROC		qglDebugMessageInsertARB;
-extern PFNGLDEBUGMESSAGECALLBACKARBPROC		qglDebugMessageCallbackARB;
-extern PFNGLGETDEBUGMESSAGELOGARBPROC		qglGetDebugMessageLogARB;
-
-//===========================================================================
-
-#include "qgl_linked.h"
+// old-style qgl names forwarded to the matching glad context member
+#define qglActiveTextureARB gladGL.ActiveTextureARB
+#define qglAlphaFunc gladGL.AlphaFunc
+#define qglArrayElement gladGL.ArrayElement
+#define qglAttachShader gladGL.AttachShader
+#define qglBegin gladGL.Begin
+#define qglBeginQueryARB gladGL.BeginQueryARB
+#define qglBindAttribLocation gladGL.BindAttribLocation
+#define qglBindBufferARB gladGL.BindBufferARB
+#define qglBindBufferRange gladGL.BindBufferRange
+#define qglBindFragDataLocation gladGL.BindFragDataLocation
+#define qglBindMultiTextureEXT gladGL.BindMultiTextureEXT
+#define qglBindTexture gladGL.BindTexture
+#define qglBindVertexArray gladGL.BindVertexArray
+#define qglBlendFunc gladGL.BlendFunc
+#define qglBufferDataARB gladGL.BufferDataARB
+#define qglBufferSubDataARB gladGL.BufferSubDataARB
+#define qglClear gladGL.Clear
+#define qglClearColor gladGL.ClearColor
+#define qglClearDepth gladGL.ClearDepth
+#define qglClearStencil gladGL.ClearStencil
+#define qglClientWaitSync gladGL.ClientWaitSync
+#define qglColor3fv gladGL.Color3fv
+#define qglColor4fv gladGL.Color4fv
+#define qglColor4ubv gladGL.Color4ubv
+#define qglColorMask gladGL.ColorMask
+#define qglCompileShader gladGL.CompileShader
+#define qglCompressedTexImage2DARB gladGL.CompressedTexImage2DARB
+#define qglCompressedTexSubImage2DARB gladGL.CompressedTexSubImage2DARB
+#define qglCopyBufferSubDataARB gladGL.CopyBufferSubData
+#define qglCopyTexImage2D gladGL.CopyTexImage2D
+#define qglCreateProgram gladGL.CreateProgram
+#define qglCreateShader gladGL.CreateShader
+#define qglCullFace gladGL.CullFace
+#define qglDebugMessageCallbackARB gladGL.DebugMessageCallbackARB
+#define qglDebugMessageControlARB gladGL.DebugMessageControlARB
+#define qglDebugMessageInsertARB gladGL.DebugMessageInsertARB
+#define qglDeleteBuffersARB gladGL.DeleteBuffersARB
+#define qglDeleteProgram gladGL.DeleteProgram
+#define qglDeleteQueriesARB gladGL.DeleteQueriesARB
+#define qglDeleteShader gladGL.DeleteShader
+#define qglDeleteSync gladGL.DeleteSync
+#define qglDeleteTextures gladGL.DeleteTextures
+#define qglDeleteVertexArrays gladGL.DeleteVertexArrays
+#define qglDepthBoundsEXT gladGL.DepthBoundsEXT
+#define qglDepthFunc gladGL.DepthFunc
+#define qglDepthMask gladGL.DepthMask
+#define qglDetachShader gladGL.DetachShader
+#define qglDisable gladGL.Disable
+#define qglDisableVertexAttribArrayARB gladGL.DisableVertexAttribArrayARB
+#define qglDrawBuffer gladGL.DrawBuffer
+#define qglDrawElementsBaseVertex gladGL.DrawElementsBaseVertex
+#define qglDrawPixels gladGL.DrawPixels
+#define qglEnable gladGL.Enable
+#define qglEnableVertexAttribArrayARB gladGL.EnableVertexAttribArrayARB
+#define qglEnd gladGL.End
+#define qglEndQueryARB gladGL.EndQueryARB
+#define qglFenceSync gladGL.FenceSync
+#define qglFinish gladGL.Finish
+#define qglFlush gladGL.Flush
+#define qglGenBuffersARB gladGL.GenBuffersARB
+#define qglGenQueriesARB gladGL.GenQueriesARB
+#define qglGenTextures gladGL.GenTextures
+#define qglGenVertexArrays gladGL.GenVertexArrays
+#define qglGetBufferParameterivARB gladGL.GetBufferParameterivARB
+#define qglGetBufferPointervARB gladGL.GetBufferPointervARB
+#define qglGetBufferSubDataARB gladGL.GetBufferSubDataARB
+#define qglGetCompressedTexImageARB gladGL.GetCompressedTexImageARB
+#define qglGetDebugMessageLogARB gladGL.GetDebugMessageLogARB
+#define qglGetError gladGL.GetError
+#define qglGetFloatv gladGL.GetFloatv
+#define qglGetIntegerv gladGL.GetIntegerv
+#define qglGetProgramInfoLog gladGL.GetProgramInfoLog
+#define qglGetProgramiv gladGL.GetProgramiv
+#define qglGetQueryivARB gladGL.GetQueryivARB
+#define qglGetQueryObjectivARB gladGL.GetQueryObjectivARB
+#define qglGetQueryObjectui64vEXT gladGL.GetQueryObjectui64vEXT
+#define qglGetQueryObjectuivARB gladGL.GetQueryObjectuivARB
+#define qglGetShaderInfoLog gladGL.GetShaderInfoLog
+#define qglGetShaderiv gladGL.GetShaderiv
+#define qglGetString gladGL.GetString
+#define qglGetStringi gladGL.GetStringi
+#define qglGetUniformBlockIndex gladGL.GetUniformBlockIndex
+#define qglGetUniformLocation gladGL.GetUniformLocation
+#define qglIsBufferARB gladGL.IsBufferARB
+#define qglIsQueryARB gladGL.IsQueryARB
+#define qglIsSync gladGL.IsSync
+#define qglLineWidth gladGL.LineWidth
+#define qglLinkProgram gladGL.LinkProgram
+#define qglLoadIdentity gladGL.LoadIdentity
+#define qglLoadMatrixf gladGL.LoadMatrixf
+#define qglMapBufferARB gladGL.MapBufferARB
+#define qglMapBufferRange gladGL.MapBufferRange
+#define qglMatrixMode gladGL.MatrixMode
+#define qglOrtho gladGL.Ortho
+#define qglPixelStorei gladGL.PixelStorei
+#define qglPolygonMode gladGL.PolygonMode
+#define qglPolygonOffset gladGL.PolygonOffset
+#define qglPopAttrib gladGL.PopAttrib
+#define qglPopMatrix gladGL.PopMatrix
+#define qglProgramParameteri gladGL.ProgramParameteri
+#define qglPushAttrib gladGL.PushAttrib
+#define qglPushMatrix gladGL.PushMatrix
+#define qglRasterPos2f gladGL.RasterPos2f
+#define qglReadBuffer gladGL.ReadBuffer
+#define qglReadPixels gladGL.ReadPixels
+#define qglScissor gladGL.Scissor
+#define qglShadeModel gladGL.ShadeModel
+#define qglShaderSource gladGL.ShaderSource
+#define qglStencilFunc gladGL.StencilFunc
+#define qglStencilFuncSeparate gladGL.StencilFuncSeparate
+#define qglStencilOp gladGL.StencilOp
+#define qglStencilOpSeparate gladGL.StencilOpSeparate
+#define qglTexImage2D gladGL.TexImage2D
+#define qglTexParameterf gladGL.TexParameterf
+#define qglTexParameterfv gladGL.TexParameterfv
+#define qglTexParameteri gladGL.TexParameteri
+#define qglTexSubImage2D gladGL.TexSubImage2D
+#define qglUniform1i gladGL.Uniform1i
+#define qglUniform4fv gladGL.Uniform4fv
+#define qglUniformBlockBinding gladGL.UniformBlockBinding
+#define qglUnmapBufferARB gladGL.UnmapBufferARB
+#define qglUseProgram gladGL.UseProgram
+#define qglVertex3f gladGL.Vertex3f
+#define qglVertex3fv gladGL.Vertex3fv
+#define qglVertexAttribPointerARB gladGL.VertexAttribPointerARB
+#define qglVertexPointer gladGL.VertexPointer
+#define qglViewport gladGL.Viewport
 
 #endif

@@ -56,6 +56,10 @@ PFNWGLCHOOSEPIXELFORMATARBPROC			wglChoosePixelFormatARB;
 // WGL_ARB_create_context
 PFNWGLCREATECONTEXTATTRIBSARBPROC		wglCreateContextAttribsARB;
 
+// the global glad function-pointer context; every qgl* shim macro and all
+// direct GL calls in the renderer go through this
+GladGLContext gladGL;
+
 /*
 ========================
 GLimp_TestSwapBuffers
@@ -306,35 +310,41 @@ CreateOpenGLContextOnDC
 ========================
 */
 static HGLRC CreateOpenGLContextOnDC( const HDC hdc, const bool debugContext ) {
-	// An opengl 3.2 core profile context is now required, but allow a 2.0 context to be created if 3.2 core isn't available.
-	// A strict check is done in R_CheckPortableExtensions.
-	int useOpenGL32 = 2;
+	// An OpenGL 3.3 context is required; prefer the compatibility profile so
+	// the immediate mode debug line drawing tools keep working, and fall back
+	// to a 3.2 core profile context on drivers without 3.3 compatibility
+	// support. A strict version check is done in R_CheckPortableExtensions.
+	struct contextAttempt_t {
+		int	majorVersion;
+		int	minorVersion;
+		int	profile;
+	};
+	const contextAttempt_t attempts[] = {
+		{ 3, 3, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB },
+		{ 3, 2, WGL_CONTEXT_CORE_PROFILE_BIT_ARB },
+	};
 
 	HGLRC m_hrc = NULL;
 
 	for ( int i = 0; i < 2; i++ ) {
-		const int glMajorVersion = ( useOpenGL32 != 0 ) ? 3 : 2;
-		const int glMinorVersion = ( useOpenGL32 != 0 ) ? 2 : 0;
 		const int glDebugFlag = debugContext ? WGL_CONTEXT_DEBUG_BIT_ARB : 0;
-		const int glProfileMask = ( useOpenGL32 != 0 ) ? WGL_CONTEXT_PROFILE_MASK_ARB : 0;
-		const int glProfile = ( useOpenGL32 == 1 ) ? WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB : ( ( useOpenGL32 == 2 ) ? WGL_CONTEXT_CORE_PROFILE_BIT_ARB : 0 );
 		const int attribs[] =
 		{
-			WGL_CONTEXT_MAJOR_VERSION_ARB,	glMajorVersion,
-			WGL_CONTEXT_MINOR_VERSION_ARB,	glMinorVersion,
+			WGL_CONTEXT_MAJOR_VERSION_ARB,	attempts[i].majorVersion,
+			WGL_CONTEXT_MINOR_VERSION_ARB,	attempts[i].minorVersion,
 			WGL_CONTEXT_FLAGS_ARB,			glDebugFlag,
-			glProfileMask,					glProfile,
+			WGL_CONTEXT_PROFILE_MASK_ARB,	attempts[i].profile,
 			0
 		};
 
 		m_hrc = wglCreateContextAttribsARB( hdc, 0, attribs );
 		if ( m_hrc != NULL ) {
-			idLib::Printf( "created OpenGL %d.%d %s\n", glMajorVersion, glMinorVersion, glProfile == WGL_CONTEXT_CORE_PROFILE_BIT_ARB ? "core profile context" : "context" );
+			idLib::Printf( "created OpenGL %d.%d %s\n", attempts[i].majorVersion, attempts[i].minorVersion,
+				attempts[i].profile == WGL_CONTEXT_CORE_PROFILE_BIT_ARB ? "core profile context" : "compatibility profile context" );
 			break;
 		}
 
-		idLib::Printf( "failed to create OpenGL %d.%d context\n", glMajorVersion, glMinorVersion );
-		useOpenGL32 = 0;	// fall back to OpenGL 2.0
+		idLib::Printf( "failed to create OpenGL %d.%d context\n", attempts[i].majorVersion, attempts[i].minorVersion );
 	}
 
 	if ( m_hrc == NULL ) {
@@ -481,6 +491,14 @@ static bool GLW_InitDriver( glimpParms_t parms ) {
 		return false;
 	}
 	common->Printf( "succeeded\n" );
+
+	// load the GL functions through glad now that the context is current
+	const int gladVersion = gladLoaderLoadGLContext( &gladGL );
+	if ( gladVersion == 0 ) {
+		common->FatalError( "glad failed to load the OpenGL functions" );
+		return false;
+	}
+	common->Printf( "...glad loaded OpenGL %d.%d\n", GLAD_VERSION_MAJOR( gladVersion ), GLAD_VERSION_MINOR( gladVersion ) );
 
 	return true;
 }

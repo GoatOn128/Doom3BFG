@@ -672,6 +672,7 @@ base_cpppath = [
     os.path.join(PROJECT_ROOT, 'external/miniz'),
     os.path.join(PROJECT_ROOT, 'external/minizip'),
     os.path.join(PROJECT_ROOT, 'external/libbinkdec/include'),
+    os.path.join(PROJECT_ROOT, 'external/glad/include'),
 ]
 
 # Toolchain environments: MSVC uses cl.exe/link.exe/lib.exe directly, clang

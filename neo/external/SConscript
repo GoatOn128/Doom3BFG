@@ -4,6 +4,7 @@ Import('env', 'build_objects', 'build_static_library', 'require_sources',
 import os
 
 external_sources = [
+    'external/glad/src/gl.c',
     'external/miniz/miniz.c',
     'external/minizip/ioapi.c',
     'external/minizip/unzip.cpp',
