@@ -465,6 +465,7 @@ enum renderCommand_t {
 	RC_SET_BUFFER,
 	RC_COPY_RENDER,
 	RC_POST_PROCESS,
+	RC_OCCLUSION,		// occlusion queries for the portal flow, needs the depth buffer of the view just drawn
 };
 
 struct emptyCommand_t {
@@ -497,6 +498,12 @@ struct copyRenderCommand_t {
 };
 
 struct postProcessCommand_t {
+	renderCommand_t		commandId;
+	renderCommand_t *	next;
+	viewDef_t *			viewDef;
+};
+
+struct occlusionCommand_t {
 	renderCommand_t		commandId;
 	renderCommand_t *	next;
 	viewDef_t *			viewDef;
@@ -549,6 +556,7 @@ extern	idFrameData	*frameData;
 
 void R_AddDrawViewCmd( viewDef_t *parms, bool guiOnly );
 void R_AddDrawPostProcess( viewDef_t *parms );
+void R_AddDrawOcclusion( viewDef_t *parms );
 
 void R_ReloadGuis_f( const idCmdArgs &args );
 void R_ListGuis_f( const idCmdArgs &args );
@@ -854,6 +862,9 @@ extern idCVar r_useLightPortalCulling;		// 0 = none, 1 = box, 2 = exact clip of 
 extern idCVar r_useLightAreaCulling;		// 0 = off, 1 = on
 extern idCVar r_useLightScissors;			// 1 = use custom scissor rectangle for each light
 extern idCVar r_useEntityPortalCulling;		// 0 = none, 1 = box
+extern idCVar r_usePortalOcclusion;			// 1 = use deferred occlusion queries to cull the portal flow
+extern idCVar r_portalOcclusionTrustFrames;	// frames a zero-sample occlusion result is trusted
+extern idCVar r_showPortalOcclusion;			// print portal occlusion query statistics
 extern idCVar r_skipPrelightShadows;		// 1 = skip the dmap generated static shadow volumes
 extern idCVar r_useCachedDynamicModels;		// 1 = cache snapshots of dynamic models
 extern idCVar r_useScissor;					// 1 = scissor clip as portals and lights are processed
@@ -1310,6 +1321,7 @@ void RB_DrawViewInternal( const viewDef_t * viewDef );
 void RB_DrawView( const void *data );
 void RB_CopyRender( const void *data );
 void RB_PostProcess( const void *data );
+void RB_Occlusion( const void *data );
 
 /*
 =============================================================

@@ -2813,3 +2813,86 @@ void RB_PostProcess( const void * data ) {
 
 	renderLog.CloseBlock();
 }
+
+/*
+=================
+RB_Occlusion
+
+Issues deferred occlusion queries for the portal windings that the front end
+flowed through this frame. The windings are drawn depth tested against the
+opaque geometry of the view that was just rendered, with color and depth
+writes disabled, so a query that comes back with zero samples means the area
+behind the portal is completely hidden and can be culled next frame.
+=================
+*/
+void RB_Occlusion( const void *data ) {
+	const occlusionCommand_t * cmd = (const occlusionCommand_t *)data;
+
+	if ( !r_usePortalOcclusion.GetBool() ) {
+		return;
+	}
+
+	idRenderWorldLocal * world = cmd->viewDef->renderWorld;
+	if ( world == NULL ) {
+		return;
+	}
+
+	renderLog.OpenBlock( "RB_Occlusion" );
+
+	backEnd.viewDef = cmd->viewDef;
+
+	// restrict rasterization to the view, portal windings are in world space
+	GL_Viewport( cmd->viewDef->viewport.x1,
+		cmd->viewDef->viewport.y1,
+		cmd->viewDef->viewport.x2 + 1 - cmd->viewDef->viewport.x1,
+		cmd->viewDef->viewport.y2 + 1 - cmd->viewDef->viewport.y1 );
+	GL_Scissor( cmd->viewDef->viewport.x1 + cmd->viewDef->scissor.x1,
+			cmd->viewDef->viewport.y1 + cmd->viewDef->scissor.y1,
+			cmd->viewDef->scissor.x2 + 1 - cmd->viewDef->scissor.x1,
+			cmd->viewDef->scissor.y2 + 1 - cmd->viewDef->scissor.y1 );
+	backEnd.currentScissor = cmd->viewDef->scissor;
+
+	// depth test against the existing depth buffer without modifying it
+	// or the color buffer
+	GL_State( GLS_DEPTHFUNC_LESS | GLS_DEPTHMASK | GLS_COLORMASK | GLS_ALPHAMASK );
+	GL_Cull( CT_TWO_SIDED );
+
+	gladGL.MatrixMode( GL_PROJECTION );
+	gladGL.LoadMatrixf( backEnd.viewDef->projectionMatrix );
+	gladGL.MatrixMode( GL_MODELVIEW );
+	gladGL.LoadMatrixf( backEnd.viewDef->worldSpace.modelViewMatrix );
+
+	int numIssued = 0;
+	for ( int i = 0; i < world->numPortalAreas; i++ ) {
+		for ( portal_t * p = world->portalAreas[i].portals; p != NULL; p = p->next ) {
+			if ( p->queryWantedFrame != tr.frameCount ) {
+				continue;	// the portal flow didn't flow through this portal
+			}
+			if ( p->queryFrame == tr.frameCount ) {
+				continue;	// already queried this frame
+			}
+
+			GL_BeginQuery( &p->occlusionQuery );
+			gladGL.Begin( GL_POLYGON );
+			for ( int j = 0; j < p->w->GetNumPoints(); j++ ) {
+				gladGL.Vertex3fv( (*p->w)[j].ToFloatPtr() );
+			}
+			gladGL.End();
+			GL_EndQuery();
+
+			p->queryFrame = tr.frameCount;
+			p->sampleCount = -1;	// pending deferred readback
+			numIssued++;
+		}
+	}
+
+	// restore the state for the commands that follow
+	GL_State( GLS_DEFAULT );
+	GL_Cull( CT_FRONT_SIDED );
+
+	if ( r_showPortalOcclusion.GetBool() && numIssued > 0 ) {
+		common->Printf( "portalOcclusion: %i queries issued\n", numIssued );
+	}
+
+	renderLog.CloseBlock();
+}

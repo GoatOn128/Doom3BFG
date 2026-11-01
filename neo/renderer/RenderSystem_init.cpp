@@ -137,6 +137,9 @@ idCVar r_useShadowDepthBounds( "r_useShadowDepthBounds", "1", CVAR_RENDERER | CV
 
 idCVar r_screenFraction( "r_screenFraction", "100", CVAR_RENDERER | CVAR_INTEGER, "for testing fill rate, the resolution of the entire screen can be changed" );
 idCVar r_usePortals( "r_usePortals", "1", CVAR_RENDERER | CVAR_BOOL, " 1 = use portals to perform area culling, otherwise draw everything" );
+idCVar r_usePortalOcclusion( "r_usePortalOcclusion", "1", CVAR_RENDERER | CVAR_BOOL, "1 = use deferred occlusion queries to cull the portal area flow" );
+idCVar r_portalOcclusionTrustFrames( "r_portalOcclusionTrustFrames", "3", CVAR_RENDERER | CVAR_INTEGER, "frames a zero-sample occlusion result is trusted before the portal is requeried", 1, 60 );
+idCVar r_showPortalOcclusion( "r_showPortalOcclusion", "0", CVAR_RENDERER | CVAR_BOOL, "print portal occlusion query statistics" );
 idCVar r_singleLight( "r_singleLight", "-1", CVAR_RENDERER | CVAR_INTEGER, "suppress all but one light" );
 idCVar r_singleEntity( "r_singleEntity", "-1", CVAR_RENDERER | CVAR_INTEGER, "suppress all but one entity" );
 idCVar r_singleSurface( "r_singleSurface", "-1", CVAR_RENDERER | CVAR_INTEGER, "suppress all but one surface on each entity" );
@@ -524,6 +527,12 @@ void R_InitOpenGL() {
 	context.useTimerQuery = glConfig.timerQueryAvailable;
 	context.useOcclusionQueries = true;	// GL_SAMPLES_PASSED is core since OpenGL 1.5
 	GL_SetWrapperContext( context );
+
+	// a new context recreated the occlusion query pool, so any outstanding
+	// portal queries are invalid
+	for ( int i = 0; i < tr.worlds.Num(); i++ ) {
+		tr.worlds[i]->InvalidatePortalOcclusionQueries();
+	}
 
 	renderProgManager.Init();
 
