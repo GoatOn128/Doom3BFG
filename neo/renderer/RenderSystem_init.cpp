@@ -522,6 +522,7 @@ void R_InitOpenGL() {
 	wrapperContext_t context;
 	memset( &context, 0, sizeof( context ) );
 	context.useTimerQuery = glConfig.timerQueryAvailable;
+	context.useOcclusionQueries = true;	// GL_SAMPLES_PASSED is core since OpenGL 1.5
 	GL_SetWrapperContext( context );
 
 	renderProgManager.Init();
