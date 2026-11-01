@@ -928,23 +928,23 @@ static void RenderBumpTriangles( srfTriangles_t *lowMesh, renderBump_t *rb ) {
 
 	RB_SetGL2D();
 
-	qglDisable( GL_CULL_FACE );
+	gladGL.Disable( GL_CULL_FACE );
 
-	qglColor3f( 1, 1, 1 );
+	gladGL.Color3f( 1, 1, 1 );
 
-	qglMatrixMode( GL_PROJECTION );
-	qglLoadIdentity();
-	qglOrtho( 0, 1, 1, 0, -1, 1 );
-	qglDisable( GL_BLEND );
-	qglMatrixMode( GL_MODELVIEW );
-	qglLoadIdentity();
+	gladGL.MatrixMode( GL_PROJECTION );
+	gladGL.LoadIdentity();
+	gladGL.Ortho( 0, 1, 1, 0, -1, 1 );
+	gladGL.Disable( GL_BLEND );
+	gladGL.MatrixMode( GL_MODELVIEW );
+	gladGL.LoadIdentity();
 
-	qglDisable( GL_DEPTH_TEST );
+	gladGL.Disable( GL_DEPTH_TEST );
 
-	qglClearColor(1,0,0,1);
-	qglClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+	gladGL.ClearColor(1,0,0,1);
+	gladGL.Clear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-	qglColor3f( 1, 1, 1 );
+	gladGL.Color3f( 1, 1, 1 );
 
 	// create smoothed normals for the surface, which might be
 	// different than the normals at the vertexes if the
@@ -978,13 +978,13 @@ static void RenderBumpTriangles( srfTriangles_t *lowMesh, renderBump_t *rb ) {
 
 		RasterizeTriangle( lowMesh, lowMeshNormals, j/3, rb );
 
-		qglClearColor(1,0,0,1);
-		qglClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-		qglRasterPos2f( 0, 1 );
-		qglPixelZoom( glConfig.nativeScreenWidth / (float)rb->width, glConfig.nativeScreenHeight / (float)rb->height );
-		qglDrawPixels( rb->width, rb->height, GL_RGBA, GL_UNSIGNED_BYTE, rb->localPic );
-		qglPixelZoom( 1, 1 );
-		qglFlush();
+		gladGL.ClearColor(1,0,0,1);
+		gladGL.Clear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+		gladGL.RasterPos2f( 0, 1 );
+		gladGL.PixelZoom( glConfig.nativeScreenWidth / (float)rb->width, glConfig.nativeScreenHeight / (float)rb->height );
+		gladGL.DrawPixels( rb->width, rb->height, GL_RGBA, GL_UNSIGNED_BYTE, rb->localPic );
+		gladGL.PixelZoom( 1, 1 );
+		gladGL.Flush();
 		GLimp_SwapBuffers();
 	}
 
@@ -1419,28 +1419,28 @@ void RenderBumpFlat_f( const idCmdArgs &args ) {
 	ResizeWindow( width, height );
 
 	// for small images, the viewport may be less than the minimum window
-	qglViewport( 0, 0, width, height );
+	gladGL.Viewport( 0, 0, width, height );
 
-	qglEnable( GL_CULL_FACE );
-	qglCullFace( GL_FRONT );
-	qglDisable( GL_STENCIL_TEST );
-	qglDisable( GL_SCISSOR_TEST );
-	qglDisable( GL_ALPHA_TEST );
-	qglDisable( GL_BLEND );
-	qglEnable( GL_DEPTH_TEST );
-	qglDisable( GL_TEXTURE_2D );
-	qglDepthMask( GL_TRUE );
-	qglDepthFunc( GL_LEQUAL );
+	gladGL.Enable( GL_CULL_FACE );
+	gladGL.CullFace( GL_FRONT );
+	gladGL.Disable( GL_STENCIL_TEST );
+	gladGL.Disable( GL_SCISSOR_TEST );
+	gladGL.Disable( GL_ALPHA_TEST );
+	gladGL.Disable( GL_BLEND );
+	gladGL.Enable( GL_DEPTH_TEST );
+	gladGL.Disable( GL_TEXTURE_2D );
+	gladGL.DepthMask( GL_TRUE );
+	gladGL.DepthFunc( GL_LEQUAL );
 
-	qglColor3f( 1, 1, 1 );
+	gladGL.Color3f( 1, 1, 1 );
 
-	qglMatrixMode( GL_PROJECTION );
-	qglLoadIdentity();
-	qglOrtho( bounds[0][0], bounds[1][0], bounds[0][2],
+	gladGL.MatrixMode( GL_PROJECTION );
+	gladGL.LoadIdentity();
+	gladGL.Ortho( bounds[0][0], bounds[1][0], bounds[0][2],
 		bounds[1][2], -( bounds[0][1] - 1 ), -( bounds[1][1] + 1 ) );
 
-	qglMatrixMode( GL_MODELVIEW );
-	qglLoadIdentity();
+	gladGL.MatrixMode( GL_MODELVIEW );
+	gladGL.LoadIdentity();
 
 	// flat maps are automatically anti-aliased
 
@@ -1468,10 +1468,10 @@ void RenderBumpFlat_f( const idCmdArgs &args ) {
 		yOff = ( ( sample / 4 ) / 4.0 ) * ( bounds[1][2] - bounds[0][2] ) / height;
 
 		for ( int colorPass = 0 ; colorPass < 2 ; colorPass++ ) {
-			qglClearColor(0.5,0.5,0.5,0);
-			qglClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+			gladGL.ClearColor(0.5,0.5,0.5,0);
+			gladGL.Clear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-			qglBegin( GL_TRIANGLES );
+			gladGL.Begin( GL_TRIANGLES );
 			for ( i = 0 ; i < highPolyModel->NumSurfaces() ; i++ ) {
 				const modelSurface_t *surf = highPolyModel->Surface( i );
 
@@ -1485,9 +1485,9 @@ void RenderBumpFlat_f( const idCmdArgs &args ) {
 							float	*a;
 
 							v = mesh->indexes[j+k];
-							qglColor3ubv( mesh->verts[v].color );
+							gladGL.Color3ubv( mesh->verts[v].color );
 							a = mesh->verts[v].xyz.ToFloatPtr();
-							qglVertex3f( a[0] + xOff, a[2] + yOff, a[1] );
+							gladGL.Vertex3f( a[0] + xOff, a[2] + yOff, a[1] );
 						}
 					}
 				} else {
@@ -1513,14 +1513,14 @@ void RenderBumpFlat_f( const idCmdArgs &args ) {
 							// NULLNORMAL is used by the artists to force an area to reflect no
 							// light at all
 							if ( surf->shader->GetSurfaceFlags() & SURF_NULLNORMAL ) {
-								qglColor3f( 0.5, 0.5, 0.5 );
+								gladGL.Color3f( 0.5, 0.5, 0.5 );
 							} else {
-								qglColor3f( 0.5 + 0.5*plane[0], 0.5 - 0.5*plane[2], 0.5 - 0.5*plane[1] );
+								gladGL.Color3f( 0.5 + 0.5*plane[0], 0.5 - 0.5*plane[2], 0.5 - 0.5*plane[1] );
 							}
 
-							qglVertex3f( (*a)[0] + xOff, (*a)[2] + yOff, (*a)[1] );
-							qglVertex3f( (*b)[0] + xOff, (*b)[2] + yOff, (*b)[1] );
-							qglVertex3f( (*c)[0] + xOff, (*c)[2] + yOff, (*c)[1] );
+							gladGL.Vertex3f( (*a)[0] + xOff, (*a)[2] + yOff, (*a)[1] );
+							gladGL.Vertex3f( (*b)[0] + xOff, (*b)[2] + yOff, (*b)[1] );
+							gladGL.Vertex3f( (*c)[0] + xOff, (*c)[2] + yOff, (*c)[1] );
 						} else {
 							for ( k = 0 ; k < 3 ; k++ ) {
 								int		v;
@@ -1533,24 +1533,24 @@ void RenderBumpFlat_f( const idCmdArgs &args ) {
 								// NULLNORMAL is used by the artists to force an area to reflect no
 								// light at all
 								if ( surf->shader->GetSurfaceFlags() & SURF_NULLNORMAL ) {
-									qglColor3f( 0.5, 0.5, 0.5 );
+									gladGL.Color3f( 0.5, 0.5, 0.5 );
 								} else {
 								// we are going to flip the normal Z direction
-									qglColor3f( 0.5 + 0.5*n[0], 0.5 - 0.5*n[2], 0.5 - 0.5*n[1] );
+									gladGL.Color3f( 0.5 + 0.5*n[0], 0.5 - 0.5*n[2], 0.5 - 0.5*n[1] );
 								}
 
 								a = mesh->verts[v].xyz.ToFloatPtr();
-								qglVertex3f( a[0] + xOff, a[2] + yOff, a[1] );
+								gladGL.Vertex3f( a[0] + xOff, a[2] + yOff, a[1] );
 							}
 						}
 					}
 				}
 			}
 
-			qglEnd();
-			qglFlush();
+			gladGL.End();
+			gladGL.Flush();
 			GLimp_SwapBuffers();
-			qglReadPixels( 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer );
+			gladGL.ReadPixels( 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer );
 
 			c = width * height;
 

@@ -1295,6 +1295,8 @@ BACKEND
 */
 
 
+// 2D virtual screen setup, used by the tools (renderbump), not by normal game paths
+void RB_SetGL2D();
 void RB_ExecuteBackEndCommands( const emptyCommand_t *cmds );
 
 /*

@@ -264,3 +264,33 @@ void RB_ExecuteBackEndCommands( const emptyCommand_t *cmds ) {
 	renderLog.EndFrame();
 }
 
+
+/*
+=============
+RB_SetGL2D
+
+This is not used by the normal game paths, just by some tools
+(renderbump)
+=============
+*/
+void RB_SetGL2D() {
+	// set 2D virtual screen size
+	GL_Viewport( 0, 0, glConfig.nativeScreenWidth, glConfig.nativeScreenHeight );
+	if ( r_useScissor.GetBool() ) {
+		GL_Scissor( 0, 0, glConfig.nativeScreenWidth, glConfig.nativeScreenHeight );
+	}
+	gladGL.MatrixMode( GL_PROJECTION );
+	gladGL.LoadIdentity();
+	gladGL.Ortho( 0, 640, 480, 0, 0, 1 );		// always assume 640x480 virtual coordinates
+	gladGL.MatrixMode( GL_MODELVIEW );
+	gladGL.LoadIdentity();
+
+	GL_State( GLS_DEPTHFUNC_ALWAYS |
+			  GLS_SRCBLEND_SRC_ALPHA |
+			  GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );
+
+	GL_Cull( CT_TWO_SIDED );
+
+	gladGL.Disable( GL_DEPTH_TEST );
+	gladGL.Disable( GL_STENCIL_TEST );
+}
