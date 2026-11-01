@@ -164,10 +164,6 @@ ID_INLINE void	GL_ViewportAndScissor( const idScreenRect& rect ) { GL_Viewport( 
 void			GL_Clear( bool color, bool depth, bool stencil, byte stencilValue, float r, float g, float b, float a );
 void			GL_PolygonOffset( float scale, float bias );
 void			GL_DepthBoundsTest( const float zmin, const float zmax );
-// deferred occlusion queries, see MAX_OCCLUSION_QUERIES / OCCLUSION_QUERY_TOO_OLD above
-void			GL_BeginQuery( int64 * queryNumber );			// returns 0 when queries are disabled
-void			GL_EndQuery();
-int				GL_GetDeferredQueryResult( int64 queryNumber );	// passed sample count, or OCCLUSION_QUERY_TOO_OLD
 void			GL_Color( float * color );
 void			GL_Color( float r, float g, float b );
 void			GL_Color( float r, float g, float b, float a );
