@@ -75,6 +75,10 @@ struct wrapperContext_t {
 	bool			useTimerQuery;
 	// ignore GL_DepthBoundsTest() requests (debugging aid for drivers with broken EXT_depth_bounds_test)
 	bool			disableDepthBoundsTest;
+	// the engine wants deferred occlusion queries for visibility testing
+	bool			useOcclusionQueries;
+	// ring buffer of GL query object names, filled in by GL_SetWrapperContext()
+	GLuint			occlusionQueries[MAX_OCCLUSION_QUERIES];
 };
 
 
@@ -92,6 +96,8 @@ struct wrapperConfig_t {
 	bool			stripFragmentBranches;
 	bool			skipDetailTris;
 	bool			singleTriangle;
+	// occlusion query readback behavior: spin on the result instead of taking whatever is ready
+	bool			waitForOcclusionQuery;
 	// values for polygon offset
 	float			polyOfsFactor;
 	float			polyOfsUnits;
@@ -158,6 +164,10 @@ ID_INLINE void	GL_ViewportAndScissor( const idScreenRect& rect ) { GL_Viewport( 
 void			GL_Clear( bool color, bool depth, bool stencil, byte stencilValue, float r, float g, float b, float a );
 void			GL_PolygonOffset( float scale, float bias );
 void			GL_DepthBoundsTest( const float zmin, const float zmax );
+// deferred occlusion queries, see MAX_OCCLUSION_QUERIES / OCCLUSION_QUERY_TOO_OLD above
+void			GL_BeginQuery( int64 * queryNumber );			// returns 0 when queries are disabled
+void			GL_EndQuery();
+int				GL_GetDeferredQueryResult( int64 queryNumber );	// passed sample count, or OCCLUSION_QUERY_TOO_OLD
 void			GL_Color( float * color );
 void			GL_Color( float r, float g, float b );
 void			GL_Color( float r, float g, float b, float a );
