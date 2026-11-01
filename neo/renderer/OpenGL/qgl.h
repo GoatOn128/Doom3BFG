@@ -29,7 +29,6 @@ If you have questions concerning this license or the applicable additional terms
 ** QGL.H
 */
 
-#ifndef __QGL_H__
 /*
 ** QGL.H
 
