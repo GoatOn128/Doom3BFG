@@ -85,7 +85,11 @@ const int MAX_EXPRESSION_OPS = 4096;
 const int MAX_EXPRESSION_REGISTERS = 4096;
 
 // renderer
-#include "../renderer/OpenGL/qgl.h"
+#include <glad/gl.h>
+
+// the global glad GL function-pointer context; win_glimp.cpp loads it with
+// gladLoaderLoadGLContext once the rendering context is current
+extern GladGLContext gladGL;
 #include "../renderer/Cinematic.h"
 #include "../renderer/CinematicRoQ.h"
 #include "../renderer/CinematicBink.h"

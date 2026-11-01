@@ -30,7 +30,31 @@ If you have questions concerning this license or the applicable additional terms
 #define __WIN_LOCAL_H__
 
 #include <windows.h>
-#include "../../renderer/OpenGL/wglext.h"		// windows OpenGL extensions
+// Windows OpenGL extension entry points and attributes, inlined from the
+// Khronos WGL extension specifications (WGL_EXT_swap_control,
+// WGL_ARB_pixel_format, WGL_ARB_create_context) instead of the old wglext.h
+typedef BOOL (WINAPI *PFNWGLSWAPINTERVALEXTPROC)( int interval );
+typedef BOOL (WINAPI *PFNWGLCHOOSEPIXELFORMATARBPROC)( HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats );
+typedef HGLRC (WINAPI *PFNWGLCREATECONTEXTATTRIBSARBPROC)( HDC hDC, HGLRC hShareContext, const int *attribList );
+
+#ifndef WGL_CONTEXT_DEBUG_BIT_ARB
+#define WGL_CONTEXT_DEBUG_BIT_ARB					0x00000001
+#define WGL_CONTEXT_MAJOR_VERSION_ARB				0x2091
+#define WGL_CONTEXT_MINOR_VERSION_ARB				0x2092
+#define WGL_CONTEXT_FLAGS_ARB						0x2094
+#define WGL_CONTEXT_PROFILE_MASK_ARB				0x9126
+#define WGL_CONTEXT_CORE_PROFILE_BIT_ARB			0x00000001
+#define WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB	0x00000002
+#define WGL_DOUBLE_BUFFER_ARB						0x2011
+#define WGL_RED_BITS_ARB							0x2015
+#define WGL_GREEN_BITS_ARB							0x2017
+#define WGL_BLUE_BITS_ARB							0x2018
+#define WGL_ALPHA_BITS_ARB							0x201A
+#define WGL_DEPTH_BITS_ARB							0x2022
+#define WGL_STENCIL_BITS_ARB						0x2023
+#define WGL_SAMPLE_BUFFERS_ARB						0x2042
+#define WGL_SAMPLES_ARB								0x2043
+#endif
 #include "win_input.h"
 
 // WGL_EXT_swap_interval

@@ -56,8 +56,15 @@ PFNWGLCHOOSEPIXELFORMATARBPROC			wglChoosePixelFormatARB;
 // WGL_ARB_create_context
 PFNWGLCREATECONTEXTATTRIBSARBPROC		wglCreateContextAttribsARB;
 
-// the global glad function-pointer context; every qgl* shim macro and all
-// direct GL calls in the renderer go through this
+// resolves a WGL extension entry point through wglGetProcAddress and
+// prints a message when it is missing; declared here because the old qgl.h
+// header that used to declare it is gone
+typedef void (*GLExtension_t)( void );
+GLExtension_t GLimp_ExtensionPointer( const char *name );
+
+// the global glad function-pointer context; every GL call in the renderer
+// goes through this; loaded with gladLoaderLoadGLContext once the
+// rendering context is current
 GladGLContext gladGL;
 
 /*
@@ -69,7 +76,7 @@ void GLimp_TestSwapBuffers( const idCmdArgs &args ) {
 	idLib::Printf( "GLimp_TimeSwapBuffers\n" );
 	static const int MAX_FRAMES = 5;
 	uint64	timestamps[MAX_FRAMES];
-	qglDisable( GL_SCISSOR_TEST );
+	gladGL.Disable( GL_SCISSOR_TEST );
 
 	int frameMilliseconds = 16;
 	for ( int swapInterval = 2 ; swapInterval >= -1 ; swapInterval-- ) {
@@ -79,13 +86,13 @@ void GLimp_TestSwapBuffers( const idCmdArgs &args ) {
 				Sys_Sleep( frameMilliseconds );
 			}
 			if ( i & 1 ) {
-				qglClearColor( 0, 1, 0, 1 );
+				gladGL.ClearColor( 0, 1, 0, 1 );
 			} else {
-				qglClearColor( 1, 0, 0, 1 );
+				gladGL.ClearColor( 1, 0, 0, 1 );
 			}
-			qglClear( GL_COLOR_BUFFER_BIT );
-			qwglSwapBuffers( win32.hDC );
-			qglFinish();
+			gladGL.Clear( GL_COLOR_BUFFER_BIT );
+			SwapBuffers( win32.hDC );
+			gladGL.Finish();
 			timestamps[i] = Sys_Microseconds();
 		}
 
@@ -227,8 +234,8 @@ static LRESULT CALLBACK FakeWndProc (
 	// Set up OpenGL
 	pixelFormat = ChoosePixelFormat(hDC, &pfd);
 	SetPixelFormat(hDC, pixelFormat, &pfd);
-	hGLRC = qwglCreateContext(hDC);
-	qwglMakeCurrent(hDC, hGLRC);
+	hGLRC = wglCreateContext(hDC);
+	wglMakeCurrent(hDC, hGLRC);
 
 	// free things
 	wglMakeCurrent(NULL, NULL);
@@ -484,8 +491,8 @@ static bool GLW_InitDriver( glimpParms_t parms ) {
 	common->Printf( "succeeded\n" );
 
 	common->Printf( "...making context current: " );
-	if ( !qwglMakeCurrent( win32.hDC, win32.hGLRC ) ) {
-		qwglDeleteContext( win32.hGLRC );
+	if ( !wglMakeCurrent( win32.hDC, win32.hGLRC ) ) {
+		wglDeleteContext( win32.hGLRC );
 		win32.hGLRC = NULL;
 		common->Printf( "^3failed^0\n" );
 		return false;
@@ -1238,12 +1245,12 @@ void GLimp_Shutdown() {
 	common->Printf( "Shutting down OpenGL subsystem\n" );
 
 	// set current context to NULL
-	retVal = qwglMakeCurrent( NULL, NULL ) != 0;
+	retVal = wglMakeCurrent( NULL, NULL ) != 0;
 	common->Printf( "...wglMakeCurrent( NULL, NULL ): %s\n", success[retVal] );
 
 	// delete HGLRC
 	if ( win32.hGLRC ) {
-		retVal = qwglDeleteContext( win32.hGLRC ) != 0;
+		retVal = wglDeleteContext( win32.hGLRC ) != 0;
 		common->Printf( "...deleting GL context: %s\n", success[retVal] );
 		win32.hGLRC = NULL;
 	}
@@ -1295,7 +1302,7 @@ void GLimp_SwapBuffers() {
 		}
 	}
 
-	qwglSwapBuffers( win32.hDC );
+	SwapBuffers( win32.hDC );
 }
 
 /*
@@ -1312,7 +1319,7 @@ GLimp_ActivateContext
 ===================
 */
 void GLimp_ActivateContext() {
-	if ( !qwglMakeCurrent( win32.hDC, win32.hGLRC ) ) {
+	if ( !wglMakeCurrent( win32.hDC, win32.hGLRC ) ) {
 		win32.wglErrors++;
 	}
 }
@@ -1323,8 +1330,8 @@ GLimp_DeactivateContext
 ===================
 */
 void GLimp_DeactivateContext() {
-	qglFinish();
-	if ( !qwglMakeCurrent( win32.hDC, NULL ) ) {
+	gladGL.Finish();
+	if ( !wglMakeCurrent( win32.hDC, NULL ) ) {
 		win32.wglErrors++;
 	}
 }
@@ -1340,7 +1347,7 @@ Returns a function pointer for an OpenGL extension entry point
 GLExtension_t GLimp_ExtensionPointer( const char *name ) {
 	void	(*proc)();
 
-	proc = (GLExtension_t)qwglGetProcAddress( name );
+	proc = (GLExtension_t)wglGetProcAddress( name );
 
 	if ( !proc ) {
 		common->Printf( "Couldn't find proc address for: %s\n", name );

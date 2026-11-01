@@ -1294,7 +1294,6 @@ BACKEND
 =============================================================
 */
 
-void RB_SetGL2D();
 
 void RB_ExecuteBackEndCommands( const emptyCommand_t *cmds );
 
