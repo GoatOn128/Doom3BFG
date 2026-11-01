@@ -191,6 +191,24 @@ void	R_AddDrawPostProcess( viewDef_t * parms ) {
 	cmd->viewDef = parms;
 }
 
+/*
+=============
+R_AddDrawOcclusion
+
+Issues the occlusion queries for the portals the front end flowed through.
+The command is placed after the draw view commands, so the queries are
+depth tested against the opaque geometry of the view just rendered.
+=============
+*/
+void	R_AddDrawOcclusion( viewDef_t * parms ) {
+	if ( !r_usePortalOcclusion.GetBool() ) {
+		return;
+	}
+	occlusionCommand_t * cmd = (occlusionCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
+	cmd->commandId = RC_OCCLUSION;
+	cmd->viewDef = parms;
+}
+
 
 //=================================================================================
 

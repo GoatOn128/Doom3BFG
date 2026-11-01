@@ -240,6 +240,9 @@ void RB_ExecuteBackEndCommands( const emptyCommand_t *cmds ) {
 		case RC_POST_PROCESS:
 			RB_PostProcess( cmds );
 			break;
+		case RC_OCCLUSION:
+			RB_Occlusion( cmds );
+			break;
 		default:
 			common->Error( "RB_ExecuteBackEndCommands: bad commandId" );
 			break;

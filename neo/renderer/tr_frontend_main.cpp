@@ -434,6 +434,11 @@ pass happens after the active view and its subviews is done rendering.
 void R_RenderPostProcess( viewDef_t *parms ) {
 	viewDef_t * oldView = tr.viewDef;
 
+	// the occlusion queries must sample the depth buffer of the view that
+	// was just drawn, so they go on the command chain before the post
+	// process step
+	R_AddDrawOcclusion( parms );
+
 	R_AddDrawPostProcess( parms );
 
 	tr.viewDef = oldView;

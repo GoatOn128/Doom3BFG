@@ -41,6 +41,12 @@ typedef struct portal_s {
 	idPlane					plane;			// view must be on the positive side of the plane to cross
 	struct portal_s *		next;			// next portal of the area
 	struct doublePortal_s *	doublePortal;
+
+	// occlusion query state, updated by the portal flow and the back end
+	int64					occlusionQuery;		// query number from GL_BeginQuery, 0 = never issued
+	int						queryFrame;			// frame the query was issued on
+	int						queryWantedFrame;	// frame the portal flow last asked for a query
+	int						sampleCount;		// deferred result, -1 = not read back yet
 } portal_t;
 
 
@@ -223,6 +229,9 @@ public:
 	void					AddAreaToView( int areaNum, const portalStack_t *ps );
 	idScreenRect			ScreenRectFromWinding( const idWinding *w, const viewEntity_t *space );
 	bool					PortalIsFoggedOut( const portal_t *p );
+	bool					PortalIsOccluded( const portal_t *p );
+	void					UpdatePortalOcclusionResults();
+	void					InvalidatePortalOcclusionQueries();
 	void					FloodViewThroughArea_r( const idVec3 & origin, int areaNum, const portalStack_t *ps );
 	void					FlowViewThroughPortals( const idVec3 & origin, int numPlanes, const idPlane *planes );
 	void					BuildConnectedAreas_r( int areaNum );

@@ -44,6 +44,9 @@ struct portalStack_t {
 	idScreenRect			rect;
 };
 
+// number of portals the occlusion queries culled in the last portal flow
+static int c_portalOcclusionCulled = 0;
+
 /*
 =======================================================================
 
@@ -446,6 +449,80 @@ bool idRenderWorldLocal::PortalIsFoggedOut( const portal_t *p ) {
 
 /*
 ===================
+idRenderWorldLocal::PortalIsOccluded
+
+Returns true if the deferred occlusion query result says the area behind the
+portal is completely hidden by opaque geometry. Results that have not been
+read back yet, or that are older than the trust window, never cull so the
+portal is requeried instead.
+===================
+*/
+bool idRenderWorldLocal::PortalIsOccluded( const portal_t *p ) {
+	if ( !r_usePortalOcclusion.GetBool() ) {
+		return false;
+	}
+	if ( p->occlusionQuery == 0 ) {
+		return false;	// never queried
+	}
+	if ( p->sampleCount < 0 ) {
+		return false;	// result not read back yet
+	}
+	if ( tr.frameCount - p->queryFrame > r_portalOcclusionTrustFrames.GetInteger() ) {
+		return false;	// result is too old, requery before culling
+	}
+	return p->sampleCount == 0;
+}
+
+/*
+===================
+idRenderWorldLocal::UpdatePortalOcclusionResults
+
+Reads back the occlusion query results the back end issued for the previous
+frame and stores them on the portals for the upcoming traversal.
+===================
+*/
+void idRenderWorldLocal::UpdatePortalOcclusionResults() {
+	if ( !r_usePortalOcclusion.GetBool() ) {
+		return;
+	}
+	for ( int i = 0; i < numPortalAreas; i++ ) {
+		for ( portal_t * p = portalAreas[i].portals; p != NULL; p = p->next ) {
+			if ( p->occlusionQuery == 0 || p->sampleCount >= 0 ) {
+				continue;	// never queried, or result already consumed
+			}
+			const int result = GL_GetDeferredQueryResult( p->occlusionQuery );
+			if ( result == OCCLUSION_QUERY_TOO_OLD ) {
+				// the query object was reused in the meantime, requery
+				p->occlusionQuery = 0;
+				p->queryFrame = -1;
+				continue;
+			}
+			p->sampleCount = result;
+		}
+	}
+}
+
+/*
+===================
+idRenderWorldLocal::InvalidatePortalOcclusionQueries
+
+The query pool is regenerated whenever a new GL context is created, so any
+outstanding query numbers on the portals are invalid.
+===================
+*/
+void idRenderWorldLocal::InvalidatePortalOcclusionQueries() {
+	for ( int i = 0; i < numPortalAreas; i++ ) {
+		for ( portal_t * p = portalAreas[i].portals; p != NULL; p = p->next ) {
+			p->occlusionQuery = 0;
+			p->queryFrame = -1;
+			p->queryWantedFrame = -1;
+			p->sampleCount = -1;
+		}
+	}
+}
+
+/*
+===================
 idRenderWorldLocal::FloodViewThroughArea_r
 ===================
 */
@@ -484,6 +561,22 @@ void idRenderWorldLocal::FloodViewThroughArea_r( const idVec3 & origin, int area
 		}
 		if ( check ) {
 			continue;	// already in stack
+		}
+
+		// the occlusion queries are driven by the primary view only, subviews
+		// such as mirrors always use the unmodified portal flow
+		if ( tr.viewDef == tr.primaryView ) {
+			// let the back end refresh the occlusion query for this portal
+			const_cast<portal_t *>(p)->queryWantedFrame = tr.frameCount;
+
+			// if a fresh query says the portal is completely hidden behind
+			// opaque geometry, don't flow through it. portals the view is very
+			// close to are never culled, the query could be clipped by the
+			// near plane
+			if ( d >= 1.0f && PortalIsOccluded( p ) ) {
+				c_portalOcclusionCulled++;
+				continue;
+			}
 		}
 
 		// if we are very close to the portal surface, don't bother clipping
@@ -665,6 +758,10 @@ void idRenderWorldLocal::FindViewLightsAndEntities() {
 	// viewLight / viewEntity
 	tr.viewCount++;
 
+	// consume the occlusion query results the back end issued for the
+	// previous frame before flowing through the portals
+	UpdatePortalOcclusionResults();
+
 	// clear the visible lightDef and entityDef lists
 	tr.viewDef->viewLights = NULL;
 	tr.viewDef->viewEntitys = NULL;
@@ -713,6 +810,12 @@ void idRenderWorldLocal::FindViewLightsAndEntities() {
 		// may have the viewOrigin in a solid/invalid area
 		FlowViewThroughPortals( tr.viewDef->renderView.vieworg, 5, tr.viewDef->frustum );
 	}
+
+	// report how many portals the occlusion queries culled
+	if ( r_showPortalOcclusion.GetBool() && tr.viewDef == tr.primaryView ) {
+		common->Printf( "portalOcclusion: %i portals culled\n", c_portalOcclusionCulled );
+	}
+	c_portalOcclusionCulled = 0;
 }
 
 /*
