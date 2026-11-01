@@ -49,6 +49,11 @@ static uint64						frameStartGPUTimeMicroSec = 0;
 static uint64						frameEndGPUTimeMicroSec = 0;
 static uint64						gpuToCpuTimeDeltaMicroSec = 0;
 
+// occlusion query ring state; the query number is a plain increasing counter and
+// the query object for a number is occlusionQueries[number % MAX_OCCLUSION_QUERIES]
+// (declared up front because GL_SetWrapperContext() resets the counter)
+static int64						currentOcclusionQuery = 0;
+
 /*
 ====================
 GL_SelectTexture
@@ -526,6 +531,7 @@ void GL_SetWrapperContext( const wrapperContext_t & context ) {
 			gladGL.DeleteQueriesARB( MAX_OCCLUSION_QUERIES, wrapperContext.occlusionQueries );
 		}
 		gladGL.GenQueriesARB( MAX_OCCLUSION_QUERIES, wrapperContext.occlusionQueries );
+		currentOcclusionQuery = 0;
 	}
 }
 
