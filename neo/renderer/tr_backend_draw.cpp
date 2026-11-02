@@ -1023,7 +1023,7 @@ static void RB_RenderInteractions( const drawSurf_t *surfList, const viewLight_t
 	const bool useShadowMap = ( vLight->shadowMapSlot >= 0 );
 	if ( useShadowMap ) {
 		// the global light origin and the shadow map depth compare bias
-		idVec4 globalLightOrigin( vLight->globalLightOrigin, r_shadowMapBias.GetFloat() );
+		const idVec4 globalLightOrigin( vLight->globalLightOrigin.x, vLight->globalLightOrigin.y, vLight->globalLightOrigin.z, r_shadowMapBias.GetFloat() );
 		SetFragmentParm( RENDERPARM_GLOBALLIGHTORIGIN, globalLightOrigin.ToFloatPtr() );
 		// the biased world to atlas matrix of all six cube faces
 		for ( int i = 0; i < 24; i++ ) {
