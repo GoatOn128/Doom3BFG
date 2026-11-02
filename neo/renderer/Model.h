@@ -289,6 +289,11 @@ public:
 	// Returns number of the joint nearest to the given triangle.
 	virtual int					NearestJoint( int surfaceNum, int a, int c, int b ) const = 0;
 
+	// Returns the transform of the given joint for the given entity, or false
+	// if the model does not provide joint transforms. MD3 models return the
+	// lerped tag transform here.
+	virtual bool				GetJointTransform( jointHandle_t handle, const struct renderEntity_s *ent, idVec3 &origin, idMat3 &axis ) const { return false; }
+
 	// Writing to and reading from a demo file.
 	virtual void				ReadFromDemoFile( class idDemoFile *f ) = 0;
 	virtual void				WriteToDemoFile( class idDemoFile *f ) = 0;

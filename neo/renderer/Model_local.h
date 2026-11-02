@@ -29,6 +29,8 @@ If you have questions concerning this license or the applicable additional terms
 #ifndef __MODEL_LOCAL_H__
 #define __MODEL_LOCAL_H__
 
+#include "Model_md3.h"
+
 /*
 ===============================================================================
 
@@ -69,7 +71,7 @@ public:
 	virtual void				Print() const;
 	virtual void				List() const;
 	virtual int					Memory() const;
-	virtual ID_TIME_T				Timestamp() const;
+	virtual ID_TIME_T			Timestamp() const;
 	virtual int					NumSurfaces() const;
 	virtual int					NumBaseSurfaces() const;
 	virtual const modelSurface_t *Surface( int surfaceNum ) const;
@@ -92,7 +94,7 @@ public:
 	virtual float				DepthHack() const;
 
 	virtual bool				ModelHasDrawingSurfaces() const { return hasDrawingSurfaces; };
- 	virtual bool				ModelHasInteractingSurfaces() const { return hasInteractingSurfaces; };
+	virtual bool				ModelHasInteractingSurfaces() const { return hasInteractingSurfaces; };
 	virtual bool				ModelHasShadowCastingSurfaces() const { return hasShadowCastingSurfaces; };
 
 	void						MakeDefaultModel();
@@ -158,7 +160,7 @@ public:
 								idMD5Mesh();
 								~idMD5Mesh();
 
- 	void						ParseMesh( idLexer &parser, int numJoints, const idJointMat *joints );
+	void						ParseMesh( idLexer &parser, int numJoints, const idJointMat *joints );
 
 	int							NumVerts() const { return numVerts; }
 	int							NumTris() const { return numTris; }
@@ -225,19 +227,38 @@ struct md3Surface_s;
 
 class idRenderModelMD3 : public idRenderModelStatic {
 public:
+								idRenderModelMD3();
+	virtual						~idRenderModelMD3();
+
 	virtual void				InitFromFile( const char *fileName );
 	virtual bool				SupportsBinaryModel() { return false; }
+	virtual void				PurgeModel();
+	virtual void				LoadModel();
+	virtual void				TouchData();
+	virtual void				List() const;
+	virtual int					Memory() const;
 	virtual dynamicModel_t		IsDynamicModel() const;
 	virtual idRenderModel *		InstantiateDynamicModel( const struct renderEntity_s *ent, const viewDef_t *view, idRenderModel *cachedModel );
 	virtual idBounds			Bounds( const struct renderEntity_s *ent ) const;
+
+
+	virtual int					NumJoints() const;	// the MD3 tags are exposed as joints so attachments can find them
+	virtual const idMD5Joint *	GetJoints() const;
+	virtual jointHandle_t		GetJointHandle( const char *name ) const;
+	virtual const char *		GetJointName( jointHandle_t handle ) const;
+	virtual bool				GetJointTransform( jointHandle_t handle, const struct renderEntity_s *ent, idVec3 &origin, idMat3 &axis ) const;
 
 private:
 	int							index;			// model = tr.models[model->index]
 	int							dataSize;		// just for listing purposes
 	struct md3Header_s *		md3;			// only if type == MOD_MESH
-	int							numLods;
+	struct md3Header_s *		lods[MD3_MAX_LODS];	// base model plus lower detail levels
+	int							numLods;		// number of valid entries in lods[]
+	idList<idMD5Joint, TAG_MODEL>	joints;		// the MD3 tags exposed as joints
 
 	void						LerpMeshVertexes( srfTriangles_t *tri, const struct md3Surface_s *surf, const float backlerp, const int frame, const int oldframe ) const;
+	void						GetFrameParms( const struct renderEntity_s *ent, const struct md3Header_s *header, int &frame, int &oldframe, float &backlerp ) const;
+	int							SelectLodForView( const struct renderEntity_s *ent, const viewDef_t *view, int frame ) const;
 };
 
 /*
@@ -438,3 +459,4 @@ public:
 };
 
 #endif /* !__MODEL_LOCAL_H__ */
+
