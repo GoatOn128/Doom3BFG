@@ -77,10 +77,6 @@ void R_FreeEntityDefDerivedData( idRenderEntityLocal *def, bool keepDecals, bool
 		}
 	}
 
-	// free all the interactions
-	while ( def->firstInteraction != NULL ) {
-		def->firstInteraction->UnlinkAndFree();
-	}
 	def->dynamicModelFrameCount = 0;
 
 	// clear the dynamic model if present
@@ -256,11 +252,6 @@ void R_FreeLightDefDerivedData( idRenderLightLocal *ldef ) {
 	// remove any portal fog references
 	for ( doublePortal_t *dp = ldef->foggedPortals; dp != NULL; dp = dp->nextFoggedPortal ) {
 		dp->fogLight = NULL;
-	}
-
-	// free all the interactions
-	while ( ldef->firstInteraction != NULL ) {
-		ldef->firstInteraction->UnlinkAndFree();
 	}
 
 	// free all the references to the light
@@ -551,7 +542,7 @@ ReloadModels and RegenerateWorld call this
 ===================
 */
 void R_ReCreateWorldReferences() {
-	// let the interaction generation code know this
+	// the reference generation code shouldn't be optimized for a particular view
 	// shouldn't be optimized for a particular view
 	tr.viewDef = NULL;
 

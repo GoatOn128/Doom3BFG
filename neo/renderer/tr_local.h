@@ -82,7 +82,6 @@ SURFACES
 
 #include "ModelDecal.h"
 #include "ModelOverlay.h"
-#include "Interaction.h"
 
 class idRenderWorldLocal;
 struct viewEntity_t;
@@ -196,8 +195,6 @@ public:
 	viewLight_t *			viewLight;
 
 	areaReference_t *		references;				// each area the light is present in will have a lightRef
-	idInteraction *			firstInteraction;		// doubly linked list
-	idInteraction *			lastInteraction;
 
 	struct doublePortal_s *	foggedPortals;
 };
@@ -249,8 +246,6 @@ public:
 	idRenderModelOverlay *	overlays;				// blood overlays on animated models
 
 	areaReference_t *		entityRefs;				// chain of all references
-	idInteraction *			firstInteraction;		// doubly linked list
-	idInteraction *			lastInteraction;
 
 	bool					needsPortalSky;
 };
@@ -345,7 +340,6 @@ struct viewEntity_t {
 	drawSurf_t *			drawSurfs;
 
 	// R_AddSingleModel will build a chain of parameters here to setup shadow volumes
-	staticShadowVolumeParms_t *		staticShadowVolumes;
 	dynamicShadowVolumeParms_t *	dynamicShadowVolumes;
 };
 
@@ -561,7 +555,6 @@ const idMaterial *R_RemapShaderBySkin( const idMaterial *shader, const idDeclSki
 struct performanceCounters_t {
 	int		c_box_cull_in;
 	int		c_box_cull_out;
-	int		c_createInteractions;	// number of calls to idInteraction::CreateInteraction
 	int		c_createShadowVolumes;
 	int		c_generateMd5;
 	int		c_entityDefCallbacks;
@@ -854,8 +847,6 @@ extern idCVar r_lightAllBackFaces;			// light all the back faces, even when they
 extern idCVar r_useLightDepthBounds;		// use depth bounds test on lights to reduce both shadow and interaction fill
 extern idCVar r_useShadowDepthBounds;		// use depth bounds test on individual shadows to reduce shadow fill
 
-extern idCVar r_skipStaticInteractions;		// skip interactions created at level load
-extern idCVar r_skipDynamicInteractions;	// skip interactions created after level load
 extern idCVar r_skipPostProcess;			// skip all post-process renderings
 extern idCVar r_skipSuppress;				// ignore the per-view suppressions
 extern idCVar r_skipInteractions;			// skip all light/surface interaction drawing
@@ -1334,7 +1325,6 @@ void RB_ShutdownDebugTools();
 #include "AutoRenderBink.h"
 #include "jobs/ShadowShared.h"
 #include "jobs/prelightshadowvolume/PreLightShadowVolume.h"
-#include "jobs/staticshadowvolume/StaticShadowVolume.h"
 #include "jobs/dynamicshadowvolume/DynamicShadowVolume.h"
 #include "GraphicsAPIWrapper.h"
 #include "GLMatrix.h"
