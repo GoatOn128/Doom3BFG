@@ -298,6 +298,10 @@ struct wolfTag_t {
 	idMat3					axis;
 };
 
+// shared helpers, defined in Model_wolf.cpp and used by the format loaders
+byte					*WolfLoadFile( const char *fileName, int *fileSizeOut, ID_TIME_T *timestamp );
+const char				*WolfName( const char *name, char *buffer );
+
 class idRenderModelWolfSkeletal : public idRenderModelStatic {
 public:
 							idRenderModelWolfSkeletal();
@@ -352,39 +356,6 @@ protected:
 	int									numFrames;
 	byte *								fileData;		// the raw model file
 	byte *								skeletonData;	// the sibling skeleton file (.mdx), MDM only
-};
-
-// MDS: bones, frames, surfaces and tags all in one file
-class idRenderModelMDS : public idRenderModelWolfSkeletal {
-public:
-							idRenderModelMDS() {}
-	virtual					~idRenderModelMDS() {}
-
-protected:
-	virtual void			DecodeFrame( int frameNum, idJointQuat *jointQuats ) const;
-	virtual bool			LoadWolfFile( const char *fileName );
-};
-
-// MDM: mesh and tags from the .mdm, skeleton and frames from the sibling .mdx
-class idRenderModelMDM : public idRenderModelWolfSkeletal {
-public:
-							idRenderModelMDM() {}
-	virtual					~idRenderModelMDM() {}
-
-protected:
-	virtual void			DecodeFrame( int frameNum, idJointQuat *jointQuats ) const;
-	virtual bool			LoadWolfFile( const char *fileName );
-};
-
-// MD4: absolute per-frame bone matrices, kept for completion sake
-class idRenderModelMD4 : public idRenderModelWolfSkeletal {
-public:
-							idRenderModelMD4() {}
-	virtual					~idRenderModelMD4() {}
-
-protected:
-	virtual void			DecodeFrame( int frameNum, idJointQuat *jointQuats ) const;
-	virtual bool			LoadWolfFile( const char *fileName );
 };
 
 #endif /* !__MODEL_WOLF_H__ */

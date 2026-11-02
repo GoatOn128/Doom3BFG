@@ -141,12 +141,12 @@ Still missing for Q3/ET use:
 
 ### 2.3 Model formats
 
-All Q3-era model formats are implemented (port commit adds `Model_mdc.cpp/.h` and `Model_wolf.cpp/.h`):
+All Q3-era model formats are implemented (the port adds `Model_mdc.cpp/.h`, a shared `Model_wolf.cpp/.h` base and one file pair per format: `Model_mds`, `Model_mdm`, `Model_md4`):
 
 - MDC: compressed MD3 variant from RtCW (`idRenderModelMDC` in `neo/renderer/Model_mdc.cpp`). The compressed frames (per-axis deltas plus an anorms256 normal index, per-frame base/comp tables) and the short-packed tags are decoded at load time into a synthesized MD3 layout, so the entire MD3 path (instantiate, LOD chain via the `LoadHeader`/`LodFileExtension` hooks, tags as joints, per-frame bounds) is shared unchanged.
-- MDS: RtCW/ET skeletal format, single file with bones, compressed bone frames, weighted surfaces and bone-attached tags (`idRenderModelMDS` in `neo/renderer/Model_wolf.cpp`).
-- MDM + MDX: RtCW split skeletal pair, `.mdm` mesh and tags plus the sibling `.mdx` skeleton/frames (`idRenderModelMDM`, the `.mdx` is loaded by replacing the extension).
-- MD4: the early Q3-era skeletal format, kept for completion sake (`idRenderModelMD4`). Only the on-disk structures survive in the ET SDK headers; the decode follows the Q3 3x4 matrix convention (rotation rows with translation in the last column). No known content uses it.
+- MDS: RtCW/ET skeletal format, single file with bones, compressed bone frames, weighted surfaces and bone-attached tags (`idRenderModelMDS` in `neo/renderer/Model_mds.cpp`).
+- MDM + MDX: RtCW split skeletal pair, `.mdm` mesh and tags plus the sibling `.mdx` skeleton/frames (`idRenderModelMDM` in `neo/renderer/Model_mdm.cpp`, the `.mdx` is loaded by replacing the extension).
+- MD4: the early Q3-era skeletal format, kept for completion sake (`idRenderModelMD4` in `neo/renderer/Model_md4.cpp`). Only the on-disk structures survive in the ET SDK headers; the decode follows the Q3 3x4 matrix convention (rotation rows with translation in the last column). No known content uses it.
 - External `.tag` files (RtCW skeletal attachments): still not loaded; only relevant alongside MDM.
 - `.shadow` scripts (ET per-model projection shadow shader + six floats): only relevant if a projection shadow path is added; our shadow roadmap is shadowmap-based, so likely never.
 - MD2, MDR: not ET formats, not needed.

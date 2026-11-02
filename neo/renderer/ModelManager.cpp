@@ -31,7 +31,9 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "Model_local.h"
 #include "Model_mdc.h"
-#include "Model_wolf.h"
+#include "Model_mds.h"
+#include "Model_mdm.h"
+#include "Model_md4.h"
 #include "tr_local.h"	// just for R_FreeWorldInteractions and R_CreateWorldInteractions
 
 idCVar binaryLoadRenderModels( "binaryLoadRenderModels", "1", 0, "enable binary load/write of render models" );
