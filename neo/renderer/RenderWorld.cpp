@@ -224,7 +224,7 @@ void idRenderWorldLocal::UpdateEntityDef( qhandle_t entityHandle, const renderEn
 					// only clear the dynamic model and interaction surfaces if they exist
 					c_callbackUpdate++;
 					R_ClearEntityDefDynamicModel( def );
-					def->parms = *re;
+					static_cast<renderEntity_t&>( def->parms ) = *re;
 					return;
 				}
 			}
@@ -245,7 +245,7 @@ void idRenderWorldLocal::UpdateEntityDef( qhandle_t entityHandle, const renderEn
 		def->index = entityHandle;
 	}
 
-	def->parms = *re;
+	static_cast<renderEntity_t&>( def->parms ) = *re;
 
 	def->lastModifiedFrameNum = tr.frameCount;
 	if ( common->WriteDemo() && def->archived ) {
@@ -378,12 +378,12 @@ void idRenderWorldLocal::UpdateLightDef( qhandle_t lightHandle, const renderLigh
 	if ( light ) {
 		// if the shape of the light stays the same, we don't need to dump
 		// any of our derived data, because shader parms are calculated every frame
-		if ( rlight->axis == light->parms.axis && rlight->end == light->parms.end &&
-			 rlight->lightCenter == light->parms.lightCenter && rlight->lightRadius == light->parms.lightRadius &&
-			 rlight->noShadows == light->parms.noShadows && rlight->origin == light->parms.origin &&
-			 rlight->parallel == light->parms.parallel && rlight->pointLight == light->parms.pointLight &&
-			 rlight->right == light->parms.right && rlight->start == light->parms.start &&
-			 rlight->target == light->parms.target && rlight->up == light->parms.up &&
+		if ( rlight->axis == light->renderLight.axis && rlight->end == light->renderLight.end &&
+			 rlight->lightCenter == light->renderLight.lightCenter && rlight->lightRadius == light->renderLight.lightRadius &&
+			 rlight->noShadows == light->renderLight.noShadows && rlight->origin == light->renderLight.origin &&
+			 rlight->parallel == light->renderLight.parallel && rlight->pointLight == light->renderLight.pointLight &&
+			 rlight->right == light->renderLight.right && rlight->start == light->renderLight.start &&
+			 rlight->target == light->renderLight.target && rlight->up == light->renderLight.up &&
 			 rlight->shader == light->lightShader && rlight->prelightModel == light->parms.prelightModel ) {
 			justUpdate = true;
 		} else {
@@ -400,7 +400,8 @@ void idRenderWorldLocal::UpdateLightDef( qhandle_t lightHandle, const renderLigh
 		light->index = lightHandle;
 	}
 
-	light->parms = *rlight;
+	light->renderLight = *rlight;
+	light->parms.FromRenderLight( *rlight );
 	light->lastModifiedFrameNum = tr.frameCount;
 	if ( common->WriteDemo() && light->archived ) {
 		WriteFreeLight( lightHandle );
@@ -473,7 +474,7 @@ const renderLight_t *idRenderWorldLocal::GetRenderLight( qhandle_t lightHandle )
 		return NULL;
 	}
 
-	return &def->parms;
+	return &def->renderLight;
 }
 
 /*

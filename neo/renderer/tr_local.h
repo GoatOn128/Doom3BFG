@@ -153,6 +153,7 @@ public:
 
 
 #include "RenderLightCommitted.h"
+#include "RenderLightParms.h"
 
 class idRenderLightLocal : public idRenderLight {
 public:
@@ -166,7 +167,9 @@ public:
 
 	bool					LightCastsShadows() const { return parms.forceShadows || ( !parms.noShadows && lightShader->LightCastsShadows() ); }
 
-	renderLight_t			parms;					// specification
+	idRenderLightParms	parms;					// specification
+
+	renderLight_t			renderLight;				// cached public API copy, kept in sync by UpdateLightDef
 
 	bool					lightHasMoved;			// the light has changed its position since it was
 													// first added, so the prelight model is not valid
@@ -198,6 +201,7 @@ public:
 
 
 #include "RenderModelCommitted.h"
+#include "RenderModelParms.h"
 
 class idRenderEntityLocal : public idRenderEntity {
 public:
@@ -215,7 +219,7 @@ public:
 
 	bool					IsDirectlyVisible() const;
 
-	renderEntity_t			parms;
+	idRenderModelParms	parms;
 
 	committedModel_t		committed;				// view independent derived state, rebuilt by the per frame model commit pass
 

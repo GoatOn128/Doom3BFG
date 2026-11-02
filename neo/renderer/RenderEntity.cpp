@@ -79,7 +79,8 @@ void idRenderEntityLocal::RemoveDecals() {
 //======================================================================
 
 idRenderLightLocal::idRenderLightLocal() {
-	memset( &parms, 0, sizeof( parms ) );
+	// idRenderLightParms zeroes itself in its constructor
+	memset( &renderLight, 0, sizeof( renderLight ) );
 	memset( committed.lightProject, 0, sizeof( committed.lightProject ) );
 
 	lightHasMoved			= false;

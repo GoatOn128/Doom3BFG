@@ -67,9 +67,9 @@ void R_CommitModel( idRenderEntityLocal * entity ) {
 		entity->committed.localReferenceBounds = entity->parms.hModel->Bounds( &entity->parms );
 	}
 
-	R_AxisToModelMatrix( entity->parms.axis, entity->parms.origin, entity->committed.modelMatrix );
+	entity->parms.ComputeModelMatrix( entity->committed.modelMatrix );
 
-	idRenderMatrix::CreateFromOriginAxis( entity->parms.origin, entity->parms.axis, entity->committed.modelRenderMatrix );
+	entity->parms.ComputeModelRenderMatrix( entity->committed.modelRenderMatrix );
 
 	// calculate the matrix that transforms the unit cube to exactly cover the model in world space
 	idRenderMatrix::OffsetScaleForBounds( entity->committed.modelRenderMatrix, entity->committed.localReferenceBounds, entity->committed.inverseBaseModelProject );
