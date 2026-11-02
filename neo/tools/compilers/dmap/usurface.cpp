@@ -819,7 +819,7 @@ static void CarveGroupsByLight( uEntity_t *e, mapLight_t *light ) {
 			// if the surface doesn't get lit, don't carve it up
 			if ( ( light->def.lightShader->IsFogLight() && !group->material->ReceivesFog() )
 				|| ( !light->def.lightShader->IsFogLight() && !group->material->ReceivesLighting() )
-				|| !group->bounds.IntersectsBounds( light->def.globalLightBounds ) ) {
+				|| !group->bounds.IntersectsBounds( light->def.committed.globalLightBounds ) ) {
 
 				group->nextGroup = carvedGroups;
 				carvedGroups = group;

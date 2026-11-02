@@ -156,6 +156,8 @@ public:
 };
 
 
+#include "RenderLightCommitted.h"
+
 class idRenderLightLocal : public idRenderLight {
 public:
 							idRenderLightLocal();
@@ -185,15 +187,10 @@ public:
 
 
 	// derived information
-	idPlane					lightProject[4];		// old style light projection where Z and W are flipped and projected lights lightProject[3] is divided by ( zNear + zFar )
-	idRenderMatrix			baseLightProject;		// global xyz1 to projected light strq
-	idRenderMatrix			inverseBaseLightProject;// transforms the zero-to-one cube to exactly cover the light in world space
+	committedLight_t		committed;				// view independent derived state, rebuilt by the per frame light commit pass
 
 	const idMaterial *		lightShader;			// guaranteed to be valid, even if parms.shader isn't
 	idImage *				falloffImage;
-
-	idVec3					globalLightOrigin;		// accounting for lightCenter and parallel
-	idBounds				globalLightBounds;
 
 	int						viewCount;				// if == tr.viewCount, the light is on the viewDef->viewLights list
 	viewLight_t *			viewLight;
@@ -1112,7 +1109,7 @@ void R_ShadowBounds( const idBounds & modelBounds, const idBounds & lightBounds,
 
 ID_INLINE bool R_CullModelBoundsToLight( const idRenderLightLocal * light, const idBounds & localBounds, const idRenderMatrix & modelRenderMatrix ) {
 	idRenderMatrix modelLightProject;
-	idRenderMatrix::Multiply( light->baseLightProject, modelRenderMatrix, modelLightProject );
+	idRenderMatrix::Multiply( light->committed.baseLightProject, modelRenderMatrix, modelLightProject );
 	return idRenderMatrix::CullBoundsToMVP( modelLightProject, localBounds, true );
 }
 

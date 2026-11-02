@@ -461,7 +461,7 @@ static void CreateMapLight( const idMapEntity *mapEnt ) {
 
 	R_DeriveLightData( &light->def );
 
-	idRenderMatrix::GetFrustumPlanes( light->frustumPlanes, light->def.baseLightProject, true, true );
+	idRenderMatrix::GetFrustumPlanes( light->frustumPlanes, light->def.committed.baseLightProject, true, true );
 
 	// the DOOM 3 frustum planes point outside the frustum
 	for ( int i = 0; i < 6; i++ ) {

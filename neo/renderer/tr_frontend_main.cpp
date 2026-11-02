@@ -380,6 +380,11 @@ void R_RenderView( viewDef_t *parms ) {
 	// remove the Z-near to avoid portals from being near clipped
 	tr.viewDef->frustum[4][3] -= r_znear.GetFloat();
 
+	// commit the view independent light state for this frame before any
+	// light gathering happens; subviews re-enter R_RenderView, but the
+	// commitFrame gating in R_CommitLights makes that cheap
+	R_CommitLights();
+
 	// identify all the visible portal areas, and create view lights and view entities
 	// for all the the entityDefs and lightDefs that are in the visible portal areas
 	static_cast<idRenderWorldLocal *>(parms->renderWorld)->FindViewLightsAndEntities();
