@@ -193,6 +193,11 @@ public:
 	void	BindShader_InteractionShadowSkinned()  { BindShader_Builtin( BUILTIN_INTERACTION_SHADOW_SKINNED ); }
 	void	BindShader_AmbientFill()  { BindShader_Builtin( BUILTIN_AMBIENT_FILL ); }
 	void	BindShader_AmbientFillSkinned()  { BindShader_Builtin( BUILTIN_AMBIENT_FILL_SKINNED ); }
+	void	BindShader_ShadowMoments()  { BindShader_Builtin( BUILTIN_SHADOW_MOMENTS ); }
+	void	BindShader_ShadowMomentsSkinned()  { BindShader_Builtin( BUILTIN_SHADOW_MOMENTS_SKINNED ); }
+	void	BindShader_ShadowMomentsAlpha()  { BindShader_Builtin( BUILTIN_SHADOW_MOMENTS_ALPHA ); }
+	void	BindShader_ShadowMomentsAlphaSkinned()  { BindShader_Builtin( BUILTIN_SHADOW_MOMENTS_ALPHA_SKINNED ); }
+	void	BindShader_ShadowMomentsBlur()  { BindShader_Builtin( BUILTIN_SHADOW_MOMENTS_BLUR ); }
 	void	BindShader_SimpleShade() { BindShader_Builtin( BUILTIN_SIMPLESHADE ); }
 	void	BindShader_Environment() { BindShader_Builtin( BUILTIN_ENVIRONMENT ); }
 	void	BindShader_EnvironmentSkinned() { BindShader_Builtin( BUILTIN_ENVIRONMENT_SKINNED ); }
@@ -270,6 +275,12 @@ protected:
 
 		BUILTIN_AMBIENT_FILL,
 		BUILTIN_AMBIENT_FILL_SKINNED,
+
+		BUILTIN_SHADOW_MOMENTS,
+		BUILTIN_SHADOW_MOMENTS_SKINNED,
+		BUILTIN_SHADOW_MOMENTS_ALPHA,
+		BUILTIN_SHADOW_MOMENTS_ALPHA_SKINNED,
+		BUILTIN_SHADOW_MOMENTS_BLUR,
 
 		MAX_BUILTINS
 	};

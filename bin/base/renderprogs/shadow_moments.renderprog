@@ -1,0 +1,66 @@
+/*
+===========================================================================
+
+Doom 3 BFG Edition GPL Source Code
+Copyright (C) 1993-2012 id Software LLC, a ZeniMax Media company. 
+
+This file is part of the Doom 3 BFG Edition GPL Source Code ("Doom 3 BFG Edition Source Code").  
+
+Doom 3 BFG Edition Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 BFG Edition Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS OF A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 BFG Edition Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 BFG Edition Source Code is also subject to certain additional terms.  These terms apply only to those files identifiable as the Doom 3 BFG Edition Source Code as distributed by the particular company identified in the file header.
+
+You should have received a copy of these additional terms with the file header.  If you did not, please request a copy in writing from id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
+
+
+renderProg shadow_moments {
+	hlsl_vp {
+
+struct VS_IN {
+	float4 position : POSITION;
+};
+
+struct VS_OUT {
+	float4 position : POSITION;
+};
+
+void main( VS_IN vertex, out VS_OUT result ) {
+	result.position.x = dot4( vertex.position, rpMVPmatrixX );
+	result.position.y = dot4( vertex.position, rpMVPmatrixY );
+	result.position.z = dot4( vertex.position, rpMVPmatrixZ );
+	result.position.w = dot4( vertex.position, rpMVPmatrixW );
+}
+	}
+	hlsl_fp {
+
+struct PS_IN {
+	float4 position : VPOS;
+};
+
+struct PS_OUT {
+	float4 color : COLOR;
+};
+
+void main( PS_IN fragment, out PS_OUT result ) {
+	// the window depth of the caster fragment becomes the first two
+	// moments, the blur pass spreads them over the tile so the
+	// receivers can run a Chebyshev occlusion test
+	float depth = fragment.position.z;
+	result.color = float4( depth, depth * depth, 1.0, 1.0 );
+}
+	}
+}

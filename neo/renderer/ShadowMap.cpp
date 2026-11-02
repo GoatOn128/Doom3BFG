@@ -35,7 +35,7 @@ idCVar r_useShadowMaps( "r_useShadowMaps", "0", CVAR_RENDERER | CVAR_BOOL, "rend
 idCVar r_shadowMapSize( "r_shadowMapSize", "512", CVAR_RENDERER | CVAR_INTEGER, "shadow map tile resolution, the atlas is rebuilt on the fly when this changes", 128, 2048 );
 idCVar r_shadowMapMaxLights( "r_shadowMapMaxLights", "4", CVAR_RENDERER | CVAR_INTEGER, "maximum number of lights per view that get a shadow map, the atlas is rebuilt on the fly when this changes", 0, 16 );
 idCVar r_shadowMapZNear( "r_shadowMapZNear", "1", CVAR_RENDERER | CVAR_FLOAT, "near clip plane for shadow map rendering" );
-idCVar r_shadowMapBias( "r_shadowMapBias", "0.0005", CVAR_RENDERER | CVAR_FLOAT, "shadow map depth compare bias, raise this when shadow acne appears" );
+idCVar r_shadowMapBias( "r_shadowMapBias", "0.0005", CVAR_RENDERER | CVAR_FLOAT, "minimum variance for the shadow map moments, raise this when shadow acne appears" );
 idCVar r_showShadowMaps( "r_showShadowMaps", "0", CVAR_RENDERER | CVAR_BOOL, "print the shadow map slot assignment" );
 
 // every light occupies a horizontal strip of six cube face tiles in the atlas
@@ -53,6 +53,9 @@ static const idAngles shadowMapFaceAngles[SHADOW_MAP_CUBE_FACES] = {
 
 static GLuint shadowMapAtlasTexture = 0;
 static GLuint shadowMapFrameBuffer = 0;
+static GLuint shadowMapMomentsTexture = 0;
+static GLuint shadowMapBlurTexture = 0;
+static GLuint shadowMapBlurFrameBuffer = 0;
 static int shadowMapTileSize = 0;
 static int shadowMapAtlasWidth = 0;
 static int shadowMapAtlasHeight = 0;
@@ -73,6 +76,18 @@ void R_ShutdownShadowMaps() {
 	if ( shadowMapAtlasTexture != 0 ) {
 		gladGL.DeleteTextures( 1, &shadowMapAtlasTexture );
 		shadowMapAtlasTexture = 0;
+	}
+	if ( shadowMapMomentsTexture != 0 ) {
+		gladGL.DeleteTextures( 1, &shadowMapMomentsTexture );
+		shadowMapMomentsTexture = 0;
+	}
+	if ( shadowMapBlurTexture != 0 ) {
+		gladGL.DeleteTextures( 1, &shadowMapBlurTexture );
+		shadowMapBlurTexture = 0;
+	}
+	if ( shadowMapBlurFrameBuffer != 0 ) {
+		gladGL.DeleteFramebuffers( 1, &shadowMapBlurFrameBuffer );
+		shadowMapBlurFrameBuffer = 0;
 	}
 	shadowMapTileSize = 0;
 	shadowMapAtlasWidth = 0;
@@ -115,14 +130,51 @@ void R_InitShadowMaps() {
 	gladGL.TexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, atlasWidth, atlasHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NULL );
 	gladGL.BindTexture( GL_TEXTURE_2D, 0 );
 
+	// the moments atlas holds the two moments the interaction programs
+	// run the Chebyshev test on; half float keeps the variance band wide
+	// enough for receivers at the far plane
+	gladGL.GenTextures( 1, &shadowMapMomentsTexture );
+	gladGL.BindTexture( GL_TEXTURE_2D, shadowMapMomentsTexture );
+	gladGL.TexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	gladGL.TexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	gladGL.TexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+	gladGL.TexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+	gladGL.TexImage2D( GL_TEXTURE_2D, 0, GL_RGBA16F, atlasWidth, atlasHeight, 0, GL_RGBA, GL_HALF_FLOAT, NULL );
+	gladGL.BindTexture( GL_TEXTURE_2D, 0 );
+
 	gladGL.GenFramebuffers( 1, &shadowMapFrameBuffer );
 	gladGL.BindFramebuffer( GL_FRAMEBUFFER, shadowMapFrameBuffer );
 	gladGL.FramebufferTexture2D( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMapAtlasTexture, 0 );
+	gladGL.FramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, shadowMapMomentsTexture, 0 );
 	const GLenum status = gladGL.CheckFramebufferStatus( GL_FRAMEBUFFER );
 	gladGL.BindFramebuffer( GL_FRAMEBUFFER, 0 );
 
 	if ( status != GL_FRAMEBUFFER_COMPLETE ) {
 		common->Warning( "the shadow map framebuffer is incomplete ( 0x%x ), shadow maps disabled", status );
+		R_ShutdownShadowMaps();
+		return;
+	}
+
+	// the blur pass ping pongs between the moments atlas and a scratch
+	// texture of the same size, so it needs its own framebuffer with a
+	// switchable color attachment
+	gladGL.GenTextures( 1, &shadowMapBlurTexture );
+	gladGL.BindTexture( GL_TEXTURE_2D, shadowMapBlurTexture );
+	gladGL.TexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	gladGL.TexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	gladGL.TexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+	gladGL.TexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+	gladGL.TexImage2D( GL_TEXTURE_2D, 0, GL_RGBA16F, atlasWidth, atlasHeight, 0, GL_RGBA, GL_HALF_FLOAT, NULL );
+	gladGL.BindTexture( GL_TEXTURE_2D, 0 );
+
+	gladGL.GenFramebuffers( 1, &shadowMapBlurFrameBuffer );
+	gladGL.BindFramebuffer( GL_FRAMEBUFFER, shadowMapBlurFrameBuffer );
+	gladGL.FramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, shadowMapBlurTexture, 0 );
+	const GLenum blurStatus = gladGL.CheckFramebufferStatus( GL_FRAMEBUFFER );
+	gladGL.BindFramebuffer( GL_FRAMEBUFFER, 0 );
+
+	if ( blurStatus != GL_FRAMEBUFFER_COMPLETE ) {
+		common->Warning( "the shadow map blur framebuffer is incomplete ( 0x%x ), shadow maps disabled", blurStatus );
 		R_ShutdownShadowMaps();
 		return;
 	}
@@ -146,12 +198,14 @@ void R_InitShadowMaps() {
 ====================
 R_BindShadowMapAtlas
 
-Bind the raw atlas texture to the currently selected texture unit. The
-interaction shaders sample it through the positional samp5 sampler.
+Bind the raw moments atlas texture to the currently selected texture unit.
+The interaction shaders sample it through the positional samp5 sampler.
+The depth atlas stays the depth attachment of the shadow map framebuffer
+and is never sampled directly.
 ====================
 */
 bool R_BindShadowMapAtlas() {
-	if ( shadowMapAtlasTexture == 0 ) {
+	if ( shadowMapMomentsTexture == 0 ) {
 		return false;
 	}
 	// GL_SelectTexture only tracks the unit in this fork, idImage::Bind does
@@ -159,9 +213,9 @@ bool R_BindShadowMapAtlas() {
 	// must go through the same path and keep the binding cache in sync
 	const int texUnit = backEnd.glState.currenttmu;
 	tmu_t * tmu = &backEnd.glState.tmu[texUnit];
-	if ( tmu->current2DMap != shadowMapAtlasTexture ) {
-		tmu->current2DMap = shadowMapAtlasTexture;
-		gladGL.BindMultiTextureEXT( GL_TEXTURE0_ARB + texUnit, GL_TEXTURE_2D, shadowMapAtlasTexture );
+	if ( tmu->current2DMap != shadowMapMomentsTexture ) {
+		tmu->current2DMap = shadowMapMomentsTexture;
+		gladGL.BindMultiTextureEXT( GL_TEXTURE0_ARB + texUnit, GL_TEXTURE_2D, shadowMapMomentsTexture );
 	}
 	return true;
 }
@@ -289,14 +343,14 @@ static void RB_RenderShadowMapSurface( const drawSurf_t * surf, const idRenderMa
 			renderProgManager.SetUniformValue( RENDERPARM_TEXTUREMATRIX_S, texS );
 			renderProgManager.SetUniformValue( RENDERPARM_TEXTUREMATRIX_T, texT );
 
-			// the depth programs clip against the stage alpha test value
+			// the moments programs clip against the stage alpha test value
 			const idVec4 alphaTest( regs[ pStage->alphaTestRegister ] );
 			renderProgManager.SetUniformValue( RENDERPARM_ALPHA_TEST, alphaTest.ToFloatPtr() );
 
 			if ( surf->jointCache ) {
-				renderProgManager.BindShader_DepthSkinned();
+				renderProgManager.BindShader_ShadowMomentsAlphaSkinned();
 			} else {
-				renderProgManager.BindShader_Depth();
+				renderProgManager.BindShader_ShadowMomentsAlpha();
 			}
 
 			RB_DrawElementsWithCounters( surf );
@@ -313,12 +367,68 @@ static void RB_RenderShadowMapSurface( const drawSurf_t * surf, const idRenderMa
 	}
 
 	if ( surf->jointCache ) {
-		renderProgManager.BindShader_DepthSkinned();
+		renderProgManager.BindShader_ShadowMomentsSkinned();
 	} else {
-		renderProgManager.BindShader_Depth();
+		renderProgManager.BindShader_ShadowMoments();
 	}
 
 	RB_DrawElementsWithCounters( surf );
+}
+
+/*
+====================
+RB_BlurShadowMapTile
+
+Blur one tile of the moments atlas with a separable two pass gaussian.
+The Chebyshev test of the interaction programs needs a band of blurred
+moments around the receiving fragment, a single hard sample would make
+every shadow edge shimmer.
+====================
+*/
+static void RB_BlurShadowMapTile( int tileX, int tileY ) {
+	// both passes draw the unit square, the viewport and the scissor pick
+	// the tile out of the atlas
+	GL_Viewport( tileX * shadowMapTileSize, tileY * shadowMapTileSize, shadowMapTileSize, shadowMapTileSize );
+	GL_Scissor( tileX * shadowMapTileSize, tileY * shadowMapTileSize, shadowMapTileSize, shadowMapTileSize );
+
+	GL_State( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO | GLS_DEPTHMASK | GLS_DEPTHFUNC_ALWAYS );
+	GL_Cull( CT_TWO_SIDED );
+
+	gladGL.BindFramebuffer( GL_FRAMEBUFFER, shadowMapBlurFrameBuffer );
+	gladGL.DrawBuffer( GL_COLOR_ATTACHMENT0 );
+
+	// the tile bounds in atlas texture coordinates, the blur program
+	// clamps every tap into them
+	float tileBounds[4];
+	tileBounds[0] = tileX * ( float )shadowMapTileSize / ( float )shadowMapAtlasWidth;
+	tileBounds[1] = tileY * ( float )shadowMapTileSize / ( float )shadowMapAtlasHeight;
+	tileBounds[2] = ( tileX + 1 ) * ( float )shadowMapTileSize / ( float )shadowMapAtlasWidth;
+	tileBounds[3] = ( tileY + 1 ) * ( float )shadowMapTileSize / ( float )shadowMapAtlasHeight;
+	renderProgManager.SetUniformValue( ( renderParm_t )( RENDERPARM_USER + 0 ), tileBounds );
+
+	// horizontal pass: read the moments atlas, write the scratch texture
+	gladGL.FramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, shadowMapBlurTexture, 0 );
+	float texelStep[4] = { 1.0f / ( float )shadowMapAtlasWidth, 0.0f, 0.0f, 0.0f };
+	renderProgManager.SetUniformValue( ( renderParm_t )( RENDERPARM_USER + 1 ), texelStep );
+	GL_SelectTexture( 0 );
+	R_BindShadowMapAtlas();
+	renderProgManager.BindShader_ShadowMomentsBlur();
+	RB_DrawElementsWithCounters( &backEnd.unitSquareSurface );
+
+	// vertical pass: read the scratch texture, write the moments atlas
+	gladGL.FramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, shadowMapMomentsTexture, 0 );
+	texelStep[0] = 0.0f;
+	texelStep[1] = 1.0f / ( float )shadowMapAtlasHeight;
+	renderProgManager.SetUniformValue( ( renderParm_t )( RENDERPARM_USER + 1 ), texelStep );
+	const int texUnit = backEnd.glState.currenttmu;
+	tmu_t * tmu = &backEnd.glState.tmu[texUnit];
+	if ( tmu->current2DMap != shadowMapBlurTexture ) {
+		tmu->current2DMap = shadowMapBlurTexture;
+		gladGL.BindMultiTextureEXT( GL_TEXTURE0_ARB + texUnit, GL_TEXTURE_2D, shadowMapBlurTexture );
+	}
+	RB_DrawElementsWithCounters( &backEnd.unitSquareSurface );
+
+	renderProgManager.Unbind();
 }
 
 /*
@@ -366,7 +476,7 @@ void RB_RenderShadowMaps() {
 	int slot = 0;
 
 	gladGL.BindFramebuffer( GL_FRAMEBUFFER, shadowMapFrameBuffer );
-	gladGL.DrawBuffer( GL_NONE );
+	gladGL.DrawBuffer( GL_COLOR_ATTACHMENT0 );
 	gladGL.ReadBuffer( GL_NONE );
 
 	GL_State( GLS_DEFAULT );
@@ -474,7 +584,7 @@ void RB_RenderShadowMaps() {
 			GL_Viewport( face * shadowMapTileSize, slot * shadowMapTileSize, shadowMapTileSize, shadowMapTileSize );
 			GL_Scissor( face * shadowMapTileSize, slot * shadowMapTileSize, shadowMapTileSize, shadowMapTileSize );
 
-			GL_Clear( false, true, false, 0, 0.0f, 0.0f, 0.0f, 0.0f );
+			GL_Clear( true, true, false, 0, 1.0f, 1.0f, 1.0f, 1.0f );
 
 			for ( const drawSurf_t * surf = vLight->localInteractions; surf != NULL; surf = surf->nextOnLight ) {
 				RB_RenderShadowMapSurface( surf, viewProj );
@@ -489,6 +599,13 @@ void RB_RenderShadowMaps() {
 
 		if ( r_showShadowMaps.GetBool() ) {
 			common->Printf( "shadow map: light %s slot %i\n", vLight->lightShader->GetName(), slot - 1 );
+		}
+	}
+
+	// blur every rendered tile before the interactions sample the atlas
+	for ( int blurSlot = 0; blurSlot < slot; blurSlot++ ) {
+		for ( int face = 0; face < SHADOW_MAP_CUBE_FACES; face++ ) {
+			RB_BlurShadowMapTile( face, blurSlot );
 		}
 	}
 

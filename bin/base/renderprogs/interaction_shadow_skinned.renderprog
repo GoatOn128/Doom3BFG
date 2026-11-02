@@ -200,7 +200,7 @@ uniform sampler2D	samp1 : register(s1); // texture 2 is the light falloff textur
 uniform sampler2D	samp2 : register(s2); // texture 3 is the light projection texture
 uniform sampler2D	samp3 : register(s3); // texture 4 is the per-surface diffuse map
 uniform sampler2D	samp4 : register(s4); // texture 5 is the per-surface specular map
-uniform sampler2D	samp5 : register(s5); // texture 6 is the per-light shadow map atlas
+uniform sampler2D	samp5 : register(s5); // texture 6 is the per-light shadow map moments atlas
 
 struct PS_IN {
 	half4 position	: VPOS;
@@ -296,9 +296,11 @@ void main( PS_IN fragment, out PS_OUT result ) {
 	if ( shadowH.w > 0.0 && shadowH.z <= shadowH.w ) {
 		float2 shadowTexCoord = shadowH.xy / shadowH.w;
 		float shadowDepth = shadowH.z * ( 0.5 / shadowH.w ) + 0.5;
-		float shadowMapDepth = tex2D( samp5, shadowTexCoord ).x;
-		if ( shadowMapDepth < shadowDepth - rpGlobalLightOrigin.w ) {
-			shadow = 0.0;
+		float2 moments = tex2D( samp5, shadowTexCoord ).xy;
+		if ( shadowDepth > moments.x ) {
+			float variance = max( moments.y - moments.x * moments.x, rpGlobalLightOrigin.w );
+			float distance = shadowDepth - moments.x;
+			shadow = variance / ( variance + distance * distance );
 		}
 	}
 
