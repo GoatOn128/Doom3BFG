@@ -26,6 +26,8 @@ import subprocess
 import sys
 import threading
 import unicodedata
+import uuid
+import xml.etree.ElementTree as ET
 
 EnsurePythonVersion(3, 6)
 
@@ -43,6 +45,20 @@ def _has_explicit_jobs_option(argv):
 if not _has_explicit_jobs_option(sys.argv[1:]):
     _cpu_count = os.cpu_count() or 1
     SetOption('num_jobs', min(max(_cpu_count, 1), 16))
+
+# Visual Studio export is a separate SCons goal. Accept both `scons msvc-projects`
+# and `scons msvc=1` / `scons generate=msvc`.
+MSVS_EXPORT_REQUESTED = (
+    ARGUMENTS.get('msvc', '0').lower() in ('1', 'true', 'yes', 'on')
+    or ARGUMENTS.get('generate', '').lower() in ('msvc', 'visualstudio', 'visual-studio')
+    or 'msvc-projects' in COMMAND_LINE_TARGETS
+)
+# Keep MSVC console output conventional. ANSI colors, custom diagnostic piping,
+# emoji summaries, and the pinned progress footer are reserved for LLVM/GCC builds.
+PLAIN_MSVS_OUTPUT = (
+    ARGUMENTS.get('toolchain', 'msvc').lower() == 'msvc'
+    or MSVS_EXPORT_REQUESTED
+)
 
 # Enable ANSI terminal control sequences where supported. On Windows this also
 # enables virtual-terminal processing for modern Windows Terminal / consoles.
@@ -74,7 +90,7 @@ def _enable_terminal_ansi():
 
 TERMINAL_TTY = bool(getattr(sys.stdout, 'isatty', lambda: False)())
 ANSI_TTY = _enable_terminal_ansi()
-USE_COLOR = ANSI_TTY and os.environ.get('NO_COLOR') is None
+USE_COLOR = ANSI_TTY and os.environ.get('NO_COLOR') is None and not PLAIN_MSVS_OUTPUT
 # Always reset an ANSI-capable terminal, even if styled output is disabled.
 # This prevents an interrupted compiler or a previous command leaving a color
 # (often pink/magenta on Windows terminals) active for the user's next prompt.
@@ -124,14 +140,17 @@ def _status_text(label, value):
     )
 
 
+
 # Progress is shown only for the default build, where the complete default
 # target graph is known. Reserve the terminal's last row for the progress bar.
 _PROGRESS_ENABLED = (
     ANSI_TTY
     and ARGUMENTS.get('verbose') != '1'
+    and not PLAIN_MSVS_OUTPUT
     and not GetOption('no_exec')
     and not GetOption('clean')
     and not COMMAND_LINE_TARGETS
+    and not MSVS_EXPORT_REQUESTED
 )
 _PROGRESS_LOCK = threading.Lock()
 _PROGRESS_NODES = {}
@@ -364,6 +383,15 @@ def _track_progress(env, nodes):
     return nodes
 
 def _report_build_result():
+    if PLAIN_MSVS_OUTPUT:
+        _cleanup_progress_footer()
+        if ANSI_TTY:
+            try:
+                sys.stdout.write(ANSI_RESET + '\033[r')
+                sys.stdout.flush()
+            except Exception:
+                pass
+        return
     try:
         from SCons.Script import GetBuildFailures
         failures = GetBuildFailures()
@@ -520,6 +548,8 @@ Usage:
   scons Game-D3XP                             Build only the game code
   scons DoomEXE                               Build the engine code
   scons arch=x64 config=debug dll=1 dll       Build the "dll" group
+  scons msvc-projects                         Generate/update Visual Studio files when build scripts change
+  scons msvc=1                                Same as msvc-projects (generation only)
 
 Project selection (mirrors Premake groups):
   libs               external + idLib + Game-D3XP static library (when dll=0)
@@ -542,6 +572,7 @@ Options:
   dll=1              Put Game-D3XP in the "dll" group and build gamex86.dll
   dedicated=1        Dedicate server build
   verbose=1          Show full compiler/linker command lines
+  msvc_version=14.5  Visual Studio toolset version for export (14.5 = VS 2026)
   -jN                Number of parallel jobs; defaults to min(CPU count, 16)
 
 Project definitions:
@@ -802,19 +833,49 @@ if USE_COLOR:
     elif TOOLCHAIN == 'gcc':
         env.Append(CCFLAGS=['-fdiagnostics-color=always'], CXXFLAGS=['-fdiagnostics-color=always'])
 
-# Keep the diagnostic forwarding, SCons output, and progress footer from the
-# previous build script. SCons' mslink tool supplies the command templates.
-env['SPAWN'] = _diagnostic_spawn
-if ARGUMENTS.get('verbose') != '1':
-    env['CCCOMSTR'] = _status_text('Compiling', '$SOURCE')
-    env['CXXCOMSTR'] = _status_text('Compiling', '$SOURCE')
-    env['SHCCCOMSTR'] = _status_text('Compiling', '$SOURCE')
-    env['SHCXXCOMSTR'] = _status_text('Compiling', '$SOURCE')
-    env['LINKCOMSTR'] = _status_text('Linking', '$TARGET')
-    env['SHLINKCOMSTR'] = _status_text('Linking', '$TARGET')
-    env['ARCOMSTR'] = _status_text('Archiving', '$TARGET')
-    env['RANLIBCOMSTR'] = _status_text('Indexing', '$TARGET')
-    env['RCCOMSTR'] = _status_text('Resources', '$SOURCE')
+# /FC makes compiler diagnostics use full paths. This is especially useful
+# because exported Visual Studio project files live in build/msvc/ rather than
+# beside SConstruct.
+if TOOLCHAIN in ('msvc', 'clang'):
+    env.Append(CCFLAGS=['/FC'], CXXFLAGS=['/FC'])
+
+# Output policy by toolchain:
+# - MSVC: retain concise, non-verbose filenames/targets only. Do not emit
+#   custom Compiling/Linking labels, ANSI colors, emoji, or a progress footer;
+#   Visual Studio's Output window should receive plain text and native cl/link
+#   diagnostics. SCons' native SPAWN is left untouched.
+# - Clang/GCC: retain the richer terminal output and diagnostic forwarding.
+if TOOLCHAIN == 'msvc':
+    if ARGUMENTS.get('verbose') != '1':
+        # Do not echo compiler source names from SCons here. cl.exe already
+        # prints the source basename itself; echoing $SOURCE as well produces
+        # duplicate lines in Visual Studio's Output window (for example both
+        # "neo\ui\GuiScript.cpp" and "GuiScript.cpp"). An empty COMSTR
+        # suppresses only SCons' command echo; native cl.exe diagnostics and
+        # its concise source-name output remain visible. Keep target messages
+        # for link/archive steps, whose tools are otherwise quiet on success.
+        env['CCCOMSTR'] = ''
+        env['CXXCOMSTR'] = ''
+        env['SHCCCOMSTR'] = ''
+        env['SHCXXCOMSTR'] = ''
+        env['LINKCOMSTR'] = '$TARGET'
+        env['SHLINKCOMSTR'] = '$TARGET'
+        env['ARCOMSTR'] = '$TARGET'
+        env['RANLIBCOMSTR'] = '$TARGET'
+        env['RCCOMSTR'] = '$SOURCE'
+        env['ASCOMSTR'] = '$SOURCE'
+elif not MSVS_EXPORT_REQUESTED:
+    env['SPAWN'] = _diagnostic_spawn
+    if ARGUMENTS.get('verbose') != '1':
+        env['CCCOMSTR'] = _status_text('Compiling', '$SOURCE')
+        env['CXXCOMSTR'] = _status_text('Compiling', '$SOURCE')
+        env['SHCCCOMSTR'] = _status_text('Compiling', '$SOURCE')
+        env['SHCXXCOMSTR'] = _status_text('Compiling', '$SOURCE')
+        env['LINKCOMSTR'] = _status_text('Linking', '$TARGET')
+        env['SHLINKCOMSTR'] = _status_text('Linking', '$TARGET')
+        env['ARCOMSTR'] = _status_text('Archiving', '$TARGET')
+        env['RANLIBCOMSTR'] = _status_text('Indexing', '$TARGET')
+        env['RCCOMSTR'] = _status_text('Resources', '$SOURCE')
 
 # SCons cache. Outputs remain separated by configuration/architecture.
 env.CacheDir(CACHE_ROOT)
@@ -897,6 +958,655 @@ if DLL_BUILD:
 all_group = Alias('all', all_members)
 
 Default(all_group)
+
+# -----------------------------------------------------------------------------
+# Optional Visual Studio solution/project export
+# -----------------------------------------------------------------------------
+# SCons' MSVSProject builder generates MSBuild-compatible .vcxproj files whose
+# Build/Clean/Rebuild commands call back into SCons. This keeps SCons as the
+# authoritative build system; Visual Studio is the IDE/debugger front-end.
+#
+# Output layout:
+#   build/msvc/Doom3BFG.sln
+#   build/msvc/DoomEXE.vcxproj[.filters]
+#   build/msvc/external.vcxproj[.filters]
+#   build/msvc/idLib.vcxproj[.filters]
+#   build/msvc/Game-D3XP.vcxproj[.filters]
+#
+# Each generated project exposes Debug/Release/Retail for Win32 and x64.
+
+
+def _collect_msvs_files(root_dirs, excludes=None):
+    """Return (sources, headers, resources, misc) for a Premake-style project."""
+    excludes = excludes or []
+    source_exts = ('.c', '.cc', '.cpp', '.cxx', '.asm', '.s', '.S')
+    header_exts = ('.h', '.hh', '.hpp', '.hxx', '.inl', '.ipp', '.inc', '.def')
+    resource_exts = ('.rc',)
+    sources, headers, resources, misc = [], [], [], []
+    for root in root_dirs:
+        root_path = root if os.path.isabs(root) else os.path.join(PROJECT_ROOT, root)
+        if not os.path.isdir(root_path):
+            print("ERROR: cannot export MSVC project; source directory is missing: %s" % root_path,
+                  file=sys.stderr)
+            Exit(2)
+        for current, dirs, filenames in os.walk(root_path):
+            dirs[:] = sorted(d for d in dirs if d not in ('.git', '.vs', '__pycache__', 'build', 'bin'))
+            for filename in sorted(filenames):
+                absolute = os.path.join(current, filename)
+                relative = _relative(os.path.relpath(absolute, PROJECT_ROOT))
+                if any(fnmatch.fnmatch(relative.lower(), pattern.lower()) for pattern in excludes):
+                    continue
+                ext = os.path.splitext(filename)[1]
+                if ext in source_exts:
+                    sources.append(relative)
+                elif ext.lower() in header_exts:
+                    headers.append(relative)
+                elif ext.lower() in resource_exts:
+                    resources.append(relative)
+                elif ext.lower() in ('.lua', '.txt', '.md', '.def', '.rc2', '.manifest'):
+                    misc.append(relative)
+    key = lambda value: value.lower()
+    return tuple(sorted(set(items), key=key) for items in (sources, headers, resources, misc))
+
+
+def _msvs_relative_to_project(path, msvs_dir):
+    """MSBuild interprets source/include paths relative to the .vcxproj folder."""
+    absolute = path if os.path.isabs(path) else os.path.join(PROJECT_ROOT, path)
+    return os.path.normpath(os.path.relpath(os.path.abspath(absolute), msvs_dir))
+
+
+def _make_directory_filters_action(project_root, project_dir, project_name):
+    """Replace SCons' type-based filters with the real source directory tree.
+
+    SCons' MSVSProject builder creates synthetic roots such as Source Files,
+    Header Files, Resource Files and Other Files. Visual Studio reads the
+    .vcxproj.filters file to decide where entries appear in Solution Explorer.
+    This post-action keeps the generated ClCompile/ClInclude/None item types,
+    but assigns each item to its path relative to the project source root.
+    """
+    namespace = 'http://schemas.microsoft.com/developer/msbuild/2003'
+    qname = lambda name: '{%s}%s' % (namespace, name)
+
+    def _rewrite_filters(target, source, env):
+        # MSVSProject's primary target is the .vcxproj; its generator writes
+        # the companion .filters file as a secondary target in the same action.
+        filters_path = str(target[0]) + '.filters'
+        if not os.path.isfile(filters_path):
+            raise RuntimeError('MSVS filters file was not generated: %s' % filters_path)
+
+        ET.register_namespace('', namespace)
+        tree = ET.parse(filters_path)
+        root = tree.getroot()
+        old_groups = list(root.findall(qname('ItemGroup')))
+        file_groups = []
+        filter_paths = set()
+
+        for group in old_groups:
+            retained_items = []
+            for item in list(group):
+                # Drop SCons' synthetic filter declarations. Keep actual
+                # project items (ClCompile, ClInclude, None, ResourceCompile).
+                if item.tag == qname('Filter') and 'Include' in item.attrib:
+                    continue
+                if 'Include' not in item.attrib:
+                    retained_items.append(item)
+                    continue
+
+                for child in list(item):
+                    if child.tag == qname('Filter'):
+                        item.remove(child)
+
+                include_path = item.attrib['Include']
+                absolute_path = os.path.abspath(os.path.normpath(
+                    os.path.join(project_dir, include_path)
+                ))
+                relative_path = os.path.relpath(absolute_path, project_root)
+                relative_path = os.path.normpath(relative_path)
+
+                # All Premake project source roots live beneath neo/. If an
+                # auxiliary item is outside that tree, keep its repository-
+                # relative path rather than creating a synthetic type folder.
+                if relative_path == os.pardir or relative_path.startswith(os.pardir + os.sep):
+                    relative_path = os.path.relpath(absolute_path, os.path.dirname(project_root))
+
+                directory = os.path.dirname(relative_path)
+                filter_name = directory.replace('/', '\\').replace(os.sep, '\\').strip('\\')
+                if filter_name and filter_name != '.':
+                    parts = filter_name.split('\\')
+                    for index in range(1, len(parts) + 1):
+                        filter_paths.add('\\'.join(parts[:index]))
+                    ET.SubElement(item, qname('Filter')).text = filter_name
+
+                retained_items.append(item)
+
+            if retained_items:
+                new_group = ET.Element(qname('ItemGroup'))
+                for item in retained_items:
+                    new_group.append(item)
+                file_groups.append(new_group)
+
+        # Rebuild the filters file with only directory-based virtual folders.
+        for group in old_groups:
+            root.remove(group)
+
+        if filter_paths:
+            definitions = ET.Element(qname('ItemGroup'))
+            for filter_name in sorted(filter_paths, key=lambda value: (value.count('\\'), value.lower())):
+                filter_node = ET.SubElement(
+                    definitions, qname('Filter'), {'Include': filter_name}
+                )
+                filter_guid = '{%s}' % str(uuid.uuid5(
+                    uuid.NAMESPACE_URL,
+                    'Doom3BFG.MSVSFilter.%s.%s' % (project_name, filter_name),
+                )).upper()
+                ET.SubElement(filter_node, qname('UniqueIdentifier')).text = filter_guid
+            root.append(definitions)
+
+        for group in file_groups:
+            root.append(group)
+
+        tree.write(filters_path, encoding='utf-8', xml_declaration=True)
+        return 0
+
+    return _rewrite_filters
+
+
+def _msvs_project_variants():
+    variants = []
+    for platform_name in ('Win32', 'x64'):
+        for configuration in ('Debug', 'Release', 'Retail'):
+            variants.append('%s|%s' % (configuration, platform_name))
+    return variants
+
+
+def _msvs_variant_defines(arch, configuration, project_defines):
+    definitions = [
+        '__DOOM__', 'ID_PC',
+        '_CRT_SECURE_NO_DEPRECATE', '_CRT_NONSTDC_NO_DEPRECATE',
+    ]
+    if arch == 'x86':
+        definitions.append('_USE_32BIT_TIME_T')
+    if DLL_BUILD:
+        definitions.append('__DOOM_DLL__')
+    definitions.extend(project_defines)
+    if configuration == 'Debug':
+        definitions.append('_DEBUG')
+    else:
+        definitions.append('NDEBUG')
+        if configuration == 'Retail':
+            definitions.append('ID_RETAIL')
+    return definitions
+
+
+def _msvs_variant_cppflags(configuration):
+    flags = ['/W4', '/nologo', '/GS', '/FC', '/std:c++17', '/EHsc', '/GR']
+    if configuration == 'Debug':
+        flags.extend(['/MTd', '/Zi', '/FS', '/Od'])
+    else:
+        flags.extend(['/MT', '/O2', '/Ob2', '/Gy', '/GF', '/Oi'])
+    return flags
+
+
+def _generate_msvc_projects():
+    # SCons 4.11.x maps MSVC_VERSION 14.5 to Visual Studio 2026 (IDE 18.0).
+    # Override with msvc_version=14.3 for VS 2022, 14.2 for VS 2019, etc.
+    msvc_version = ARGUMENTS.get('msvc_version', '14.5')
+    msvs_dir = os.path.abspath(os.path.join(SCRIPT_DIR, 'build', 'msvc'))
+    os.makedirs(msvs_dir, exist_ok=True)
+
+    try:
+        msvs_env = Environment(
+            tools=['default', 'msvs'],
+            ENV=os.environ.copy(),
+            MSVC_VERSION=msvc_version,
+        )
+    except Exception as exc:
+        print(
+            "ERROR: unable to initialize SCons Visual Studio project generator "
+            "for MSVC_VERSION=%s: %s\n"
+            "For Visual Studio 2026, use SCons 4.11.1 or newer. "
+            "You can select another installed toolset with msvc_version=14.3, etc." %
+            (msvc_version, exc),
+            file=sys.stderr,
+        )
+        Exit(2)
+
+    # SCons exposes the suffix variables as deferred construction-variable
+    # expressions (for example ${GET_MSVSPROJECTSUFFIX}). Those expressions are
+    # valid when SCons expands a builder target, but MUST NOT be concatenated into
+    # the hand-written .sln file paths. Resolve the concrete suffixes once here.
+    msvs_metadata = msvs_env.get('MSVS', {})
+    msvs_project_suffix = msvs_metadata.get('PROJECTSUFFIX') or msvs_env.subst('$MSVSPROJECTSUFFIX')
+    msvs_solution_suffix = msvs_metadata.get('SOLUTIONSUFFIX') or msvs_env.subst('$MSVSSOLUTIONSUFFIX')
+    if not msvs_project_suffix or '$' in msvs_project_suffix:
+        print('ERROR: could not resolve the Visual Studio project suffix: %r' % msvs_project_suffix, file=sys.stderr)
+        Exit(2)
+    if not msvs_solution_suffix or '$' in msvs_solution_suffix:
+        print('ERROR: could not resolve the Visual Studio solution suffix: %r' % msvs_solution_suffix, file=sys.stderr)
+        Exit(2)
+
+    # Avoid SCons' generated Python bootstrap being incorrect for installations
+    # where the `scons` command is supplied by a wrapper (for example Scoop).
+    # The generated MSBuild project calls the same SCons command available to
+    # the shell that generated the solution.
+    scons_command = shutil.which('scons') or 'scons'
+    if ' ' in scons_command and not (scons_command.startswith('"') and scons_command.endswith('"')):
+        scons_command = '"%s"' % scons_command
+    msvs_env['MSVSSCONS'] = scons_command
+
+    # Preserve SCons as the compiler/build backend even when the current
+    # command used toolchain=clang or toolchain=gcc.
+    build_variants = []
+    variant_args = []
+    variant_defines_by_project = {}
+    variant_flags = []
+    variant_cpppaths = []
+    for platform_name, arch in (('Win32', 'x86'), ('x64', 'x64')):
+        for configuration in ('Debug', 'Release', 'Retail'):
+            build_variants.append('%s|%s' % (configuration, platform_name))
+            variant_args.append(
+                'arch=%s config=%s toolchain=msvc%s' % (
+                    arch, configuration.lower(), ' dll=1' if DLL_BUILD else ''
+                )
+            )
+            variant_flags.append(_msvs_variant_cppflags(configuration))
+            variant_cpppaths.append([
+                _msvs_relative_to_project(path, msvs_dir)
+                for path in base_cpppath
+            ])
+
+    # Match the project source selections from the supplied Premake files.
+    doom_sources, doom_headers, doom_resources, doom_misc = _collect_msvs_files(
+        ('cm', 'framework', 'renderer', 'sound', 'swf', 'sys', 'tools', 'ui'),
+        excludes=[
+            'framework/Session.cpp',
+            'tools/compilers/roqvq/roq.m',
+            'ui/GameWindow.cpp',
+            'sys/win32/win_stats.*',
+            'sys/win32/win_snd.cpp',
+            'sys/win32/win_gamma.cpp',
+            'renderer/BoundsTrack.cpp',
+        ],
+    )
+    idlib_sources, idlib_headers, idlib_resources, idlib_misc = _collect_msvs_files(('idlib',))
+    game_sources, game_headers, game_resources, game_misc = _collect_msvs_files(
+        ('d3xp',),
+        excludes=[
+            'd3xp/EndLevel.*',
+            'd3xp/menus/MenuWidget_DevList.*',
+            'd3xp/gamesys/Callbacks.cpp',
+        ],
+    )
+
+    external_source_files = [
+        'external/miniz/miniz.c',
+        'external/minizip/ioapi.c',
+        'external/minizip/unzip.cpp',
+        'external/minizip/zip.cpp',
+        'external/libbinkdec/src/BinkAudio.cpp',
+        'external/libbinkdec/src/BinkDecoder.cpp',
+        'external/libbinkdec/src/BinkVideo.cpp',
+        'external/libbinkdec/src/BitReader.cpp',
+        'external/libbinkdec/src/FileStream.cpp',
+        'external/libbinkdec/src/HuffmanVLC.cpp',
+        'external/libbinkdec/src/LogError.cpp',
+        'external/libbinkdec/src/Util.cpp',
+        'external/libbinkdec/src/avfft.c',
+        'external/libbinkdec/src/dct.c',
+        'external/libbinkdec/src/dct32.c',
+        'external/libbinkdec/src/fft.c',
+        'external/libbinkdec/src/mdct.c',
+        'external/libbinkdec/src/rdft.c',
+    ]
+    external_header_files = [
+        'external/miniz/miniz.h',
+        'external/miniz/minizconf.h',
+        'external/minizip/ioapi.h',
+        'external/minizip/unzip.h',
+        'external/minizip/zip.h',
+    ]
+
+    def project_paths(items):
+        return [_msvs_relative_to_project(item, msvs_dir) for item in items]
+
+    project_definitions = {
+        'DoomEXE': [],
+        'external': [],
+        'idLib': ['__IDLIB__'],
+        'Game-D3XP': ['_D3XP', 'CTF'] + (['GAME_DLL'] if DLL_BUILD else []),
+    }
+
+    # Build targets are the actual SCons artifacts for each variant. These let
+    # Visual Studio show the correct output path and debug the executable.
+    def target_for(project_name, arch, configuration):
+        config_dir = os.path.join(
+            SCRIPT_DIR, 'build', 'scons',
+            'windows-%s-%s-msvc' % (arch, configuration.lower()),
+        )
+        if project_name == 'DoomEXE':
+            return os.path.join(BIN_DIR, 'Doom3BFG.exe')
+        if project_name == 'external':
+            return os.path.join(config_dir, 'lib', 'external.lib')
+        if project_name == 'idLib':
+            return os.path.join(config_dir, 'lib', 'idLib.lib')
+        if project_name == 'Game-D3XP':
+            if DLL_BUILD:
+                return os.path.join(BIN_DIR, 'gamex86.dll')
+            return os.path.join(config_dir, 'lib', 'gamex86.lib')
+        return None
+
+    project_specs = [
+        ('DoomEXE', doom_sources, doom_headers, doom_resources, doom_misc),
+        ('external', external_source_files, external_header_files, [], []),
+        ('idLib', idlib_sources, idlib_headers, idlib_resources, idlib_misc),
+        ('Game-D3XP', game_sources, game_headers, game_resources, game_misc),
+    ]
+
+    # Assign deterministic GUIDs to generated VC++ projects and reuse them
+    # in the hand-written solution file below.
+    project_guids = {
+        project_name: '{%s}' % str(uuid.uuid5(
+            uuid.NAMESPACE_URL, 'Doom3BFG.VisualStudioProject.' + project_name
+        )).upper()
+        for project_name, _, _, _, _ in project_specs
+    }
+
+    project_nodes = []
+    project_vcxproj_nodes = []
+    for project_name, sources, headers, resources, misc in project_specs:
+        if not sources and not headers and not resources and not misc:
+            print("ERROR: no files found for Visual Studio project %s." % project_name,
+                  file=sys.stderr)
+            Exit(2)
+
+        project_defines = [
+            _msvs_variant_defines(arch, configuration, project_definitions[project_name])
+            for platform_name, arch in (('Win32', 'x86'), ('x64', 'x64'))
+            for configuration in ('Debug', 'Release', 'Retail')
+        ]
+        buildtargets = [
+            target_for(project_name, arch, configuration)
+            for platform_name, arch in (('Win32', 'x86'), ('x64', 'x64'))
+            for configuration in ('Debug', 'Release', 'Retail')
+        ]
+        project_target = os.path.join(msvs_dir, project_name + msvs_project_suffix)
+        kwargs = {
+            'target': project_target,
+            'srcs': project_paths(sources),
+            'incs': project_paths(headers),
+            'resources': project_paths(resources),
+            'misc': project_paths(misc),
+            'variant': build_variants,
+            'cmdargs': ['-Q %s %s' % (project_name, args) for args in variant_args],
+            'cppdefines': project_defines,
+            'cppflags': variant_flags,
+            'cpppaths': variant_cpppaths,
+            'buildtarget': buildtargets,
+            'auto_build_solution': 0,
+        }
+        if project_name == 'DoomEXE':
+            kwargs['runfile'] = os.path.join(BIN_DIR, 'Doom3BFG.exe')
+
+        # MSVS_PROJECT_GUID is the supported SCons construction variable for
+        # the GUID written into each .vcxproj. Use a per-project clone so each
+        # project receives a distinct, stable GUID.
+        project_env = msvs_env.Clone()
+        project_env.Replace(MSVS_PROJECT_GUID=project_guids[project_name])
+        nodes = project_env.MSVSProject(**kwargs)
+
+        # MSVSProject returns the .vcxproj and (for modern Visual Studio) its
+        # companion .filters file. Only the .vcxproj belongs in the solution.
+        project_suffix = msvs_project_suffix.lower()
+        for project_node in nodes:
+            project_node_path = str(project_node).lower()
+            if project_node_path.endswith(project_suffix):
+                project_vcxproj_nodes.append(project_node)
+                # The MSVS tool also tags this node internally; set it here for
+                # consistency across SCons versions.
+                project_node.Tag('project_guid', project_guids[project_name])
+                # MSVSProject writes both the .vcxproj and its secondary
+                # .filters file in the primary .vcxproj action. Attach the
+                # post-action to the primary target so ordering is guaranteed.
+                rewrite_action = _make_directory_filters_action(
+                    PROJECT_ROOT, msvs_dir, project_name
+                )
+                project_env.AddPostAction(
+                    project_node,
+                    Action(
+                        rewrite_action,
+                        strfunction=lambda target, source, env, executor=None: '',
+                    ),
+                )
+        project_nodes.extend(nodes)
+
+    solution_target = os.path.join(msvs_dir, 'Doom3BFG' + msvs_solution_suffix)
+
+    def _write_solution(target, source, env):
+        """Write a clean VS solution with real solution-folder records.
+
+        SCons' MSVSSolution builder treats every supplied node as a project and
+        derives a path from the node's directory. For logical Premake groups,
+        this can produce bogus entries such as '..\\msvc\\exes'. Writing
+        the small .sln file directly avoids treating solution folders as files.
+        """
+        solution_path = os.path.abspath(os.path.join(msvs_dir, 'Doom3BFG' + msvs_solution_suffix))
+        solution_dir = os.path.dirname(solution_path)
+        cpp_project_type = '{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}'
+        solution_folder_type = '{2150E333-8FDC-42A3-9474-1A3956D46DE8}'
+
+        if msvc_version.startswith('14.5'):
+            vs_major, vs_version = '18', '18.0.0.0'
+        elif msvc_version.startswith('14.3'):
+            vs_major, vs_version = '17', '17.0.0.0'
+        elif msvc_version.startswith('14.2'):
+            vs_major, vs_version = '16', '16.0.0.0'
+        elif msvc_version.startswith('14.1'):
+            vs_major, vs_version = '15', '15.0.0.0'
+        else:
+            vs_major, vs_version = '17', '17.0.0.0'
+
+        folder_names = ['exes', 'libs'] if not DLL_BUILD else ['exes', 'libs', 'dll']
+        folder_guids = {
+            folder: '{%s}' % str(uuid.uuid5(
+                uuid.NAMESPACE_URL, 'Doom3BFG.VisualStudioSolutionFolder.' + folder
+            )).upper()
+            for folder in folder_names
+        }
+        solution_guid = '{%s}' % str(uuid.uuid5(
+            uuid.NAMESPACE_URL, 'Doom3BFG.VisualStudioSolution.Doom3BFG'
+        )).upper()
+
+        # All .vcxproj files and the .sln live side-by-side in build/msvc.
+        # Use the resolved literal suffix, never the deferred SCons expression
+        # ${GET_MSVSPROJECTSUFFIX} (which Visual Studio cannot evaluate).
+        project_paths = {
+            name: os.path.relpath(
+                os.path.join(msvs_dir, name + msvs_project_suffix),
+                solution_dir,
+            ).replace('/', '\\')
+            for name, _, _, _, _ in project_specs
+        }
+        if any('$' in value for value in project_paths.values()):
+            raise RuntimeError('Unresolved SCons variable found in Visual Studio project path: %r' % project_paths)
+        dependencies = {
+            'DoomEXE': ['external', 'idLib'] + ([] if DLL_BUILD else ['Game-D3XP']),
+            'Game-D3XP': ['idLib'] if DLL_BUILD else [],
+        }
+        folder_for_project = {
+            'DoomEXE': 'exes',
+            'external': 'libs',
+            'idLib': 'libs',
+            'Game-D3XP': 'dll' if DLL_BUILD else 'libs',
+        }
+
+        lines = [
+            'Microsoft Visual Studio Solution File, Format Version 12.00',
+            '# Visual Studio ' + vs_major,
+            'VisualStudioVersion = ' + vs_version,
+            'MinimumVisualStudioVersion = 10.0.40219.1',
+        ]
+
+        # Real C++ projects always reference the generated .vcxproj filename.
+        # Their paths are relative to build/msvc/Doom3BFG.sln, never to a
+        # synthetic group directory or an unresolved SCons construction variable.
+        for project_name, _, _, _, _ in project_specs:
+            lines.append('Project("%s") = "%s", "%s", "%s"' % (
+                cpp_project_type,
+                project_name,
+                project_paths[project_name],
+                project_guids[project_name],
+            ))
+            dependency_names = dependencies.get(project_name, [])
+            if dependency_names:
+                lines.append('\tProjectSection(ProjectDependencies) = postProject')
+                for dependency_name in dependency_names:
+                    dependency_guid = project_guids[dependency_name]
+                    lines.append('\t\t%s = %s' % (dependency_guid, dependency_guid))
+                lines.append('\tEndProjectSection')
+            lines.append('EndProject')
+
+        # A solution folder is a logical container. Its path field is the
+        # folder's display name, NOT a filesystem path such as ..\msvc\exes.
+        for folder_name in folder_names:
+            lines.extend([
+                'Project("%s") = "%s", "%s", "%s"' % (
+                    solution_folder_type,
+                    folder_name,
+                    folder_name,
+                    folder_guids[folder_name],
+                ),
+                'EndProject',
+            ])
+
+        lines.extend([
+            'Global',
+            '\tGlobalSection(SolutionConfigurationPlatforms) = preSolution',
+        ])
+        for variant in build_variants:
+            lines.append('\t\t%s = %s' % (variant, variant))
+        lines.extend([
+            '\tEndGlobalSection',
+            '\tGlobalSection(ProjectConfigurationPlatforms) = postSolution',
+        ])
+        for project_name, _, _, _, _ in project_specs:
+            project_guid = project_guids[project_name]
+            for variant in build_variants:
+                lines.append('\t\t%s.%s.ActiveCfg = %s' % (
+                    project_guid, variant, variant
+                ))
+                lines.append('\t\t%s.%s.Build.0 = %s' % (
+                    project_guid, variant, variant
+                ))
+        lines.extend([
+            '\tEndGlobalSection',
+            '\tGlobalSection(SolutionProperties) = preSolution',
+            '\t\tHideSolutionNode = FALSE',
+            '\tEndGlobalSection',
+            '\tGlobalSection(NestedProjects) = preSolution',
+        ])
+        for project_name, folder_name in folder_for_project.items():
+            lines.append('\t\t%s = %s' % (
+                project_guids[project_name], folder_guids[folder_name]
+            ))
+        lines.extend([
+            '\tEndGlobalSection',
+            '\tGlobalSection(ExtensibilityGlobals) = postSolution',
+            '\t\tSolutionGuid = %s' % solution_guid,
+            '\tEndGlobalSection',
+            'EndGlobal',
+        ])
+
+        os.makedirs(solution_dir, exist_ok=True)
+        with open(solution_path, 'w', encoding='utf-8-sig', newline='') as solution_file:
+            solution_file.write('\r\n'.join(lines) + '\r\n')
+        return 0
+
+    solution_nodes = Command(
+        solution_target,
+        project_vcxproj_nodes,
+        Action(
+            _write_solution,
+            strfunction=lambda target, source, env, executor=None: 'Generating Visual Studio solution',
+        ),
+    )
+
+    # ------------------------------------------------------------------
+    # Build-description integrity for generated Visual Studio projects.
+    #
+    # SCons reads SConstruct/SConscript files on every invocation, so the
+    # normal compile graph is already refreshed without a CMake-like restart.
+    # The generated .vcxproj/.sln files are separate artifacts, however, and
+    # must explicitly depend on the scripts that describe them. This makes
+    # `scons msvc-projects` regenerate only when a build description, project
+    # file inventory, or export setting has changed.
+    # ------------------------------------------------------------------
+    build_description_paths = [os.path.join(SCRIPT_DIR, 'SConstruct')]
+    for current_root, dirs, filenames in os.walk(PROJECT_ROOT):
+        dirs[:] = sorted(
+            d for d in dirs
+            if d not in ('.git', '.vs', '__pycache__', 'build', 'bin', 'obj')
+        )
+        for filename in filenames:
+            if filename == 'SConscript' or filename.endswith('.scons.py'):
+                build_description_paths.append(os.path.join(current_root, filename))
+
+    # Normalize and de-duplicate in stable order. Only existing scripts are
+    # included; a newly added SConscript changes this list on the next run and
+    # therefore changes the Value signature below.
+    build_description_paths = sorted(set(
+        os.path.abspath(path) for path in build_description_paths
+        if os.path.isfile(path)
+    ))
+    build_description_nodes = [File(path) for path in build_description_paths]
+
+    # Include non-file settings and the current source/header inventory in a
+    # Value node. That catches changes such as dll=1, VS toolset changes,
+    # altered Premake-compatible source globs, and added/removed project files,
+    # even when none of the output files has a newer timestamp.
+    export_signature_data = {
+        # Include the script path inventory itself so adding or removing a
+        # SConscript also invalidates the generated project files.
+        'build_description_paths': [
+            os.path.relpath(path, SCRIPT_DIR).replace('\\', '/')
+            for path in build_description_paths
+        ],
+        'msvc_version': msvc_version,
+        'dll': bool(DLL_BUILD),
+        'platforms': list(build_variants),
+        'projects': {
+            name: {
+                'sources': [_relative(path) for path in sources],
+                'headers': [_relative(path) for path in headers],
+                'resources': [_relative(path) for path in resources],
+                'misc': [_relative(path) for path in misc],
+                'defines': list(project_definitions[name]),
+            }
+            for name, sources, headers, resources, misc in project_specs
+        },
+        'project_guids': dict(project_guids),
+        'solution_folder_type': '{2150E333-8FDC-42A3-9474-1A3956D46DE8}',
+    }
+    export_signature = Value(repr(export_signature_data))
+    export_integrity_inputs = build_description_nodes + [export_signature]
+
+    # Apply the same integrity inputs to every generated project artifact
+    # (.vcxproj and .filters) and to the solution. No AlwaysBuild is used:
+    # unchanged exports remain up-to-date, while changed scripts force refresh.
+    Depends(project_nodes, export_integrity_inputs)
+    Depends(solution_nodes, export_integrity_inputs)
+
+    # A separate selectable target makes export independent of the normal
+    # default build and keeps the generated files entirely under build/msvc/.
+    msvc_alias = Alias('msvc-projects', list(project_nodes) + list(solution_nodes))
+    return msvc_alias
+
+
+if MSVS_EXPORT_REQUESTED:
+    msvc_projects_target = _generate_msvc_projects()
+    Default(msvc_projects_target)
+else:
+    Default(all_group)
+
 
 _PROGRESS_STATE['total'] = len(_PROGRESS_NODES)
 if _PROGRESS_ENABLED:
