@@ -59,7 +59,7 @@ private:
 
 // Must match RENDERPARM_TOTAL in RenderProgs.h and the uniform register
 // list in global.inc.
-static const int RENDERPROG_NUM_BUILTIN_PARMS = 53;
+static const int RENDERPROG_NUM_BUILTIN_PARMS = 78;
 
 // User parms set through SetRenderParm with a RENDERPARM_USER offset. Must
 // match RENDERPARM_USER and MAX_GLSL_USER_PARMS in RenderProgs.h. Some of

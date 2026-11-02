@@ -526,6 +526,9 @@ void R_InitOpenGL() {
 
 	// Reset our gamma
 	R_SetColorMappings();
+
+	// create the shadow map atlas and its framebuffer
+	R_InitShadowMaps();
 }
 
 /*
@@ -2042,6 +2045,9 @@ idRenderSystemLocal::ShutdownOpenGL
 ========================
 */
 void idRenderSystemLocal::ShutdownOpenGL() {
+	// free the shadow map atlas before the context goes away
+	R_ShutdownShadowMaps();
+
 	// free the context and close the window
 	R_ShutdownFrameData();
 	GLimp_Shutdown();

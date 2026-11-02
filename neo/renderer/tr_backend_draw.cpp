@@ -851,6 +851,7 @@ const int INTERACTION_TEXUNIT_FALLOFF		= 1;
 const int INTERACTION_TEXUNIT_PROJECTION	= 2;
 const int INTERACTION_TEXUNIT_DIFFUSE		= 3;
 const int INTERACTION_TEXUNIT_SPECULAR		= 4;
+const int INTERACTION_TEXUNIT_SHADOWATLAS	= 5;
 
 /*
 ==================
@@ -1018,6 +1019,21 @@ static void RB_RenderInteractions( const drawSurf_t *surfList, const viewLight_t
 	// perform setup here that will be constant for all interactions
 	GL_State( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHMASK | depthFunc | GLS_STENCIL_FUNC_ALWAYS );
 
+	// when the light has a shadow map atlas strip the interaction programs sample the atlas
+	const bool useShadowMap = ( vLight->shadowMapSlot >= 0 );
+	if ( useShadowMap ) {
+		// the global light origin and the shadow map depth compare bias
+		const idVec4 globalLightOrigin( vLight->globalLightOrigin.x, vLight->globalLightOrigin.y, vLight->globalLightOrigin.z, r_shadowMapBias.GetFloat() );
+		SetFragmentParm( RENDERPARM_GLOBALLIGHTORIGIN, globalLightOrigin.ToFloatPtr() );
+		// the biased world to atlas matrix of all six cube faces
+		for ( int i = 0; i < 24; i++ ) {
+			renderProgManager.SetUniformValue( ( renderParm_t )( RENDERPARM_SHADOWMAPMATRIX0_X + i ), &vLight->shadowMapMatrix[0][0][0] + i * 4 );
+		}
+		// the depth atlas rides on texture unit 5
+		GL_SelectTexture( INTERACTION_TEXUNIT_SHADOWATLAS );
+		R_BindShadowMapAtlas();
+	}
+
 	// some rare lights have multiple animating stages, loop over them outside the surface list
 	const idMaterial * lightShader = vLight->lightShader;
 	const float * lightRegs = vLight->shaderRegisters;
@@ -1110,6 +1126,12 @@ static void RB_RenderInteractions( const drawSurf_t *surfList, const viewLight_t
 				} else {
 					renderProgManager.BindShader_InteractionAmbient();
 				}
+			} else if ( useShadowMap ) {
+				if ( surf->jointCache ) {
+					renderProgManager.BindShader_InteractionShadowSkinned();
+				} else {
+					renderProgManager.BindShader_InteractionShadow();
+				}
 			} else {
 				if ( surf->jointCache ) {
 					renderProgManager.BindShader_InteractionSkinned();
@@ -1154,6 +1176,13 @@ static void RB_RenderInteractions( const drawSurf_t *surfList, const viewLight_t
 				// set the local light/view origin
 				SetVertexParm( RENDERPARM_LOCALLIGHTORIGIN, localLightOrigin.ToFloatPtr() );
 				SetVertexParm( RENDERPARM_LOCALVIEWORIGIN, localViewOrigin.ToFloatPtr() );
+
+				// the shadow map programs transform the fragment into world space themselves
+				if ( useShadowMap ) {
+					float modelMatrixTranspose[16];
+					R_MatrixTranspose( surf->space->modelMatrix, modelMatrixTranspose );
+					SetVertexParms( RENDERPARM_MODELMATRIX_X, modelMatrixTranspose, 4 );
+				}
 
 				// transform the light project into model local space
 				idPlane lightProjection[4];
@@ -1281,6 +1310,13 @@ static void RB_RenderInteractions( const drawSurf_t *surfList, const viewLight_t
 
 	if ( useLightDepthBounds && lightDepthBoundsDisabled ) {
 		GL_DepthBoundsTest( vLight->scissorRect.zmin, vLight->scissorRect.zmax );
+	}
+
+	// release the shadow map atlas from texture unit 5
+	if ( useShadowMap ) {
+		GL_SelectTexture( INTERACTION_TEXUNIT_SHADOWATLAS );
+		R_UnbindShadowMapAtlas();
+		GL_SelectTexture( 0 );
 	}
 
 	renderProgManager.Unbind();
@@ -2111,6 +2147,11 @@ void RB_DrawViewInternal( const viewDef_t * viewDef ) {
 	// fill the depth buffer and clear color buffer to black except on subviews
 	//-------------------------------------------------
 	RB_FillDepthBufferFast( drawSurfs, numDrawSurfs );
+
+	//-------------------------------------------------
+	// render the shadow map atlas before the interactions sample it
+	//-------------------------------------------------
+	RB_RenderShadowMaps();
 
 	//-------------------------------------------------
 	// main light renderer

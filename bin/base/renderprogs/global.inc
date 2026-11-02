@@ -96,6 +96,32 @@ uniform float4 rpOverbright				:	register(c50);
 uniform float4 rpEnableSkinning			:	register(c51);
 uniform float4 rpAlphaTest				:	register(c52);
 
+uniform float4 rpGlobalLightOrigin		:	register(c53);
+uniform float4 rpShadowMapMatrix0X		:	register(c54);
+uniform float4 rpShadowMapMatrix0Y		:	register(c55);
+uniform float4 rpShadowMapMatrix0Z		:	register(c56);
+uniform float4 rpShadowMapMatrix0W		:	register(c57);
+uniform float4 rpShadowMapMatrix1X		:	register(c58);
+uniform float4 rpShadowMapMatrix1Y		:	register(c59);
+uniform float4 rpShadowMapMatrix1Z		:	register(c60);
+uniform float4 rpShadowMapMatrix1W		:	register(c61);
+uniform float4 rpShadowMapMatrix2X		:	register(c62);
+uniform float4 rpShadowMapMatrix2Y		:	register(c63);
+uniform float4 rpShadowMapMatrix2Z		:	register(c64);
+uniform float4 rpShadowMapMatrix2W		:	register(c65);
+uniform float4 rpShadowMapMatrix3X		:	register(c66);
+uniform float4 rpShadowMapMatrix3Y		:	register(c67);
+uniform float4 rpShadowMapMatrix3Z		:	register(c68);
+uniform float4 rpShadowMapMatrix3W		:	register(c69);
+uniform float4 rpShadowMapMatrix4X		:	register(c70);
+uniform float4 rpShadowMapMatrix4Y		:	register(c71);
+uniform float4 rpShadowMapMatrix4Z		:	register(c72);
+uniform float4 rpShadowMapMatrix4W		:	register(c73);
+uniform float4 rpShadowMapMatrix5X		:	register(c74);
+uniform float4 rpShadowMapMatrix5Y		:	register(c75);
+uniform float4 rpShadowMapMatrix5Z		:	register(c76);
+uniform float4 rpShadowMapMatrix5W		:	register(c77);
+
 static float dot2( float2 a, float2 b ) { return dot( a, b ); }
 static float dot3( float3 a, float3 b ) { return dot( a, b ); }
 static float dot3( float3 a, float4 b ) { return dot( a, b.xyz ); }
