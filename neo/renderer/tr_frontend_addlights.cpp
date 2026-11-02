@@ -244,8 +244,8 @@ static void R_AddSingleLight( viewLight_t * vLight ) {
 
 	const bool lightCastsShadows = light->LightCastsShadows();
 
-	for ( areaReference_t * lref = light->references; lref != NULL; lref = lref->ownerNext ) {
-		portalArea_t *area = lref->area;
+	for ( int areaRefIndex = 0; areaRefIndex < light->references.Num(); areaRefIndex++ ) {
+		portalArea_t *area = light->references[areaRefIndex];
 
 		// some lights have their center of projection outside the world, but otherwise
 		// we want to ignore areas that are not connected to the light center due to a closed door
@@ -257,8 +257,8 @@ static void R_AddSingleLight( viewLight_t * vLight ) {
 		}
 
 		// check all the models in this area
-		for ( areaReference_t * eref = area->entityRefs.areaNext; eref != &area->entityRefs; eref = eref->areaNext ) {
-			idRenderEntityLocal * edef = eref->entity;
+		for ( int entityRefIndex = 0; entityRefIndex < area->entityRefs.Num(); entityRefIndex++ ) {
+			idRenderEntityLocal * edef = area->entityRefs[entityRefIndex];
 
 			if ( vLight->entityInteractionState[ edef->index ] != viewLight_t::INTERACTION_UNCHECKED ) {
 				continue;

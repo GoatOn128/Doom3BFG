@@ -62,8 +62,8 @@ typedef struct portalArea_s {
 									// not separated by a portal with the apropriate PS_BLOCK_* blockingBits
 	int				viewCount;		// set by R_FindViewLightsAndEntities
 	portal_t *		portals;		// never changes after load
-	areaReference_t	entityRefs;		// head/tail of doubly linked list, may change
-	areaReference_t	lightRefs;		// head/tail of doubly linked list, may change
+	idList<idRenderEntityLocal *, TAG_ENTITY>	entityRefs;	// all entities linked into this area, may change
+	idList<idRenderLightLocal *, TAG_LIGHT>	lightRefs;	// all lights linked into this area, may change
 } portalArea_t;
 
 
@@ -170,8 +170,6 @@ public:
 	idList<idRenderEntityLocal*, TAG_ENTITY>	entityDefs;
 	idList<idRenderLightLocal*, TAG_LIGHT>		lightDefs;
 
-	idBlockAlloc<areaReference_t, 1024> areaReferenceAllocator;
-
 #ifdef ID_PC
 	static const int MAX_DECAL_SURFACES = 32;
 #else
@@ -258,7 +256,10 @@ public:
 	float					DrawTextLength( const char *text, float scale, int len = 0 );
 
 	void					PushFrustumIntoTree_r( idRenderEntityLocal *def, idRenderLightLocal *light, const frustumCorners_t & corners, int nodeNum );
-	void					PushFrustumIntoTree( idRenderEntityLocal *def, idRenderLightLocal *light, const idRenderMatrix & frustumTransform, const idBounds & frustumBounds );
+	void					LinkModelIntoTree( idRenderEntityLocal *def, const idRenderMatrix & frustumTransform, const idBounds & frustumBounds );
+	void					LinkLightIntoTree( idRenderLightLocal *light, const idRenderMatrix & frustumTransform, const idBounds & frustumBounds );
+	void					UnlinkModelFromTree( idRenderEntityLocal *def );
+	void					UnlinkLightFromTree( idRenderLightLocal *light );
 
 	idRenderModelDecal *	AllocDecal( qhandle_t newEntityHandle, int startTime );
 	idRenderModelOverlay *	AllocOverlay( qhandle_t newEntityHandle, int startTime );

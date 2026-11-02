@@ -29,6 +29,8 @@ If you have questions concerning this license or the applicable additional terms
 #include "precompiled.h"
 #pragma hdrstop
 
+#include <new>
+
 #include "tr_local.h"
 
 
@@ -54,15 +56,21 @@ void idRenderWorldLocal::FreeWorld() {
 		}
 
 		// there shouldn't be any remaining lightRefs or entityRefs
-		if ( area->lightRefs.areaNext != &area->lightRefs ) {
+		if ( area->lightRefs.Num() != 0 ) {
 			common->Error( "FreeWorld: unexpected remaining lightRefs" );
 		}
-		if ( area->entityRefs.areaNext != &area->entityRefs ) {
+		if ( area->entityRefs.Num() != 0 ) {
 			common->Error( "FreeWorld: unexpected remaining entityRefs" );
 		}
 	}
 
 	if ( portalAreas ) {
+		// free the reference list memory of all areas before
+		// the raw area memory goes away
+		for ( int i = 0; i < numPortalAreas; i++ ) {
+			portalAreas[i].entityRefs.Clear();
+			portalAreas[i].lightRefs.Clear();
+		}
 		R_StaticFree( portalAreas );
 		portalAreas = NULL;
 		numPortalAreas = 0;
@@ -87,8 +95,6 @@ void idRenderWorldLocal::FreeWorld() {
 		delete localModels[i];
 	}
 	localModels.Clear();
-
-	areaReferenceAllocator.Shutdown();
 
 	mapName = "<FREED>";
 }
@@ -373,10 +379,10 @@ void idRenderWorldLocal::SetupAreaRefs() {
 	connectedAreaNum = 0;
 	for ( int i = 0; i < numPortalAreas; i++ ) {
 		portalAreas[i].areaNum = i;
-		portalAreas[i].lightRefs.areaNext =
-		portalAreas[i].lightRefs.areaPrev = &portalAreas[i].lightRefs;
-		portalAreas[i].entityRefs.areaNext =
-		portalAreas[i].entityRefs.areaPrev = &portalAreas[i].entityRefs;
+		// the portal areas are allocated as raw cleared memory, so the
+		// reference lists need explicit construction here
+		new ( &portalAreas[i].entityRefs ) idList<idRenderEntityLocal *, TAG_ENTITY>();
+		new ( &portalAreas[i].lightRefs ) idList<idRenderLightLocal *, TAG_LIGHT>();
 	}
 }
 
@@ -1001,10 +1007,8 @@ CheckAreaForPortalSky
 bool idRenderWorldLocal::CheckAreaForPortalSky( int areaNum ) {
 	assert( areaNum >= 0 && areaNum < numPortalAreas );
 
-	for ( areaReference_t * ref = portalAreas[areaNum].entityRefs.areaNext; ref->entity; ref = ref->areaNext ) {
-		assert( ref->area == &portalAreas[areaNum] );
-
-		if ( ref->entity && ref->entity->needsPortalSky ) {
+	for ( int refIndex = 0; refIndex < portalAreas[areaNum].entityRefs.Num(); refIndex++ ) {
+		if ( portalAreas[areaNum].entityRefs[refIndex]->needsPortalSky ) {
 			return true;
 		}
 	}
