@@ -20,10 +20,11 @@ jobs:
     # a cancelled run (superseded by a newer push) must not publish its
     # partial logs: they race with the live run and corrupt the committed
     # build.log and build-digest.md. pull_request cycles stay in the
-    # artifacts only. feature branches are excluded too: committing the
-    # digest to a branch makes it conflict with the digest master publishes
-    # for its own merge commits, which blocks squash-merging the PR
-    if: github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion != 'cancelled' && github.event.workflow_run.head_branch == github.event.repository.default_branch
+    # artifacts only. push builds of every branch publish: the default
+    # branch gets the digest next to the code it describes, feature
+    # branches get it on a disposable ci-logs/<branch> ref so the PR head
+    # stays put and the digest files never conflict with master's
+    if: github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion != 'cancelled'
     runs-on: ubuntu-latest
     steps:
       - name: find build run
@@ -95,6 +96,9 @@ jobs:
           fi
       - name: commit
         if: steps.runs.outputs.skip != 'true'
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -104,9 +108,19 @@ jobs:
           git rm -q --ignore-unmatch build.log
           git diff --cached --quiet && exit 0
           git commit -m "CI: publish build logs and digest [skip ci]"
-          if ! git push; then
-            # -X theirs: on a push race the newest output wins instead of
-            # committing conflict markers
-            git pull --rebase -X theirs origin ${{ github.event.workflow_run.head_branch }}
-            git push
+          if [ "$HEAD_BRANCH" = "$DEFAULT_BRANCH" ]; then
+            if ! git push; then
+              # -X theirs: on a push race the newest output wins instead of
+              # committing conflict markers
+              git pull --rebase -X theirs origin "$HEAD_BRANCH"
+              git push
+            fi
+          else
+            # feature branch: publish to a disposable ci-logs/<branch> ref
+            # instead of the branch itself so the PR head stays put and the
+            # digest never conflicts with the files master publishes; force
+            # is fine because every publish replaces the previous snapshot.
+            # the [skip ci] marker in the digest commit keeps the ci-logs
+            # ref from triggering builds of its own
+            git push --force origin HEAD:refs/heads/ci-logs/"$HEAD_BRANCH"
           fi
