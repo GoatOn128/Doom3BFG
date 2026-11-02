@@ -982,8 +982,8 @@ void idRenderWorldLocal::AddWorldModelEntities() {
 		}
 
 		// the local and global reference bounds are the same for area models
-		def->localReferenceBounds = def->parms.hModel->Bounds();
-		def->globalReferenceBounds = def->parms.hModel->Bounds();
+		def->committed.localReferenceBounds = def->parms.hModel->Bounds();
+		def->committed.globalReferenceBounds = def->parms.hModel->Bounds();
 
 		def->parms.axis[0][0] = 1.0f;
 		def->parms.axis[1][1] = 1.0f;

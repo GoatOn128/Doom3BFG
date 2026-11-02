@@ -304,7 +304,7 @@ static void R_AddSingleLight( viewLight_t * vLight ) {
 
 				// do a check of the entity reference bounds against the light frustum to see if they can't
 				// possibly interact, despite sharing one or more world areas
-				if ( R_CullModelBoundsToLight( light, edef->localReferenceBounds, edef->modelRenderMatrix ) ) {
+				if ( R_CullModelBoundsToLight( light, edef->committed.localReferenceBounds, edef->committed.modelRenderMatrix ) ) {
 					continue;
 				}
 			}
@@ -335,7 +335,7 @@ static void R_AddSingleLight( viewLight_t * vLight ) {
 
 			// should we use the shadow bounds from pre-calculated interactions?
 			idBounds shadowBounds;
-			R_ShadowBounds( edef->globalReferenceBounds, light->committed.globalLightBounds, light->committed.globalLightOrigin, shadowBounds );
+			R_ShadowBounds( edef->committed.globalReferenceBounds, light->committed.globalLightBounds, light->committed.globalLightOrigin, shadowBounds );
 
 			// this test is pointless if we knew the light was completely contained
 			// in the view frustum, but the entity would also be directly visible in most

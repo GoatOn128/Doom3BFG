@@ -122,7 +122,7 @@ R_IssueEntityDefCallback
 ==================
 */
 bool R_IssueEntityDefCallback( idRenderEntityLocal *def ) {
-	idBounds oldBounds = def->localReferenceBounds;
+	idBounds oldBounds = def->committed.localReferenceBounds;
 
 	def->archived = false;		// will need to be written to the demo file
 
@@ -139,12 +139,12 @@ bool R_IssueEntityDefCallback( idRenderEntityLocal *def ) {
 	}
 
 	if ( r_checkBounds.GetBool() ) {
-		if (	oldBounds[0][0] > def->localReferenceBounds[0][0] + CHECK_BOUNDS_EPSILON ||
-				oldBounds[0][1] > def->localReferenceBounds[0][1] + CHECK_BOUNDS_EPSILON ||
-				oldBounds[0][2] > def->localReferenceBounds[0][2] + CHECK_BOUNDS_EPSILON ||
-				oldBounds[1][0] < def->localReferenceBounds[1][0] - CHECK_BOUNDS_EPSILON ||
-				oldBounds[1][1] < def->localReferenceBounds[1][1] - CHECK_BOUNDS_EPSILON ||
-				oldBounds[1][2] < def->localReferenceBounds[1][2] - CHECK_BOUNDS_EPSILON ) {
+		if (	oldBounds[0][0] > def->committed.localReferenceBounds[0][0] + CHECK_BOUNDS_EPSILON ||
+				oldBounds[0][1] > def->committed.localReferenceBounds[0][1] + CHECK_BOUNDS_EPSILON ||
+				oldBounds[0][2] > def->committed.localReferenceBounds[0][2] + CHECK_BOUNDS_EPSILON ||
+				oldBounds[1][0] < def->committed.localReferenceBounds[1][0] - CHECK_BOUNDS_EPSILON ||
+				oldBounds[1][1] < def->committed.localReferenceBounds[1][1] - CHECK_BOUNDS_EPSILON ||
+				oldBounds[1][2] < def->committed.localReferenceBounds[1][2] - CHECK_BOUNDS_EPSILON ) {
 			common->Printf( "entity %i callback extended reference bounds\n", def->index );
 		}
 	}
@@ -205,12 +205,12 @@ idRenderModel *R_EntityDefDynamicModel( idRenderEntityLocal *def ) {
 
 		if ( def->cachedDynamicModel != NULL && r_checkBounds.GetBool() ) {
 			idBounds b = def->cachedDynamicModel->Bounds();
-			if (	b[0][0] < def->localReferenceBounds[0][0] - CHECK_BOUNDS_EPSILON ||
-					b[0][1] < def->localReferenceBounds[0][1] - CHECK_BOUNDS_EPSILON ||
-					b[0][2] < def->localReferenceBounds[0][2] - CHECK_BOUNDS_EPSILON ||
-					b[1][0] > def->localReferenceBounds[1][0] + CHECK_BOUNDS_EPSILON ||
-					b[1][1] > def->localReferenceBounds[1][1] + CHECK_BOUNDS_EPSILON ||
-					b[1][2] > def->localReferenceBounds[1][2] + CHECK_BOUNDS_EPSILON ) {
+			if (	b[0][0] < def->committed.localReferenceBounds[0][0] - CHECK_BOUNDS_EPSILON ||
+					b[0][1] < def->committed.localReferenceBounds[0][1] - CHECK_BOUNDS_EPSILON ||
+					b[0][2] < def->committed.localReferenceBounds[0][2] - CHECK_BOUNDS_EPSILON ||
+					b[1][0] > def->committed.localReferenceBounds[1][0] + CHECK_BOUNDS_EPSILON ||
+					b[1][1] > def->committed.localReferenceBounds[1][1] + CHECK_BOUNDS_EPSILON ||
+					b[1][2] > def->committed.localReferenceBounds[1][2] + CHECK_BOUNDS_EPSILON ) {
 				common->Printf( "entity %i dynamic model exceeded reference bounds\n", def->index );
 			}
 		}
@@ -381,11 +381,11 @@ void R_AddSingleModel( viewEntity_t * vEntity ) {
 
 			const idRenderLightLocal * lightDef = vLight->lightDef;
 
-			if ( !lightDef->committed.globalLightBounds.IntersectsBounds( entityDef->globalReferenceBounds ) ) {
+			if ( !lightDef->committed.globalLightBounds.IntersectsBounds( entityDef->committed.globalReferenceBounds ) ) {
 				continue;
 			}
 
-			if ( R_CullModelBoundsToLight( lightDef, entityDef->localReferenceBounds, entityDef->modelRenderMatrix ) ) {
+			if ( R_CullModelBoundsToLight( lightDef, entityDef->committed.localReferenceBounds, entityDef->committed.modelRenderMatrix ) ) {
 				continue;
 			}
 
@@ -409,7 +409,7 @@ void R_AddSingleModel( viewEntity_t * vEntity ) {
 
 				// check more precisely for shadow visibility
 				idBounds shadowBounds;
-				R_ShadowBounds( entityDef->globalReferenceBounds, lightDef->committed.globalLightBounds, lightDef->committed.globalLightOrigin, shadowBounds );
+				R_ShadowBounds( entityDef->committed.globalReferenceBounds, lightDef->committed.globalLightBounds, lightDef->committed.globalLightOrigin, shadowBounds );
 
 				// this doesn't say that the shadow can't effect anything, only that it can't
 				// effect anything in the view
@@ -480,8 +480,8 @@ void R_AddSingleModel( viewEntity_t * vEntity ) {
 	vEntity->weaponDepthHack = renderEntity->weaponDepthHack;
 	vEntity->skipMotionBlur = renderEntity->skipMotionBlur;
 
-	memcpy( vEntity->modelMatrix, entityDef->modelMatrix, sizeof( vEntity->modelMatrix ) );
-	R_MatrixMultiply( entityDef->modelMatrix, viewDef->worldSpace.modelViewMatrix, vEntity->modelViewMatrix );
+	memcpy( vEntity->modelMatrix, entityDef->committed.modelMatrix, sizeof( vEntity->modelMatrix ) );
+	R_MatrixMultiply( entityDef->committed.modelMatrix, viewDef->worldSpace.modelViewMatrix, vEntity->modelViewMatrix );
 
 	idRenderMatrix viewMat;
 	idRenderMatrix::Transpose( *(idRenderMatrix *)vEntity->modelViewMatrix, viewMat );
@@ -559,8 +559,8 @@ void R_AddSingleModel( viewEntity_t * vEntity ) {
 						common->Printf( "bad tri->bounds on %s:%s\n", entityDef->parms.hModel->Name(), shader->GetName() );
 						break;
 					}
-					if ( tri->verts[j].xyz[k] > entityDef->localReferenceBounds[1][k] + CHECK_BOUNDS_EPSILON
-						|| tri->verts[j].xyz[k] < entityDef->localReferenceBounds[0][k] - CHECK_BOUNDS_EPSILON ) {
+					if ( tri->verts[j].xyz[k] > entityDef->committed.localReferenceBounds[1][k] + CHECK_BOUNDS_EPSILON
+						|| tri->verts[j].xyz[k] < entityDef->committed.localReferenceBounds[0][k] - CHECK_BOUNDS_EPSILON ) {
 						common->Printf( "bad referenceBounds on %s:%s\n", entityDef->parms.hModel->Name(), shader->GetName() );
 						break;
 					}
@@ -664,7 +664,7 @@ void R_AddSingleModel( viewEntity_t * vEntity ) {
 				surfInter = &interaction->surfaces[surfaceNum];
 			} else {
 				// try to do a more precise cull of this model surface to the light
-				if ( R_CullModelBoundsToLight( lightDef, tri->bounds, entityDef->modelRenderMatrix ) ) {
+				if ( R_CullModelBoundsToLight( lightDef, tri->bounds, entityDef->committed.modelRenderMatrix ) ) {
 					continue;
 				}
 			}
@@ -722,7 +722,7 @@ void R_AddSingleModel( viewEntity_t * vEntity ) {
 								dynamicShadowParms->triangleMVP = vEntity->mvp;
 								dynamicShadowParms->localLightOrigin = localLightOrigin;
 								dynamicShadowParms->localViewOrigin = localViewOrigin;
-								idRenderMatrix::Multiply( vLight->lightDef->committed.baseLightProject, entityDef->modelRenderMatrix, dynamicShadowParms->localLightProject );
+								idRenderMatrix::Multiply( vLight->lightDef->committed.baseLightProject, entityDef->committed.modelRenderMatrix, dynamicShadowParms->localLightProject );
 								dynamicShadowParms->zNear = znear;
 								dynamicShadowParms->lightZMin = vLight->scissorRect.zmin;
 								dynamicShadowParms->lightZMax = vLight->scissorRect.zmax;
@@ -905,7 +905,7 @@ void R_AddSingleModel( viewEntity_t * vEntity ) {
 					dynamicShadowParms->triangleMVP = vEntity->mvp;
 					dynamicShadowParms->localLightOrigin = localLightOrigin;
 					dynamicShadowParms->localViewOrigin = localViewOrigin;
-					idRenderMatrix::Multiply( vLight->lightDef->committed.baseLightProject, entityDef->modelRenderMatrix, dynamicShadowParms->localLightProject );
+					idRenderMatrix::Multiply( vLight->lightDef->committed.baseLightProject, entityDef->committed.modelRenderMatrix, dynamicShadowParms->localLightProject );
 					dynamicShadowParms->zNear = znear;
 					dynamicShadowParms->lightZMin = vLight->scissorRect.zmin;
 					dynamicShadowParms->lightZMax = vLight->scissorRect.zmax;

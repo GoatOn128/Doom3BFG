@@ -45,15 +45,8 @@ R_DeriveEntityData
 =================
 */
 void R_DeriveEntityData( idRenderEntityLocal * entity ) {
-	R_AxisToModelMatrix( entity->parms.axis, entity->parms.origin, entity->modelMatrix );
-
-	idRenderMatrix::CreateFromOriginAxis( entity->parms.origin, entity->parms.axis, entity->modelRenderMatrix );
-
-	// calculate the matrix that transforms the unit cube to exactly cover the model in world space
-	idRenderMatrix::OffsetScaleForBounds( entity->modelRenderMatrix, entity->localReferenceBounds, entity->inverseBaseModelProject );
-
-	// calculate the global model bounds by inverse projecting the unit cube with the 'inverseBaseModelProject'
-	idRenderMatrix::ProjectedBounds( entity->globalReferenceBounds, entity->inverseBaseModelProject, bounds_unitCube, false );
+	// derive the view independent entity data into the committed state
+	R_CommitModel( entity );
 }
 
 /*
@@ -164,35 +157,28 @@ void R_CreateEntityRefs( idRenderEntityLocal *entity ) {
 		entity->parms.hModel = renderModelManager->DefaultModel();
 	}
 
-	// if the entity hasn't been fully specified due to expensive animation calcs
-	// for md5 and particles, use the provided conservative bounds.
-	if ( entity->parms.callback != NULL ) {
-		entity->localReferenceBounds = entity->parms.bounds;
-	} else {
-		entity->localReferenceBounds = entity->parms.hModel->Bounds( &entity->parms );
-	}
+	// derive and commit the entity data, which also calculates the local
+	// reference bounds from the parms or the model bounds
+	R_DeriveEntityData( entity );
 
 	// some models, like empty particles, may not need to be added at all
-	if ( entity->localReferenceBounds.IsCleared() ) {
+	if ( entity->committed.localReferenceBounds.IsCleared() ) {
 		return;
 	}
 
 	if ( r_showUpdates.GetBool() &&
-			( entity->localReferenceBounds[1][0] - entity->localReferenceBounds[0][0] > 1024.0f ||
-				entity->localReferenceBounds[1][1] - entity->localReferenceBounds[0][1] > 1024.0f ) ) {
-		common->Printf( "big entityRef: %f,%f\n", entity->localReferenceBounds[1][0] - entity->localReferenceBounds[0][0],
-						entity->localReferenceBounds[1][1] - entity->localReferenceBounds[0][1] );
+			( entity->committed.localReferenceBounds[1][0] - entity->committed.localReferenceBounds[0][0] > 1024.0f ||
+				entity->committed.localReferenceBounds[1][1] - entity->committed.localReferenceBounds[0][1] > 1024.0f ) ) {
+		common->Printf( "big entityRef: %f,%f\n", entity->committed.localReferenceBounds[1][0] - entity->committed.localReferenceBounds[0][0],
+						entity->committed.localReferenceBounds[1][1] - entity->committed.localReferenceBounds[0][1] );
 	}
-
-	// derive entity data
-	R_DeriveEntityData( entity );
 
 	// bump the view count so we can tell if an
 	// area already has a reference
 	tr.viewCount++;
 
 	// push the model frustum down the BSP tree into areas
-	entity->world->PushFrustumIntoTree( entity, NULL, entity->inverseBaseModelProject, bounds_unitCube );
+	entity->world->PushFrustumIntoTree( entity, NULL, entity->committed.inverseBaseModelProject, bounds_unitCube );
 }
 
 /*

@@ -58,7 +58,7 @@ void R_CalcInteractionFacing( const idRenderEntityLocal *ent, const srfTriangles
 	}
 
 	idVec3 localLightOrigin;
-	R_GlobalPointToLocal( ent->modelMatrix, light->committed.globalLightOrigin, localLightOrigin );
+	R_GlobalPointToLocal( ent->committed.modelMatrix, light->committed.globalLightOrigin, localLightOrigin );
 
 	const int numFaces = tri->numIndexes / 3;
 	cullInfo.facing = (byte *) R_StaticAlloc( ( numFaces + 1 ) * sizeof( cullInfo.facing[0] ), TAG_RENDER_INTERACTION );
@@ -101,7 +101,7 @@ void R_CalcInteractionCullBits( const idRenderEntityLocal *ent, const srfTriangl
 
 	// cull the triangle surface bounding box
 	for ( int i = 0; i < 6; i++ ) {
-		R_GlobalPlaneToLocal( ent->modelMatrix, frustumPlanes[i], cullInfo.localClipPlanes[i] );
+		R_GlobalPlaneToLocal( ent->committed.modelMatrix, frustumPlanes[i], cullInfo.localClipPlanes[i] );
 
 		// get front bits for the whole surface
 		if ( tri->bounds.PlaneDistance( cullInfo.localClipPlanes[i] ) >= LIGHT_CLIP_EPSILON ) {
@@ -672,7 +672,7 @@ void idInteraction::CreateStaticInteraction() {
 	const idBounds bounds = model->Bounds( &entityDef->parms );
 
 	// if it doesn't contact the light frustum, none of the surfaces will
-	if ( R_CullModelBoundsToLight( lightDef, bounds, entityDef->modelRenderMatrix ) ) {
+	if ( R_CullModelBoundsToLight( lightDef, bounds, entityDef->committed.modelRenderMatrix ) ) {
 		MakeEmpty();
 		return;
 	}
@@ -703,7 +703,7 @@ void idInteraction::CreateStaticInteraction() {
 		}
 
 		// try to cull each surface
-		if ( R_CullModelBoundsToLight( lightDef, tri->bounds, entityDef->modelRenderMatrix ) ) {
+		if ( R_CullModelBoundsToLight( lightDef, tri->bounds, entityDef->committed.modelRenderMatrix ) ) {
 			continue;
 		}
 

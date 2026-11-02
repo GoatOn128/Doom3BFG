@@ -898,12 +898,12 @@ static void RB_ShowViewEntitys( viewEntity_t *vModels ) {
 			color.Set( 0, 0, 1, 1 );
 		}
 		GL_Color( color[0], color[1], color[2] );
-		RB_DrawBounds( edef->localReferenceBounds );
+		RB_DrawBounds( edef->committed.localReferenceBounds );
 
 		// transform the upper bounds corner into global space
 		if ( r_showViewEntitys.GetInteger() >= 2 ) {
 			idVec3 corner;
-			R_LocalPointToGlobal( vModel->modelMatrix, edef->localReferenceBounds[1], corner );
+			R_LocalPointToGlobal( vModel->modelMatrix, edef->committed.localReferenceBounds[1], corner );
 
 			tr.primaryWorld->DrawText(
 				va( "%i:%s", edef->index, edef->parms.hModel->Name() ),
@@ -921,7 +921,7 @@ static void RB_ShowViewEntitys( viewEntity_t *vModels ) {
 				continue;	// particles won't instantiate without a current view
 			}
 			b = model->Bounds( &vModel->entityDef->parms );
-			if ( b != vModel->entityDef->localReferenceBounds ) {
+			if ( b != vModel->entityDef->committed.localReferenceBounds ) {
 				RB_DrawBounds( b );
 			}
 		}

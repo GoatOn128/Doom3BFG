@@ -203,6 +203,8 @@ public:
 };
 
 
+#include "RenderModelCommitted.h"
+
 class idRenderEntityLocal : public idRenderEntity {
 public:
 							idRenderEntityLocal();
@@ -221,9 +223,7 @@ public:
 
 	renderEntity_t			parms;
 
-	float					modelMatrix[16];		// this is just a rearrangement of parms.axis and parms.origin
-	idRenderMatrix			modelRenderMatrix;
-	idRenderMatrix			inverseBaseModelProject;// transforms the unit cube to exactly cover the model in world space
+	committedModel_t		committed;				// view independent derived state, rebuilt by the per frame model commit pass
 
 	idRenderWorldLocal *	world;
 	int						index;					// in world entityDefs
@@ -238,13 +238,6 @@ public:
 													// dynamicModel if this doesn't == tr.viewCount
 	idRenderModel *			cachedDynamicModel;
 
-
-	// the local bounds used to place entityRefs, either from parms for dynamic entities, or a model bounds
-	idBounds				localReferenceBounds;
-
-	// axis aligned bounding box in world space, derived from refernceBounds and
-	// modelMatrix in R_CreateEntityRefs()
-	idBounds				globalReferenceBounds;
 
 	// a viewEntity_t is created whenever a idRenderEntityLocal is considered for inclusion
 	// in a given view, even if it turns out to not be visible
