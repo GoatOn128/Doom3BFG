@@ -1,6 +1,6 @@
 # Quake 3 / Wolfenstein: Enemy Territory content support inventory
 
-Audited at commit `0c79836747bc850e93e3bfda8f5a4213d36924e5` (master) on 2026-11-02.
+Audited at commit `0c79836747bc850e93e3bfda8f5a4213d36924e5` (master) on 2026-11-02. Updated 2026-11-02: the MD3 parity work landed (`81dc731`) and MDC/MDS/MDM/MDX/MD4 loaders were added, see sections 2.1-2.3.
 
 Purpose: gap analysis before implementing Q3/ET content support. Two areas as requested: shader (material) syntax and model formats. The engine side was read directly from this repo (`neo/renderer/Material.cpp`, `neo/renderer/Model_md3.cpp`, `neo/renderer/ModelManager.cpp`, `neo/framework/DeclManager.cpp`, `neo/renderer/Image_files.cpp`). The Q3/ET requirement side is taken from the ET: Legacy renderer sources (GPLv3, `src/renderer/tr_shader.c` and `src/renderer/tr_model.c`) and published format references.
 
@@ -112,6 +112,10 @@ Dispatch in `neo/renderer/ModelManager.cpp` (`GetModel`):
 | `.ase`, `.lwo`, `.flt`, `.ma` | `idRenderModelStatic` (source formats) |
 | `.md5mesh` | `idRenderModelMD5` (skeletal) |
 | `.md3` | `idRenderModelMD3` |
+| `.mdc` | `idRenderModelMDC` (decodes to MD3 layout at load, shares the MD3 path) |
+| `.mds` | `idRenderModelMDS` (skeletal) |
+| `.mdm` | `idRenderModelMDM` (skeletal; loads the sibling `.mdx`) |
+| `.md4` | `idRenderModelMD4` (skeletal, kept for completion) |
 | `.prt` | particle |
 | `.liquid` | liquid |
 | world `.proc`/`.bmodel` | RenderWorld static geometry |
@@ -120,31 +124,36 @@ Nothing else dispatches anywhere. There is no Q3 BSP (`MOD_BRUSH`) path.
 
 ### 2.2 MD3 audit (`neo/renderer/Model_md3.cpp/.h`)
 
-Works today:
+Fixed with the Q3 parity work (commit `81dc731`), all items below now work:
 
 - Full header/frame/tag/surface byte-swapping and validation (version 15, `SHADER_MAX_VERTEXES` 1000 guard).
 - Surface shader registration through `declManager->FindMaterial` (Q3 shader names resolve once Q3 materials parse).
 - Two-frame vertex lerp driven by `shaderParms`: `SHADERPARM_MD3_FRAME`, `SHADERPARM_MD3_LASTFRAME`, `SHADERPARM_MD3_BACKLERP`.
 - Surface name lowercasing plus the trailing `_1`/`_2` strip (same Q3 crutch).
+- Lat-long normals are decoded and tangents derived (`R_DeriveTangentsWithoutNormals`), so interaction lighting works.
+- Tags are exposed as joints with a lerped tag query API (`GetJointHandle`/`GetJointTransform`), the game-facing equivalent of ET `R_LerpTag`.
+- `Bounds()` returns the lerped per-frame bounds like ET `R_ModelBounds`.
+- LOD: `_1`/`_2`/`_3` extension variants load (`MD3_MAX_LODS` 4, `r_md3lodscale`/`r_md3lodbias`), selected per view like Q3 `R_ComputeLOD`.
 
-Missing/broken for Q3/ET use:
+Still missing for Q3/ET use:
 
-1. Normals are never decoded (the MD3 lat-long encoded normal field is ignored in `LerpMeshVertexes`) and tangents are never set, so `idDrawVert` normal/tangent stay zeroed. D3 interaction lighting cannot work on these meshes. Minimum fix: decode the lat-long normal and derive tangents like the other static paths do.
-2. Tags are parsed and byte-swapped but never stored or exposed. There is no `GetJointHandle`/joint transform path, so no weapon/head/muzzle attachment and no game-facing equivalent of ET `R_LerpTag` (tag lookup with frame lerp). Needs a tag-to-joint mapping per frame plus a lerped tag query API.
-3. `Bounds()` always returns frame 0 bounds; ET uses per-frame bounds (`R_ModelBounds`).
-4. No LOD: Q3/ET loads `_1`/`_2`/`_3` extension variants (`MD3_MAX_LODS` 4, `r_lodbias`). The constant exists in `Model_md3.h` but is unused.
-5. No Q3 skin remap (see 2.4).
+1. No Q3 skin remap (see 2.4).
 
-### 2.3 Missing formats
+### 2.3 Model formats
 
-1. MDC (high priority; ET player/character models are `.mdc`): compressed MD3 variant from RtCW. Per the ET loader (`R_LoadMDC`): header like MD3 plus `ofsTagNames`; tags compressed as short xyz + short angles; surfaces carry base frames (full `md3XyzNormal` data) plus compressed frames (per-axis bit-packed deltas against the previous frame's vertices plus a normal index into the anorms256 table), with `ofsFrameBaseFrames`/`ofsFrameCompFrames` short tables per frame; same `_N.mdc` LOD chain. Ports cleanly onto the fixed MD3 path (shared surface instantiate, decode step before lerp).
-2. MDS (optional): RtCW/ET skeletal format, single-file skinned mesh with bones, compressed bone frames, bone-attached tags with torsoWeight blending. ET MP content itself is md3/mdc; only needed for RtCW-style skeletal assets.
-3. MDM + MDX (optional): RtCW split skeletal pair, `.mdm` mesh plus `.mdx` skeleton/animation.
-4. External `.tag` files (RtCW skeletal attachments): only relevant alongside MDM.
-5. `.shadow` scripts (ET per-model projection shadow shader + six floats): only relevant if a projection shadow path is added; our shadow roadmap is shadowmap-based, so likely never.
-6. MD2, MDR: not ET formats, not needed.
+All Q3-era model formats are implemented (the port adds `Model_mdc.cpp/.h`, a shared `Model_wolf.cpp/.h` base and one file pair per format: `Model_mds`, `Model_mdm`, `Model_md4`):
 
-Licensing note: reference implementations for MD3/MDC/MDS/MDM/MDX live in the ET: Legacy repository (GPLv3, like this engine). Porting between the two is license-compatible; keep the attribution headers and note the origin in the port commits.
+- MDC: compressed MD3 variant from RtCW (`idRenderModelMDC` in `neo/renderer/Model_mdc.cpp`). The compressed frames (per-axis deltas plus an anorms256 normal index, per-frame base/comp tables) and the short-packed tags are decoded at load time into a synthesized MD3 layout, so the entire MD3 path (instantiate, LOD chain via the `LoadHeader`/`LodFileExtension` hooks, tags as joints, per-frame bounds) is shared unchanged.
+- MDS: RtCW/ET skeletal format, single file with bones, compressed bone frames, weighted surfaces and bone-attached tags (`idRenderModelMDS` in `neo/renderer/Model_mds.cpp`).
+- MDM + MDX: RtCW split skeletal pair, `.mdm` mesh and tags plus the sibling `.mdx` skeleton/frames (`idRenderModelMDM` in `neo/renderer/Model_mdm.cpp`, the `.mdx` is loaded by replacing the extension).
+- MD4: the early Q3-era skeletal format, kept for completion sake (`idRenderModelMD4` in `neo/renderer/Model_md4.cpp`). Only the on-disk structures survive in the ET SDK headers; the decode follows the Q3 3x4 matrix convention (rotation rows with translation in the last column). No known content uses it.
+- External `.tag` files (RtCW skeletal attachments): still not loaded; only relevant alongside MDM.
+- `.shadow` scripts (ET per-model projection shadow shader + six floats): only relevant if a projection shadow path is added; our shadow roadmap is shadowmap-based, so likely never.
+- MD2, MDR: not ET formats, not needed.
+
+Skeletal implementation notes (MDS/MDM/MDX/MD4): the pipeline is modeled on the Doom 3 MD5 loader. Surfaces become `deformInfo_t` meshes with the four largest weights folded into the vertex colors, so the GPU skinning path (`jointsInverted` + `staticModelWithJoints`) works without a game-side animator. Rendering falls back to the file frames (MD3-style `shaderParms` frame channel) when the renderEntity carries no matching joints, so bind-pose and shaderParms-driven playback work out of the box. Torso blending (torsoParent/torsoWeight split) is not applied; with a single frame channel it is a no-op anyway. Bone angles are stored as absolute SHORT2ANGLE eulers, translations as parentDist along a pitch/yaw direction from the parent, matching the ET runtime decode (`R_CalcBone`); the ET and Doom 3 angle conventions turned out to be identical (`AnglesToAxis` == `idAngles::ToMat3`).
+
+Licensing note: reference implementations for MD3/MDC/MDS/MDM/MDX live in the ET: Legacy repository and the vendored WET SDK (`references/etwolf`, GPLv3, like this engine). Porting between the two is license-compatible; keep the attribution headers and note the origin in the port commits.
 
 ### 2.4 Skins
 
@@ -159,13 +168,13 @@ Licensing note: reference implementations for MD3/MDC/MDS/MDM/MDX live in the ET
 
 ## 3. Recommended implementation order
 
-1. MD3 loader fixes: normal decode + tangent derivation, per-frame bounds, tag exposure with a lerped tag query API. Unblocks all Q3 model work, small surface area, no new systems.
+1. ~~MD3 loader fixes~~ Done (`81dc731`): normal decode + tangent derivation, per-frame bounds, tag exposure with a lerped tag query API, LOD chain.
 2. Q3 shader parsing: register `scripts/*.shader` as a material decl folder (the typeless-decl scanner path already exists), add the Q3 syntax mode to the parser, implement the group A keywords, parse-and-ignore the editor/compile keywords, warn on the rest.
-3. MDC loader, sharing the fixed MD3 instantiate path.
+3. ~~MDC loader~~ Done (shares the fixed MD3 path through the `LoadHeader`/`LodFileExtension` hooks).
 4. Q3 skin parser + remap hook.
 5. Lighting provider decision for `$lightmap`/lightgrid keywords (coupled to the map format decision).
 6. Global fog system, `skyparms` sky stage, sun flare.
-7. Optional: MDS/MDM/MDX.
+7. ~~MDS/MDM/MDX~~ Done (plus MD4 for completion).
 
 ## Sources
 

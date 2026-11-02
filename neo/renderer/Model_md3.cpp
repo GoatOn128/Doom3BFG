@@ -319,6 +319,24 @@ idRenderModelMD3::~idRenderModelMD3() {
 
 /*
 =================
+idRenderModelMD3::LoadHeader
+=================
+*/
+bool idRenderModelMD3::LoadHeader( const char *fileName, md3Header_t **headerOut, ID_TIME_T *timestamp ) {
+	return MD3_LoadHeader( fileName, headerOut, timestamp );
+}
+
+/*
+=================
+idRenderModelMD3::LodFileExtension
+=================
+*/
+const char *idRenderModelMD3::LodFileExtension() const {
+	return "md3";
+}
+
+/*
+=================
 idRenderModelMD3::InitFromFile
 =================
 */
@@ -341,7 +359,7 @@ void idRenderModelMD3::LoadModel() {
 	}
 	purged = false;
 
-	if ( !MD3_LoadHeader( name.c_str(), &lods[0], &timeStamp ) ) {
+	if ( !LoadHeader( name.c_str(), &lods[0], &timeStamp ) ) {
 		MakeDefaultModel();
 		return;
 	}
@@ -352,7 +370,7 @@ void idRenderModelMD3::LoadModel() {
 	baseName.StripFileExtension();
 	for ( int i = 1; i < MD3_MAX_LODS; i++ ) {
 		idStr lodName;
-		lodName.Format( "%s_%i.md3", baseName.c_str(), i );
+		lodName.Format( "%s_%i.%s", baseName.c_str(), i, LodFileExtension() );
 
 		md3Header_t *lod = NULL;
 		if ( !MD3_LoadHeader( lodName.c_str(), &lod, NULL ) ) {
