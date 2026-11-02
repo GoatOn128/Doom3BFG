@@ -59,7 +59,32 @@ static const char * const s_renderParmNames[RENDERPROG_NUM_BUILTIN_PARMS] = {
 	"rpWobbleSkyZ",					// c49
 	"rpOverbright",					// c50
 	"rpEnableSkinning",				// c51
-	"rpAlphaTest"					// c52
+	"rpAlphaTest",					// c52
+	"rpGlobalLightOrigin",				// c53
+	"rpShadowMapMatrix0X",				// c54
+	"rpShadowMapMatrix0Y",				// c55
+	"rpShadowMapMatrix0Z",				// c56
+	"rpShadowMapMatrix0W",				// c57
+	"rpShadowMapMatrix1X",				// c58
+	"rpShadowMapMatrix1Y",				// c59
+	"rpShadowMapMatrix1Z",				// c60
+	"rpShadowMapMatrix1W",				// c61
+	"rpShadowMapMatrix2X",				// c62
+	"rpShadowMapMatrix2Y",				// c63
+	"rpShadowMapMatrix2Z",				// c64
+	"rpShadowMapMatrix2W",				// c65
+	"rpShadowMapMatrix3X",				// c66
+	"rpShadowMapMatrix3Y",				// c67
+	"rpShadowMapMatrix3Z",				// c68
+	"rpShadowMapMatrix3W",				// c69
+	"rpShadowMapMatrix4X",				// c70
+	"rpShadowMapMatrix4Y",				// c71
+	"rpShadowMapMatrix4Z",				// c72
+	"rpShadowMapMatrix4W",				// c73
+	"rpShadowMapMatrix5X",				// c74
+	"rpShadowMapMatrix5Y",				// c75
+	"rpShadowMapMatrix5Z",				// c76
+	"rpShadowMapMatrix5W",				// c77
 };
 
 // The temporary expression parm names must outlive the registry entries

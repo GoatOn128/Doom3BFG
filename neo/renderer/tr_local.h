@@ -36,6 +36,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "ImageOpts.h"
 #include "Image.h"
 #include "RenderTexture.h"
+#include "ShadowMap.h"
 #include "Font.h"
 
 // everything that is needed by the backend needs
@@ -284,6 +285,10 @@ struct viewLight_t {
 	drawSurf_t *			localInteractions;			// don't get local shadows
 	drawSurf_t *			globalInteractions;			// get shadows from everything
 	drawSurf_t *			translucentInteractions;	// translucent interactions don't get shadows
+
+	// shadow map atlas strip of the light, written by RB_RenderShadowMaps in frame memory
+	int					shadowMapSlot;			// -1 while the light has no shadow map
+	idRenderMatrix		shadowMapMatrix[6];		// biased world to atlas matrix per cube face
 
 };
 
