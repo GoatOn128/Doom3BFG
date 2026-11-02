@@ -248,6 +248,11 @@ public:
 	virtual const char *		GetJointName( jointHandle_t handle ) const;
 	virtual bool				GetJointTransform( jointHandle_t handle, const struct renderEntity_s *ent, idVec3 &origin, idMat3 &axis ) const;
 
+protected:
+	// format hook points, MDC shares the whole MD3 path through these
+	virtual bool				LoadHeader( const char *fileName, struct md3Header_s **headerOut, ID_TIME_T *timestamp );
+	virtual const char *		LodFileExtension() const;
+
 private:
 	int							index;			// model = tr.models[model->index]
 	int							dataSize;		// just for listing purposes

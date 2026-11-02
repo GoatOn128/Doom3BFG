@@ -30,6 +30,8 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "Model_local.h"
+#include "Model_mdc.h"
+#include "Model_wolf.h"
 #include "tr_local.h"	// just for R_FreeWorldInteractions and R_CreateWorldInteractions
 
 idCVar binaryLoadRenderModels( "binaryLoadRenderModels", "1", 0, "enable binary load/write of render models" );
@@ -311,6 +313,14 @@ idRenderModel *idRenderModelManagerLocal::GetModel( const char *_modelName, bool
 		model = new (TAG_MODEL) idRenderModelMD5;
 	} else if ( extension.Icmp( "md3" ) == 0 ) {
 		model = new (TAG_MODEL) idRenderModelMD3;
+	} else if ( extension.Icmp( "mdc" ) == 0 ) {
+		model = new (TAG_MODEL) idRenderModelMDC;
+	} else if ( extension.Icmp( "mds" ) == 0 ) {
+		model = new (TAG_MODEL) idRenderModelMDS;
+	} else if ( extension.Icmp( "mdm" ) == 0 ) {
+		model = new (TAG_MODEL) idRenderModelMDM;
+	} else if ( extension.Icmp( "md4" ) == 0 ) {
+		model = new (TAG_MODEL) idRenderModelMD4;
 	} else if ( extension.Icmp( "prt" ) == 0  ) {
 		model = new (TAG_MODEL) idRenderModelPrt;
 	} else if ( extension.Icmp( "liquid" ) == 0  ) {
