@@ -142,8 +142,6 @@ void idRenderProgManager::Init() {
 
 		{ BUILTIN_DEPTH, "depth.vfp" },
 		{ BUILTIN_DEPTH_SKINNED, "depth_skinned.vfp" },
-		{ BUILTIN_SHADOW_DEBUG, "shadowDebug.vfp" },
-		{ BUILTIN_SHADOW_DEBUG_SKINNED, "shadowDebug_skinned.vfp" },
 
 		{ BUILTIN_BLENDLIGHT, "blendlight.vfp" },
 		{ BUILTIN_FOG, "fog.vfp" },
@@ -175,43 +173,6 @@ void idRenderProgManager::Init() {
 		program.fragmentShaderIndex = fragmentShaderIndex;
 		builtinShaders[builtins[i].index] = glslPrograms.Append( program );
 	}
-
-	// Special case handling for fastZ shaders: the legacy system linked the
-	// shadow programs vertex only and never used shadow.pixel; the decl of
-	// the shadow pair links the unused fragment stage as well, which renders
-	// the same depth only result.
-	idDeclRenderProg * shadowDecl = FindRenderProgDecl( "shadow.vp" );
-	idDeclRenderProg * shadowSkinnedDecl = FindRenderProgDecl( "shadow_skinned.vp" );
-	if ( shadowDecl != nullptr ) {
-		shaderEntry_t shader;
-		shader.name = "shadow.vp";
-		shader.decl = shadowDecl;
-		const int vertexShaderIndex = vertexShaders.Append( shader );
-		programEntry_t program;
-		program.name = shader.name;
-		program.decl = shadowDecl;
-		program.vertexShaderIndex = vertexShaderIndex;
-		program.fragmentShaderIndex = -1;
-		builtinShaders[BUILTIN_SHADOW] = glslPrograms.Append( program );
-	} else {
-		common->Warning( "no renderprog decl for shadow.vp" );
-	}
-	if ( shadowSkinnedDecl != nullptr ) {
-		shaderEntry_t shader;
-		shader.name = "shadow_skinned.vp";
-		shader.decl = shadowSkinnedDecl;
-		const int vertexShaderIndex = vertexShaders.Append( shader );
-		programEntry_t program;
-		program.name = shader.name;
-		program.decl = shadowSkinnedDecl;
-		program.vertexShaderIndex = vertexShaderIndex;
-		program.fragmentShaderIndex = -1;
-		builtinShaders[BUILTIN_SHADOW_SKINNED] = glslPrograms.Append( program );
-	} else {
-		common->Warning( "no renderprog decl for shadow_skinned.vp" );
-	}
-
-	glslUniforms.SetNum( RENDERPARM_USER + MAX_GLSL_USER_PARMS, vec4_zero );
 
 	cmdSystem->AddCommand( "reloadShaders", R_ReloadShaders, CMD_FL_RENDERER, "reloads shaders" );
 }

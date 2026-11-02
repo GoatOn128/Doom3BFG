@@ -430,16 +430,14 @@ void	idRenderWorldLocal::WriteRenderLight( qhandle_t handle, const renderLight_t
 	common->WriteDemo()->WriteVec3( light->up );
 	common->WriteDemo()->WriteVec3( light->start );
 	common->WriteDemo()->WriteVec3( light->end );
-	common->WriteDemo()->WriteInt( (int&)light->prelightModel );
+	// prelightModel was removed, a zero is written for demo file format compatibility
+	common->WriteDemo()->WriteInt( 0 );
 	common->WriteDemo()->WriteInt( light->lightId );
 	common->WriteDemo()->WriteInt( (int&)light->shader );
 	for ( int i = 0; i < MAX_ENTITY_SHADER_PARMS; i++)
 		common->WriteDemo()->WriteFloat( light->shaderParms[i] );
 	common->WriteDemo()->WriteInt( (int&)light->referenceSound );
 
-	if ( light->prelightModel ) {
-		common->WriteDemo()->WriteHashString( light->prelightModel->Name() );
-	}
 	if ( light->shader ) {
 		common->WriteDemo()->WriteHashString( light->shader->GetName() );
 	}
@@ -482,14 +480,17 @@ void	idRenderWorldLocal::ReadRenderLight( ) {
 	common->ReadDemo()->ReadVec3( light.up );
 	common->ReadDemo()->ReadVec3( light.start );
 	common->ReadDemo()->ReadVec3( light.end );
-	common->ReadDemo()->ReadInt( (int&)light.prelightModel );
+	// prelightModel was removed, the value is still read for demo file format compatibility
+	int prelightModelDiscard;
+	common->ReadDemo()->ReadInt( prelightModelDiscard );
 	common->ReadDemo()->ReadInt( light.lightId );
 	common->ReadDemo()->ReadInt( (int&)light.shader );
 	for ( int i = 0; i < MAX_ENTITY_SHADER_PARMS; i++)
 		common->ReadDemo()->ReadFloat( light.shaderParms[i] );
 	common->ReadDemo()->ReadInt( (int&)light.referenceSound );
-	if ( light.prelightModel ) {
-		light.prelightModel = renderModelManager->FindModel( common->ReadDemo()->ReadHashString() );
+	if ( prelightModelDiscard ) {
+		// old demos have a prelight model name here, skip it
+		common->ReadDemo()->ReadHashString();
 	}
 	if ( light.shader ) {
 		light.shader = declManager->FindMaterial( common->ReadDemo()->ReadHashString() );

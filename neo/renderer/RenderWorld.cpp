@@ -390,11 +390,9 @@ void idRenderWorldLocal::UpdateLightDef( qhandle_t lightHandle, const renderLigh
 			 rlight->parallel == light->parms.parallel && rlight->pointLight == light->parms.pointLight &&
 			 rlight->right == light->parms.right && rlight->start == light->parms.start &&
 			 rlight->target == light->parms.target && rlight->up == light->parms.up &&
-			 rlight->shader == light->lightShader && rlight->prelightModel == light->parms.prelightModel ) {
+			 rlight->shader == light->lightShader ) {
 			justUpdate = true;
 		} else {
-			// if we are updating shadows, the prelight model is no longer valid
-			light->lightHasMoved = true;
 			R_FreeLightDefDerivedData( light );
 		}
 	} else {
@@ -411,16 +409,6 @@ void idRenderWorldLocal::UpdateLightDef( qhandle_t lightHandle, const renderLigh
 	if ( common->WriteDemo() && light->archived ) {
 		WriteFreeLight( lightHandle );
 		light->archived = false;
-	}
-
-	// new for BFG edition: force noShadows on spectrum lights so teleport spawns
-	// don't cause such a slowdown.  Hell writing shouldn't be shadowed anyway...
-	if ( light->parms.shader && light->parms.shader->Spectrum() ) {
-		light->parms.noShadows = true;
-	}
-
-	if ( light->lightHasMoved ) {
-		light->parms.prelightModel = NULL;
 	}
 
 	if ( !justUpdate ) {
