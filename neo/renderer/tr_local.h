@@ -102,18 +102,15 @@ struct drawSurf_t {
 	int						numIndexes;
 	vertCacheHandle_t		indexCache;			// triIndex_t
 	vertCacheHandle_t		ambientCache;		// idDrawVert
-	vertCacheHandle_t		shadowCache;		// idShadowVert / idShadowVertSkinned
 	vertCacheHandle_t		jointCache;			// idJointMat
 	const viewEntity_t *	space;
-	const idMaterial *		material;			// may be NULL for shadow volumes
+	const idMaterial *		material;
 	uint64					extraGLState;		// Extra GL state |'d with material->stage[].drawStateBits
 	float					sort;				// material->sort, modified by gui / entity sort offsets
 	const float	 *			shaderRegisters;	// evaluated and adjusted for referenceShaders
 	drawSurf_t *			nextOnLight;		// viewLight chains
 	drawSurf_t **			linkChain;			// defer linking to lights to a serial section to avoid a mutex
 	idScreenRect			scissorRect;		// for scissor clipping, local inside renderView viewport
-	int						renderZFail;
-	volatile shadowVolumeState_t shadowVolumeState;
 };
 
 // areas have references to hold all the lights and entities in them
@@ -173,8 +170,6 @@ public:
 
 	renderLight_t			parms;					// specification
 
-	bool					lightHasMoved;			// the light has changed its position since it was
-													// first added, so the prelight model is not valid
 	idRenderWorldLocal *	world;
 	int						index;					// in world lightdefs
 
@@ -252,11 +247,6 @@ public:
 	bool					needsPortalSky;
 };
 
-struct shadowOnlyEntity_t {
-	shadowOnlyEntity_t *	next;
-	idRenderEntityLocal	*	edef;
-};
-
 // viewLights are allocated on the frame temporary stack memory
 // a viewLight contains everything that the back end needs out of an idRenderLightLocal,
 // which the front end may be modifying simultaniously if running in SMP mode.
@@ -276,11 +266,6 @@ struct viewLight_t {
 	// R_AddSingleLight() determined that the light isn't actually needed
 	bool					removeFromList;
 
-	// R_AddSingleLight builds this list of entities that need to be added
-	// to the viewEntities list because they potentially cast shadows into
-	// the view, even though the aren't directly visible
-	shadowOnlyEntity_t *	shadowOnlyViewEntities;
-
 	enum interactionState_t {
 		INTERACTION_UNCHECKED,
 		INTERACTION_NO,
@@ -296,14 +281,10 @@ struct viewLight_t {
 	const float	*			shaderRegisters;			// shader registers used by backend
 	idImage *				falloffImage;				// falloff image used by backend
 
-	drawSurf_t *			globalShadows;				// shadow everything
 	drawSurf_t *			localInteractions;			// don't get local shadows
-	drawSurf_t *			localShadows;				// don't shadow local surfaces
 	drawSurf_t *			globalInteractions;			// get shadows from everything
 	drawSurf_t *			translucentInteractions;	// translucent interactions don't get shadows
 
-	// R_AddSingleLight will build a chain of parameters here to setup shadow volumes
-	preLightShadowVolumeParms_t *	preLightShadowVolumes;
 };
 
 // a viewEntity is created whenever a idRenderEntityLocal is considered for inclusion
@@ -341,8 +322,6 @@ struct viewEntity_t {
 	// be linked to the lights or added to the drawsurf list in a serial code section
 	drawSurf_t *			drawSurfs;
 
-	// R_AddSingleModel will build a chain of parameters here to setup shadow volumes
-	dynamicShadowVolumeParms_t *	dynamicShadowVolumes;
 };
 
 
@@ -501,8 +480,6 @@ enum frameAllocType_t {
 	FRAME_ALLOC_SURFACE_TRIANGLES,
 	FRAME_ALLOC_DRAW_SURFACE,
 	FRAME_ALLOC_INTERACTION_STATE,
-	FRAME_ALLOC_SHADOW_ONLY_ENTITY,
-	FRAME_ALLOC_SHADOW_VOLUME_PARMS,
 	FRAME_ALLOC_SHADER_REGISTER,
 	FRAME_ALLOC_DRAW_SURFACE_POINTER,
 	FRAME_ALLOC_DRAW_COMMAND,
@@ -557,13 +534,11 @@ const idMaterial *R_RemapShaderBySkin( const idMaterial *shader, const idDeclSki
 struct performanceCounters_t {
 	int		c_box_cull_in;
 	int		c_box_cull_out;
-	int		c_createShadowVolumes;
 	int		c_generateMd5;
 	int		c_entityDefCallbacks;
 	int		c_alloc;			// counts for R_StaticAllc/R_StaticFree
 	int		c_free;
 	int		c_visibleViewEntities;
-	int		c_shadowViewEntities;
 	int		c_viewLights;
 	int		c_numViews;			// number of total views rendered
 	int		c_deformedSurfaces;	// idMD5Mesh::GenerateSurface
@@ -618,15 +593,11 @@ struct backEndCounters_t {
 	int		c_drawElements;
 	int		c_drawIndexes;
 
-	int		c_shadowElements;
-	int		c_shadowIndexes;
-
 	int		c_copyFrameBuffer;
 
 	float	c_overDraw;
 
 	int		totalMicroSec;			// total microseconds for backend run
-	int		shadowMicroSec;
 };
 
 // all state modified by the back end is separated
@@ -830,7 +801,6 @@ extern idCVar r_maxAnisotropicFiltering;	// texture filtering parameter
 extern idCVar r_useTrilinearFiltering;		// Extra quality filtering
 extern idCVar r_lodBias;					// lod bias
 
-extern idCVar r_useLightPortalFlow;			// 1 = do a more precise area reference determination
 extern idCVar r_useShadowSurfaceScissor;	// 1 = scissor shadows by the scissor rect of the interaction surfaces
 extern idCVar r_useConstantMaterials;		// 1 = use pre-calculated material registers if possible
 extern idCVar r_useNodeCommonChildren;		// stop pushing reference bounds early when possible
@@ -839,7 +809,6 @@ extern idCVar r_useLightPortalCulling;		// 0 = none, 1 = box, 2 = exact clip of 
 extern idCVar r_useLightAreaCulling;		// 0 = off, 1 = on
 extern idCVar r_useLightScissors;			// 1 = use custom scissor rectangle for each light
 extern idCVar r_useEntityPortalCulling;		// 0 = none, 1 = box
-extern idCVar r_skipPrelightShadows;		// 1 = skip the dmap generated static shadow volumes
 extern idCVar r_useCachedDynamicModels;		// 1 = cache snapshots of dynamic models
 extern idCVar r_useScissor;					// 1 = scissor clip as portals and lights are processed
 extern idCVar r_usePortals;					// 1 = use portals to perform area culling, otherwise draw everything
@@ -847,7 +816,6 @@ extern idCVar r_useStateCaching;			// avoid redundant state changes in GL_*() ca
 extern idCVar r_useEntityCallbacks;			// if 0, issue the callback immediately at update time, rather than defering
 extern idCVar r_lightAllBackFaces;			// light all the back faces, even when they would be shadowed
 extern idCVar r_useLightDepthBounds;		// use depth bounds test on lights to reduce both shadow and interaction fill
-extern idCVar r_useShadowDepthBounds;		// use depth bounds test on individual shadows to reduce shadow fill
 
 extern idCVar r_skipPostProcess;			// skip all post-process renderings
 extern idCVar r_skipSuppress;				// ignore the per-view suppressions
@@ -873,14 +841,12 @@ extern idCVar r_skipSpecular;				// use black for specular
 extern idCVar r_skipDiffuse;				// use black for diffuse
 extern idCVar r_skipDecals;					// skip decal surfaces
 extern idCVar r_skipOverlays;				// skip overlay surfaces
-extern idCVar r_skipShadows;				// disable shadows
 extern idCVar r_skipVideo;					// skip video decoding
 
 extern idCVar r_ignoreGLErrors;
 
 extern idCVar r_screenFraction;				// for testing fill rate, the resolution of the entire screen can be changed
 extern idCVar r_showUnsmoothedTangents;		// highlight geometry rendered with unsmoothed tangents
-extern idCVar r_showSilhouette;				// highlight edges that are casting shadow planes
 extern idCVar r_showVertexColor;			// draws all triangles with the solid vertex color
 extern idCVar r_showUpdates;				// report entity and light updates and ref counts
 extern idCVar r_showDemo;					// report reads and writes to the demo file
@@ -899,7 +865,6 @@ extern idCVar r_showDominantTri;			// draw lines from vertexes to center of domi
 extern idCVar r_showTextureVectors;			// draw each triangles texture (tangent) vectors
 extern idCVar r_showLights;					// 1 = print light info, 2 = also draw volumes
 extern idCVar r_showLightCount;				// colors surfaces based on light count
-extern idCVar r_showShadows;				// visualize the stencil shadow volumes
 extern idCVar r_showLightScissors;			// show light scissor rectangles
 extern idCVar r_showMemory;					// print frame memory utilization
 extern idCVar r_showCull;					// report sphere and box culling stats
@@ -919,8 +884,6 @@ extern idCVar r_singleLight;				// suppress all but one light
 extern idCVar r_singleEntity;				// suppress all but one entity
 extern idCVar r_singleArea;					// only draw the portal area the view is actually in
 extern idCVar r_singleSurface;				// suppress all but one surface on each entity
-extern idCVar r_shadowPolygonOffset;		// bias value added to depth test for stencil shadow drawing
-extern idCVar r_shadowPolygonFactor;		// scale value for stencil shadow drawing
 
 extern idCVar r_jitter;						// randomly subpixel jitter the projection matrix
 extern idCVar r_orderIndexes;				// perform index reorganization to optimize vertex use
@@ -1091,8 +1054,6 @@ TR_FRONTEND_ADDLIGHTS
 ============================================================
 */
 
-void R_ShadowBounds( const idBounds & modelBounds, const idBounds & lightBounds, const idVec3 & lightOrigin, idBounds & shadowBounds );
-
 ID_INLINE bool R_CullModelBoundsToLight( const idRenderLightLocal * light, const idBounds & localBounds, const idRenderMatrix & modelRenderMatrix ) {
 	idRenderMatrix modelLightProject;
 	idRenderMatrix::Multiply( light->committed.baseLightProject, modelRenderMatrix, modelLightProject );
@@ -1164,7 +1125,6 @@ srfTriangles_t *	R_AllocStaticTriSurf();
 void				R_AllocStaticTriSurfVerts( srfTriangles_t *tri, int numVerts );
 void				R_AllocStaticTriSurfPlanes( srfTriangles_t *tri, int numIndexes );
 void				R_AllocStaticTriSurfIndexes( srfTriangles_t *tri, int numIndexes );
-void				R_AllocStaticTriSurfPreLightShadowVerts( srfTriangles_t *tri, int numVerts );
 void				R_AllocStaticTriSurfSilIndexes( srfTriangles_t *tri, int numIndexes );
 void				R_AllocStaticTriSurfDominantTris( srfTriangles_t *tri, int numVerts );
 void				R_AllocStaticTriSurfSilEdges( srfTriangles_t *tri, int numSilEdges );
@@ -1207,7 +1167,7 @@ void				R_DeriveTangents( srfTriangles_t *tri );
 // copy data from a front-end srfTriangles_t to a back-end drawSurf_t
 void				R_InitDrawSurfFromTri( drawSurf_t & ds, srfTriangles_t & tri );
 
-// For static surfaces, the indexes, ambient, and shadow buffers can be pre-created at load
+// For static surfaces, the index and vertex buffers can be pre-created at load
 // time, rather than being re-created each frame in the frame temporary buffers.
 void				R_CreateStaticBuffersForTri( srfTriangles_t & tri );
 
@@ -1238,7 +1198,6 @@ struct deformInfo_t {
 
 	vertCacheHandle_t	staticIndexCache;		// GL_INDEX_TYPE
 	vertCacheHandle_t	staticAmbientCache;		// idDrawVert
-	vertCacheHandle_t	staticShadowCache;		// idShadowCacheSkinned
 };
 
 
@@ -1313,7 +1272,6 @@ void RB_DrawBounds( const idBounds &bounds );
 void RB_ShowLights( drawSurf_t **drawSurfs, int numDrawSurfs );
 void RB_ShowLightCount( drawSurf_t **drawSurfs, int numDrawSurfs );
 void RB_PolygonClear();
-void RB_ScanStencilBuffer();
 void RB_ShowDestinationAlpha();
 void RB_ShowOverdraw();
 void RB_RenderDebugTools( drawSurf_t **drawSurfs, int numDrawSurfs );
@@ -1325,9 +1283,6 @@ void RB_ShutdownDebugTools();
 #include "RenderLog.h"
 #include "AutoRender.h"
 #include "AutoRenderBink.h"
-#include "jobs/ShadowShared.h"
-#include "jobs/prelightshadowvolume/PreLightShadowVolume.h"
-#include "jobs/dynamicshadowvolume/DynamicShadowVolume.h"
 #include "GraphicsAPIWrapper.h"
 #include "GLMatrix.h"
 

@@ -625,9 +625,6 @@ void idSaveGame::WriteRenderLight( const renderLight_t &renderLight ) {
 	WriteVec3( renderLight.start );
 	WriteVec3( renderLight.end );
 
-	// only idLight has a prelightModel and it's always based on the entityname, so we'll restore it there
-	// WriteModel( renderLight.prelightModel );
-
 	WriteInt( renderLight.lightId );
 
 	WriteMaterial( renderLight.shader );
@@ -1420,10 +1417,6 @@ void idRestoreGame::ReadRenderLight( renderLight_t &renderLight ) {
 	ReadVec3( renderLight.start );
 	ReadVec3( renderLight.end );
 
-	// only idLight has a prelightModel and it's always based on the entityname, so we'll restore it there
-	// ReadModel( renderLight.prelightModel );
-	renderLight.prelightModel = NULL;
-
 	ReadInt( renderLight.lightId );
 
 	ReadMaterial( renderLight.shader );
@@ -1599,3 +1592,4 @@ void idRestoreGame::ReadSoundCommands() {
 	gameSoundWorld->StopAllSounds();
 	gameSoundWorld->ReadFromSaveGame( file );
 }
+

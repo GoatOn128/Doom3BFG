@@ -202,39 +202,6 @@ void RB_ShowDestinationAlpha() {
 
 /*
 ===================
-RB_ScanStencilBuffer
-
-Debugging tool to see what values are in the stencil buffer
-===================
-*/
-void RB_ScanStencilBuffer() {
-	int		counts[256];
-	int		i;
-	byte	*stencilReadback;
-
-	memset( counts, 0, sizeof( counts ) );
-
-	stencilReadback = (byte *)R_StaticAlloc( renderSystem->GetWidth() * renderSystem->GetHeight(), TAG_RENDER_TOOLS );
-	gladGL.ReadPixels( 0, 0, renderSystem->GetWidth(), renderSystem->GetHeight(), GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, stencilReadback );
-
-	for ( i = 0; i < renderSystem->GetWidth() * renderSystem->GetHeight(); i++ ) {
-		counts[ stencilReadback[i] ]++;
-	}
-
-	R_StaticFree( stencilReadback );
-
-	// print some stats (not supposed to do from back end in SMP...)
-	common->Printf( "stencil values:\n" );
-	for ( i = 0; i < 255; i++ ) {
-		if ( counts[i] ) {
-			common->Printf( "%i: %i\n", i, counts[i] );
-		}
-	}
-}
-
-
-/*
-===================
 RB_CountStencilBuffer
 
 Print an overdraw count based on stencil index values
@@ -664,93 +631,6 @@ static void RB_RenderDrawSurfListWithFunction( drawSurf_t **drawSurfs, int numDr
 
 		backEnd.currentSpace = drawSurf->space;
 	}
-}
-
-/*
-=================
-RB_ShowSilhouette
-
-Blacks out all edges, then adds color for each edge that a shadow
-plane extends from, allowing you to see doubled edges
-
-FIXME: not thread safe!
-=================
-*/
-static void RB_ShowSilhouette() {
-	int		i;
-	const drawSurf_t	*surf;
-	const viewLight_t	*vLight;
-
-	if ( !r_showSilhouette.GetBool() ) {
-		return;
-	}
-
-	//
-	// clear all triangle edges to black
-	//
-	globalImages->BindNull();
-	gladGL.Disable( GL_TEXTURE_2D );
-
-	GL_Color( 0, 0, 0 );
-
-	GL_State( GLS_DEPTHFUNC_ALWAYS | GLS_POLYMODE_LINE );
-
-	GL_Cull( CT_TWO_SIDED );
-
-	RB_RenderDrawSurfListWithFunction( backEnd.viewDef->drawSurfs, backEnd.viewDef->numDrawSurfs,
-		RB_DrawElementsWithCounters );
-
-
-	//
-	// now blend in edges that cast silhouettes
-	//
-	RB_SimpleWorldSetup();
-	GL_Color( 0.5, 0, 0 );
-	GL_State( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE );
-
-	for ( vLight = backEnd.viewDef->viewLights; vLight; vLight = vLight->next ) {
-		for ( i = 0; i < 2; i++ ) {
-			for ( surf = i ? vLight->localShadows : vLight->globalShadows
-				; surf; surf = (drawSurf_t *)surf->nextOnLight ) {
-				RB_SimpleSurfaceSetup( surf );
-
-				const srfTriangles_t * tri = surf->frontEndGeo;
-
-				idVertexBuffer vertexBuffer;
-				if ( !vertexCache.GetVertexBuffer( tri->shadowCache, &vertexBuffer ) ) {
-					continue;
-				}
-
-				gladGL.BindBufferARB( GL_ARRAY_BUFFER_ARB, (GLuint)vertexBuffer.GetAPIObject() );
-				int vertOffset = vertexBuffer.GetOffset();
-
-				gladGL.VertexPointer( 3, GL_FLOAT, sizeof( idShadowVert ), (void *)vertOffset );
-				gladGL.Begin( GL_LINES );
-
-				for ( int j = 0; j < tri->numIndexes; j+=3 ) {
-					int		i1 = tri->indexes[j+0];
-					int		i2 = tri->indexes[j+1];
-					int		i3 = tri->indexes[j+2];
-
-					if ( (i1 & 1) + (i2 & 1) + (i3 & 1) == 1 ) {
-						if ( (i1 & 1) + (i2 & 1) == 0 ) {
-							gladGL.ArrayElement( i1 );
-							gladGL.ArrayElement( i2 );
-						} else if ( (i1 & 1 ) + (i3 & 1) == 0 ) {
-							gladGL.ArrayElement( i1 );
-							gladGL.ArrayElement( i3 );
-						}
-					}
-				}
-				gladGL.End();
-
-			}
-		}
-	}
-
-	GL_State( GLS_DEFAULT );
-	GL_Color( 1,1,1 );
-	GL_Cull( CT_FRONT_SIDED );
 }
 
 /*
@@ -2626,7 +2506,6 @@ void RB_RenderDebugTools( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 	}
 	RB_TestImage();
 	RB_ShowPortals();
-	RB_ShowSilhouette();
 	RB_ShowDepthBuffer();
 	RB_ShowIntensity();
 	RB_ShowCenterOfProjection();

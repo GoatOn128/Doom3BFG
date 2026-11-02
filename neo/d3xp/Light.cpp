@@ -231,7 +231,8 @@ archives object for save game file
 void idLight::Save( idSaveGame *savefile ) const {
 	savefile->WriteRenderLight( renderLight );
 
-	savefile->WriteBool( renderLight.prelightModel != NULL );
+	// prelightModel was removed, the bool is still written for savegame format compatibility
+	savefile->WriteBool( false );
 
 	savefile->WriteVec3( localLightOrigin );
 	savefile->WriteMat3( localLightAxis );
@@ -265,18 +266,8 @@ void idLight::Restore( idRestoreGame *savefile ) {
 
 	savefile->ReadRenderLight( renderLight );
 
+	// prelightModel was removed, the bool is still read for savegame format compatibility
 	savefile->ReadBool( hadPrelightModel );
-	renderLight.prelightModel = renderModelManager->CheckModel( va( "_prelight_%s", name.c_str() ) );
-	if ( ( renderLight.prelightModel == NULL ) && hadPrelightModel ) {
-		assert( 0 );
-		if ( developer.GetBool() ) {
-			// we really want to know if this happens
-			gameLocal.Error( "idLight::Restore: prelightModel '_prelight_%s' not found", name.c_str() );
-		} else {
-			// but let it slide after release
-			gameLocal.Warning( "idLight::Restore: prelightModel '_prelight_%s' not found", name.c_str() );
-		}
-	}
 
 	savefile->ReadVec3( localLightOrigin );
 	savefile->ReadMat3( localLightAxis );
@@ -344,16 +335,6 @@ void idLight::Spawn() {
 	renderEntity.referenceShader = renderLight.shader;
 
 	lightDefHandle = -1;		// no static version yet
-
-	// see if an optimized shadow volume exists
-	// the renderer will ignore this value after a light has been moved,
-	// but there may still be a chance to get it wrong if the game moves
-	// a light before the first present, and doesn't clear the prelight
-	renderLight.prelightModel = 0;
-	if ( name[ 0 ] ) {
-		// this will return 0 if not found
-		renderLight.prelightModel = renderModelManager->CheckModel( va( "_prelight_%s", name.c_str() ) );
-	}
 
 	spawnArgs.GetBool( "start_off", "0", start_off );
 	if ( start_off ) {
@@ -1182,3 +1163,4 @@ bool idLight::ClientReceiveEvent( int event, int time, const idBitMsg &msg ) {
 
 	return idEntity::ClientReceiveEvent( event, time, msg );
 }
+
