@@ -1046,19 +1046,6 @@ static void RB_RenderInteractions( const drawSurf_t *surfList, const viewLight_t
 	idStaticList< const drawSurf_t *, MAX_COMPLEX_INTERACTIONS_PER_LIGHT > complexSurfaces;
 	for ( const drawSurf_t * walk = surfList; walk != NULL; walk = walk->nextOnLight ) {
 
-		// make sure the triangle culling is done
-		if ( walk->shadowVolumeState != SHADOWVOLUME_DONE ) {
-			assert( walk->shadowVolumeState == SHADOWVOLUME_UNFINISHED || walk->shadowVolumeState == SHADOWVOLUME_DONE );
-
-			uint64 start = Sys_Microseconds();
-			while ( walk->shadowVolumeState == SHADOWVOLUME_UNFINISHED ) {
-				Sys_Yield();
-			}
-			uint64 end = Sys_Microseconds();
-
-			backEnd.pc.shadowMicroSec += end - start;
-		}
-
 		const idMaterial * surfaceShader = walk->material;
 		if ( surfaceShader->GetFastPathBumpImage() ) {
 			allSurfaces.Append( walk );

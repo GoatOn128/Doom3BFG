@@ -51,7 +51,6 @@ model like for instance a world model.
 
 #define TEMP_ROUND16( x )				( ( x + 15 ) & ~15 )
 #define TEMP_FACING( numIndexes )		TEMP_ROUND16( ( ( numIndexes / 3 + 3 ) & ~3 ) + 1 )	// rounded up for SIMD, plus 1 for dangling edges
-#define TEMP_CULL( numIndexes )			TEMP_ROUND16( ( ( numIndexes / 3 + 3 ) & ~3 ) )		// rounded up for SIMD
 #define TEMP_VERTS( numVerts )			TEMP_ROUND16( numVerts * sizeof( idVec4 ) )
 #define OUTPUT_INDEX_BUFFER_SIZE		4096
 
@@ -90,16 +89,12 @@ struct dynamicShadowVolumeParms_t {
 	bool							useShadowDepthBounds;
 	// temp
 	byte *							tempFacing;				// temp buffer in SPU local memory
-	byte *							tempCulled;				// temp buffer in SPU local memory
 	idVec4 *						tempVerts;				// temp buffer in SPU local memory
 	// output
 	triIndex_t *					indexBuffer;			// output buffer in SPU local memory
 	triIndex_t *					shadowIndices;			// streamed out to main memory
 	int								maxShadowIndices;
 	int *							numShadowIndices;		// streamed out to main memory
-	triIndex_t *					lightIndices;			// streamed out to main memory
-	int								maxLightIndices;
-	int *							numLightIndices;		// streamed out to main memory
 	int *							renderZFail;			// streamed out to main memory
 	float *							shadowZMin;				// streamed out to main memory
 	float *							shadowZMax;				// streamed out to main memory

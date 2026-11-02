@@ -196,7 +196,7 @@ static byte TriangleCulled_Generic( const idVec3 & v1, const idVec3 & v2, const 
 CalculateTriangleFacingCulledStatic
 =====================
 */
-static int CalculateTriangleFacingCulledStatic( byte * __restrict facing, byte * __restrict culled, const triIndex_t * __restrict indexes, int numIndexes,
+static int CalculateTriangleFacingCulledStatic( byte * __restrict facing, const triIndex_t * __restrict indexes, int numIndexes,
 									const idDrawVert * __restrict verts, const int numVerts,
 									const idVec3 & lightOrigin, const idVec3 & viewOrigin,
 									bool cullShadowTrianglesToLight, const idRenderMatrix & lightProject,
@@ -294,11 +294,6 @@ static int CalculateTriangleFacingCulledStatic( byte * __restrict facing, byte *
 			// optionally make triangles that are outside the light frustum facing so they do not contribute to the shadow volume
 			triangleFacing = _mm_or_si128( triangleFacing, _mm_and_si128( triangleCulled, cullShadowTrianglesToLightMask ) );
 
-			// store culled
-			const __m128i culled_s = _mm_packs_epi32( triangleCulled, triangleCulled );
-			const __m128i culled_b = _mm_packs_epi16( culled_s, culled_s );
-			*(int *)&culled[j] = _mm_cvtsi128_si32( culled_b );
-
 			// store facing
 			const __m128i facing_s = _mm_packs_epi32( triangleFacing, triangleFacing );
 			const __m128i facing_b = _mm_packs_epi16( facing_s, facing_s );
@@ -352,7 +347,6 @@ static int CalculateTriangleFacingCulledStatic( byte * __restrict facing, byte *
 			// optionally make triangles that are outside the light frustum facing so they do not contribute to the shadow volume
 			triangleFacing |= ( triangleCulled & cullShadowTrianglesToLightMask );
 
-			culled[j] = triangleCulled;
 			facing[j] = triangleFacing;
 
 			// count the number of facing triangles
@@ -382,7 +376,7 @@ static int CalculateTriangleFacingCulledStatic( byte * __restrict facing, byte *
 CalculateTriangleFacingCulledSkinned
 =====================
 */
-static int CalculateTriangleFacingCulledSkinned( byte * __restrict facing, byte * __restrict culled, idVec4 * __restrict tempVerts, const triIndex_t * __restrict indexes, int numIndexes,
+static int CalculateTriangleFacingCulledSkinned( byte * __restrict facing, idVec4 * __restrict tempVerts, const triIndex_t * __restrict indexes, int numIndexes,
 												const idDrawVert * __restrict verts, const int numVerts, const idJointMat * __restrict joints,
 												const idVec3 & lightOrigin, const idVec3 & viewOrigin,
 												bool cullShadowTrianglesToLight, const idRenderMatrix & lightProject,
@@ -508,11 +502,6 @@ static int CalculateTriangleFacingCulledSkinned( byte * __restrict facing, byte 
 			// optionally make triangles that are outside the light frustum facing so they do not contribute to the shadow volume
 			triangleFacing = _mm_or_si128( triangleFacing, _mm_and_si128( triangleCulled, cullShadowTrianglesToLightMask ) );
 
-			// store culled
-			const __m128i culled_s = _mm_packs_epi32( triangleCulled, triangleCulled );
-			const __m128i culled_b = _mm_packs_epi16( culled_s, culled_s );
-			*(int *)&culled[j] = _mm_cvtsi128_si32( culled_b );
-
 			// store facing
 			const __m128i facing_s = _mm_packs_epi32( triangleFacing, triangleFacing );
 			const __m128i facing_b = _mm_packs_epi16( facing_s, facing_s );
@@ -585,7 +574,6 @@ static int CalculateTriangleFacingCulledSkinned( byte * __restrict facing, byte 
 			// optionally make triangles that are outside the light frustum facing so they do not contribute to the shadow volume
 			triangleFacing |= ( triangleCulled & cullShadowTrianglesToLightMask );
 
-			culled[j] = triangleCulled;
 			facing[j] = triangleFacing;
 
 			// count the number of facing triangles
@@ -946,133 +934,9 @@ static void R_CreateShadowVolumeTriangles( triIndex_t *__restrict shadowIndices,
 
 /*
 =====================
-R_CreateLightTriangles
-=====================
-*/
-void R_CreateLightTriangles( triIndex_t * __restrict lightIndices, triIndex_t * __restrict indexBuffer, int & numLightIndicesTotal,
-								const byte * __restrict culled, const triIndex_t * __restrict indexes, const int numIndexes ) {
-	assert_spu_local_store( culled );
-	assert_not_spu_local_store( lightIndices );
-	assert_not_spu_local_store( indexes );
-
-#if 1
-
-	const int IN_BUFFER_SIZE = 256;
-	const int OUT_BUFFER_SIZE = IN_BUFFER_SIZE * 2;			// there are never more indices generated than the original indices
-	const int OUT_BUFFER_DEPTH = 4;							// quad buffer to allow overlapped output streaming
-	const int OUT_BUFFER_MASK = ( OUT_BUFFER_SIZE * OUT_BUFFER_DEPTH - 1 );
-
-	compile_time_assert( OUT_BUFFER_SIZE * OUT_BUFFER_DEPTH * sizeof( triIndex_t ) == OUTPUT_INDEX_BUFFER_SIZE );
-	assert_16_byte_aligned( indexBuffer );
-
-	int numLightIndices = 0;
-	int numStreamedIndices = 0;
-
-	idODSStreamedArray< triIndex_t, IN_BUFFER_SIZE, SBT_QUAD, 1 > indexesODS( indexes, numIndexes );
-
-	for ( int i = 0, j = 0; i < numIndexes; ) {
-
-		const int nextNumIndexes = indexesODS.FetchNextBatch();
-
-		// NOTE: we rely on FetchNextBatch() to wait for all previous DMAs to complete
-		while( numLightIndices - numStreamedIndices >= OUT_BUFFER_SIZE ) {
-			StreamOut( lightIndices + numStreamedIndices, & indexBuffer[numStreamedIndices & OUT_BUFFER_MASK], OUT_BUFFER_SIZE * sizeof( triIndex_t ) );
-			numStreamedIndices += OUT_BUFFER_SIZE;
-		}
-
-		for ( ; i + 4 * 3 <= nextNumIndexes; i += 4 * 3, j += 4 ) {
-			const byte ta = ~culled[j + 0] & 3;
-			const byte tb = ~culled[j + 1] & 3;
-			const byte tc = ~culled[j + 2] & 3;
-			const byte td = ~culled[j + 3] & 3;
-
-			indexBuffer[( numLightIndices + 0 ) & OUT_BUFFER_MASK] = indexesODS[i + 0 * 3 + 0];
-			indexBuffer[( numLightIndices + 1 ) & OUT_BUFFER_MASK] = indexesODS[i + 0 * 3 + 1];
-			indexBuffer[( numLightIndices + 2 ) & OUT_BUFFER_MASK] = indexesODS[i + 0 * 3 + 2];
-
-			numLightIndices += ta;
-
-			indexBuffer[( numLightIndices + 0 ) & OUT_BUFFER_MASK] = indexesODS[i + 1 * 3 + 0];
-			indexBuffer[( numLightIndices + 1 ) & OUT_BUFFER_MASK] = indexesODS[i + 1 * 3 + 1];
-			indexBuffer[( numLightIndices + 2 ) & OUT_BUFFER_MASK] = indexesODS[i + 1 * 3 + 2];
-
-			numLightIndices += tb;
-
-			indexBuffer[( numLightIndices + 0 ) & OUT_BUFFER_MASK] = indexesODS[i + 2 * 3 + 0];
-			indexBuffer[( numLightIndices + 1 ) & OUT_BUFFER_MASK] = indexesODS[i + 2 * 3 + 1];
-			indexBuffer[( numLightIndices + 2 ) & OUT_BUFFER_MASK] = indexesODS[i + 2 * 3 + 2];
-
-			numLightIndices += tc;
-
-			indexBuffer[( numLightIndices + 0 ) & OUT_BUFFER_MASK] = indexesODS[i + 3 * 3 + 0];
-			indexBuffer[( numLightIndices + 1 ) & OUT_BUFFER_MASK] = indexesODS[i + 3 * 3 + 1];
-			indexBuffer[( numLightIndices + 2 ) & OUT_BUFFER_MASK] = indexesODS[i + 3 * 3 + 2];
-
-			numLightIndices += td;
-		}
-
-		for ( ; i + 3 <= nextNumIndexes; i += 3, j++ ) {
-			const byte t = ~culled[j] & 3;
-
-			indexBuffer[( numLightIndices + 0 ) & OUT_BUFFER_MASK] = indexesODS[i + 0];
-			indexBuffer[( numLightIndices + 1 ) & OUT_BUFFER_MASK] = indexesODS[i + 1];
-			indexBuffer[( numLightIndices + 2 ) & OUT_BUFFER_MASK] = indexesODS[i + 2];
-
-			numLightIndices += t;
-		}
-	}
-
-	while( numLightIndices - numStreamedIndices >= OUT_BUFFER_SIZE ) {
-		StreamOut( lightIndices + numStreamedIndices, & indexBuffer[numStreamedIndices & OUT_BUFFER_MASK], OUT_BUFFER_SIZE * sizeof( triIndex_t ) );
-		numStreamedIndices += OUT_BUFFER_SIZE;
-	}
-	if ( numLightIndices > numStreamedIndices ) {
-		assert( numLightIndices - numStreamedIndices < OUT_BUFFER_SIZE );
-		StreamOut( lightIndices + numStreamedIndices, & indexBuffer[numStreamedIndices & OUT_BUFFER_MASK], ( numLightIndices - numStreamedIndices ) * sizeof( triIndex_t ) );
-	}
-
-	numLightIndicesTotal = numLightIndices;
-
-#if defined( ID_WIN_X86_SSE2_INTRIN )
-	_mm_sfence();
-#endif
-
-#else	// NOTE: this code will not work on the SPU because it tries to write directly to the destination
-
-	int numLightIndices = 0;
-
-	idODSStreamedArray< triIndex_t, 256, SBT_QUAD, 1 > indexesODS( indexes, numIndexes );
-
-	for ( int i = 0, j = 0; i < numIndexes; ) {
-
-		const int nextNumIndexes = indexesODS.FetchNextBatch() - 3;
-
-		for ( ; i <= nextNumIndexes; i += 3, j++ ) {
-			if ( culled[j] ) {
-				continue;
-			}
-
-			lightIndices[numLightIndices + 0] = indexesODS[i + 0];
-			lightIndices[numLightIndices + 1] = indexesODS[i + 1];
-			lightIndices[numLightIndices + 2] = indexesODS[i + 2];
-
-			numLightIndices += 3;
-		}
-	}
-
-	numLightIndicesTotal = numLightIndices;
-
-#endif
-}
-
-/*
-=====================
 DynamicShadowVolumeJob
 
 Creates shadow volume indices for a surface that intersects a light.
-Optionally also creates new surface indices with just the triangles
-inside the light volume. These indices will be unique for a given
-light / surface combination.
 
 The shadow volume indices are created using the original surface vertices.
 However, the indices are setup to be used with a shadow volume vertex buffer
@@ -1085,9 +949,6 @@ same position as the previous even vertex but is projected to infinity
 void DynamicShadowVolumeJob( const dynamicShadowVolumeParms_t * parms ) {
 	if ( parms->tempFacing == NULL ) {
 		*const_cast< byte ** >( &parms->tempFacing ) = (byte *)_alloca16( TEMP_FACING( parms->numIndexes ) );
-	}
-	if ( parms->tempCulled == NULL ) {
-		*const_cast< byte ** >( &parms->tempCulled ) = (byte *)_alloca16( TEMP_CULL( parms->numIndexes ) );
 	}
 	if ( parms->tempVerts == NULL && parms->joints != NULL ) {
 		*const_cast< idVec4 ** >( &parms->tempVerts ) = (idVec4 *)_alloca16( TEMP_VERTS( parms->numVerts ) );
@@ -1109,7 +970,6 @@ void DynamicShadowVolumeJob( const dynamicShadowVolumeParms_t * parms ) {
 
 	bool renderZFail = false;
 	int numShadowIndices = 0;
-	int numLightIndices = 0;
 
 	// The shadow volume may be depth culled if either the shadow volume was culled to the view frustum or if the
 	// depth range of the visible part of the shadow volume is outside the depth range of the light volume.
@@ -1131,13 +991,13 @@ void DynamicShadowVolumeJob( const dynamicShadowVolumeParms_t * parms ) {
 		// Optionally also calculate more precisely whether or not the view is inside the shadow volume.
 		int numFrontFacing = 0;
 		if ( parms->joints != NULL ) {
-			numFrontFacing = CalculateTriangleFacingCulledSkinned( parms->tempFacing, parms->tempCulled, parms->tempVerts, parms->indexes, parms->numIndexes,
+			numFrontFacing = CalculateTriangleFacingCulledSkinned( parms->tempFacing, parms->tempVerts, parms->indexes, parms->numIndexes,
 																parms->verts, parms->numVerts, parms->joints,
 																parms->localLightOrigin, parms->localViewOrigin,
 																parms->cullShadowTrianglesToLight, parms->localLightProject,
 																preciseInsideShadowVolume, parms->zNear );
 		} else {
-			numFrontFacing = CalculateTriangleFacingCulledStatic( parms->tempFacing, parms->tempCulled, parms->indexes, parms->numIndexes,
+			numFrontFacing = CalculateTriangleFacingCulledStatic( parms->tempFacing, parms->indexes, parms->numIndexes,
 																parms->verts, parms->numVerts,
 																parms->localLightOrigin, parms->localViewOrigin,
 																parms->cullShadowTrianglesToLight, parms->localLightProject,
@@ -1168,21 +1028,11 @@ void DynamicShadowVolumeJob( const dynamicShadowVolumeParms_t * parms ) {
 			}
 		}
 
-		// Create new indices with only the triangles that are inside the light volume.
-		if ( parms->lightIndices != NULL ) {
-			R_CreateLightTriangles( parms->lightIndices, parms->indexBuffer, numLightIndices, parms->tempCulled, parms->indexes, parms->numIndexes );
-
-			assert( numLightIndices <= parms->maxLightIndices );
-		}
 	}
 
 	// write out the number of shadow indices
 	if ( parms->numShadowIndices != NULL ) {
 		*parms->numShadowIndices = numShadowIndices;
-	}
-	// write out the number of light indices
-	if ( parms->numLightIndices != NULL ) {
-		*parms->numLightIndices = numLightIndices;
 	}
 	// write out whether or not the shadow volume needs to be rendered with Z-Fail
 	if ( parms->renderZFail != NULL ) {
