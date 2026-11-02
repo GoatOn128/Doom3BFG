@@ -20,8 +20,10 @@ jobs:
     # a cancelled run (superseded by a newer push) must not publish its
     # partial logs: they race with the live run and corrupt the committed
     # build.log and build-digest.md. pull_request cycles stay in the
-    # artifacts only
-    if: github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion != 'cancelled'
+    # artifacts only. feature branches are excluded too: committing the
+    # digest to a branch makes it conflict with the digest master publishes
+    # for its own merge commits, which blocks squash-merging the PR
+    if: github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion != 'cancelled' && github.event.workflow_run.head_branch == github.event.repository.default_branch
     runs-on: ubuntu-latest
     steps:
       - name: find build run
