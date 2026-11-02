@@ -514,7 +514,7 @@ void RB_RenderShadowMaps() {
 
 		shadowCandidate_t candidate;
 		candidate.vLight = vLight;
-		if ( vLight->lightDef->parms.parallel ) {
+		if ( vLight->lightDef->parms.lightType == LIGHT_PARALLEL ) {
 			// a parallel light shades everything, it must never lose its strip
 			candidate.score = -1.0f;
 		} else {

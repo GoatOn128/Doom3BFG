@@ -224,7 +224,7 @@ void idRenderWorldLocal::UpdateEntityDef( qhandle_t entityHandle, const renderEn
 					// only clear the dynamic model and interaction surfaces if they exist
 					c_callbackUpdate++;
 					R_ClearEntityDefDynamicModel( def );
-					def->parms = *re;
+					static_cast<renderEntity_t&>( def->parms ) = *re;
 					return;
 				}
 			}
@@ -245,7 +245,7 @@ void idRenderWorldLocal::UpdateEntityDef( qhandle_t entityHandle, const renderEn
 		def->index = entityHandle;
 	}
 
-	def->parms = *re;
+	static_cast<renderEntity_t&>( def->parms ) = *re;
 
 	def->lastModifiedFrameNum = tr.frameCount;
 	if ( common->WriteDemo() && def->archived ) {
