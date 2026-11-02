@@ -42,11 +42,17 @@ typedef struct portal_s {
 	struct portal_s *		next;			// next portal of the area
 	struct doublePortal_s *	doublePortal;
 
-	// occlusion query state, updated by the portal flow and the back end
-	int64					occlusionQuery;		// query number from GL_BeginQuery, 0 = never issued
-	int						queryFrame;			// frame the query was issued on
+	// occlusion query state. the front end only ever writes queryWantedFrame,
+	// the back end owns everything else, so the game/draw thread building the
+	// next frame never fights with the main thread executing this one.
+	// the zero-initialized state of a freshly loaded portal looks like a
+	// result measured at frame 0, which the trust window makes stale within
+	// a few frames of any map being up, so it can never cull.
+	int64					occlusionQuery;		// pending query number from GL_BeginQuery, 0 = none outstanding
+	int						pendingQueryFrame;	// frame the pending query was issued on
 	int						queryWantedFrame;	// frame the portal flow last asked for a query
-	int						sampleCount;		// deferred result, -1 = not read back yet
+	int						resultFrame;		// frame the stored result was measured on, -1 = never
+	int						sampleCount;		// last read back result, -1 = never read back
 } portal_t;
 
 
@@ -230,7 +236,6 @@ public:
 	idScreenRect			ScreenRectFromWinding( const idWinding *w, const viewEntity_t *space );
 	bool					PortalIsFoggedOut( const portal_t *p );
 	bool					PortalIsOccluded( const portal_t *p );
-	void					UpdatePortalOcclusionResults();
 	void					InvalidatePortalOcclusionQueries();
 	void					FloodViewThroughArea_r( const idVec3 & origin, int areaNum, const portalStack_t *ps );
 	void					FlowViewThroughPortals( const idVec3 & origin, int numPlanes, const idPlane *planes );

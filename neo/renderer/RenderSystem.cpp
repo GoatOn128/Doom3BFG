@@ -207,6 +207,7 @@ void	R_AddDrawOcclusion( viewDef_t * parms ) {
 	occlusionCommand_t * cmd = (occlusionCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
 	cmd->commandId = RC_OCCLUSION;
 	cmd->viewDef = parms;
+	cmd->frameCount = tr.frameCount;
 }
 
 

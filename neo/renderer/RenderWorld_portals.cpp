@@ -451,55 +451,24 @@ bool idRenderWorldLocal::PortalIsFoggedOut( const portal_t *p ) {
 ===================
 idRenderWorldLocal::PortalIsOccluded
 
-Returns true if the deferred occlusion query result says the area behind the
-portal is completely hidden by opaque geometry. Results that have not been
-read back yet, or that are older than the trust window, never cull so the
-portal is requeried instead.
+Returns true if the last occlusion query result the back end read back says
+the area behind the portal is completely hidden by opaque geometry. Results
+that were never measured, or that are older than the trust window, never cull.
+The back end keeps requerying marked portals every frame, so the stored result
+stays fresh as long as the portal flow keeps reaching the portal.
 ===================
 */
 bool idRenderWorldLocal::PortalIsOccluded( const portal_t *p ) {
 	if ( !r_usePortalOcclusion.GetBool() ) {
 		return false;
 	}
-	if ( p->occlusionQuery == 0 ) {
-		return false;	// never queried
+	if ( p->resultFrame < 0 || p->sampleCount < 0 ) {
+		return false;	// never measured
 	}
-	if ( p->sampleCount < 0 ) {
-		return false;	// result not read back yet
-	}
-	if ( tr.frameCount - p->queryFrame > r_portalOcclusionTrustFrames.GetInteger() ) {
-		return false;	// result is too old, requery before culling
+	if ( tr.frameCount - p->resultFrame > r_portalOcclusionTrustFrames.GetInteger() ) {
+		return false;	// result is too old to trust
 	}
 	return p->sampleCount == 0;
-}
-
-/*
-===================
-idRenderWorldLocal::UpdatePortalOcclusionResults
-
-Reads back the occlusion query results the back end issued for the previous
-frame and stores them on the portals for the upcoming traversal.
-===================
-*/
-void idRenderWorldLocal::UpdatePortalOcclusionResults() {
-	if ( !r_usePortalOcclusion.GetBool() ) {
-		return;
-	}
-	for ( int i = 0; i < numPortalAreas; i++ ) {
-		for ( portal_t * p = portalAreas[i].portals; p != NULL; p = p->next ) {
-			if ( p->occlusionQuery == 0 || p->sampleCount >= 0 ) {
-				continue;	// never queried, or result already consumed
-			}
-			const int result = GL_GetDeferredQueryResult( p->occlusionQuery );
-			if ( result == OCCLUSION_QUERY_TOO_OLD ) {
-				// the query object was reused in the meantime, requery
-				p->occlusionQuery = 0;
-				p->queryFrame = -1;
-				continue;
-			}
-			p->sampleCount = result;
-		}
-	}
 }
 
 /*
@@ -514,8 +483,9 @@ void idRenderWorldLocal::InvalidatePortalOcclusionQueries() {
 	for ( int i = 0; i < numPortalAreas; i++ ) {
 		for ( portal_t * p = portalAreas[i].portals; p != NULL; p = p->next ) {
 			p->occlusionQuery = 0;
-			p->queryFrame = -1;
+			p->pendingQueryFrame = -1;
 			p->queryWantedFrame = -1;
+			p->resultFrame = -1;
 			p->sampleCount = -1;
 		}
 	}
@@ -757,10 +727,6 @@ void idRenderWorldLocal::FindViewLightsAndEntities() {
 	// when a light or entity is next considered, it will create a new
 	// viewLight / viewEntity
 	tr.viewCount++;
-
-	// consume the occlusion query results the back end issued for the
-	// previous frame before flowing through the portals
-	UpdatePortalOcclusionResults();
 
 	// clear the visible lightDef and entityDef lists
 	tr.viewDef->viewLights = NULL;

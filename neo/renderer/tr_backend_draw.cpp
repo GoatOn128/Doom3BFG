@@ -2818,11 +2818,13 @@ void RB_PostProcess( const void * data ) {
 =================
 RB_Occlusion
 
-Issues deferred occlusion queries for the portal windings that the front end
-flowed through this frame. The windings are drawn depth tested against the
-opaque geometry of the view that was just rendered, with color and depth
-writes disabled, so a query that comes back with zero samples means the area
-behind the portal is completely hidden and can be culled next frame.
+Reads back the occlusion queries issued for the previous frame and issues new
+deferred queries for the portal windings that the front end flowed through this
+frame. The windings are drawn depth tested against the opaque geometry of the
+view that was just rendered, with color and depth writes disabled, so a query
+that comes back with zero samples means the area behind the portal is
+completely hidden and can be culled next frame. All GL work stays on the main
+thread, the game/draw thread only reads the stored results.
 =================
 */
 void RB_Occlusion( const void *data ) {
@@ -2863,13 +2865,35 @@ void RB_Occlusion( const void *data ) {
 	gladGL.LoadMatrixf( backEnd.viewDef->worldSpace.modelViewMatrix );
 
 	int numIssued = 0;
+
+	// the command list is executed after tr.frameCount was already bumped for
+	// the next frame, and with com_smp the game/draw thread is building the
+	// next frame's commands on another thread while this list runs, so the
+	// marks are compared against the frame the command was built in and any
+	// newer mark is accepted as well
+	const int frameCount = cmd->frameCount;
+
 	for ( int i = 0; i < world->numPortalAreas; i++ ) {
 		for ( portal_t * p = world->portalAreas[i].portals; p != NULL; p = p->next ) {
-			if ( p->queryWantedFrame != tr.frameCount ) {
-				continue;	// the portal flow didn't flow through this portal
+			// consume the deferred result of a pending query from a previous
+			// frame. the blocking swap before this frame's commands ran
+			// guarantees the GPU has finished that query, so this never stalls.
+			// the stored result is only overwritten by a newer result, it is
+			// never cleared, so the front end never sees a gap while the
+			// portal is being requeried
+			if ( p->occlusionQuery != 0 ) {
+				const int result = GL_GetDeferredQueryResult( p->occlusionQuery );
+				p->occlusionQuery = 0;
+				if ( result >= 0 ) {
+					p->sampleCount = result;
+					p->resultFrame = p->pendingQueryFrame;
+				}
 			}
-			if ( p->queryFrame == tr.frameCount ) {
-				continue;	// already queried this frame
+
+			// issue a fresh query for the portals the flow wants measured,
+			// unless one was already issued for this frame
+			if ( p->queryWantedFrame < frameCount || p->pendingQueryFrame == frameCount ) {
+				continue;
 			}
 
 			GL_BeginQuery( &p->occlusionQuery );
@@ -2880,8 +2904,7 @@ void RB_Occlusion( const void *data ) {
 			gladGL.End();
 			GL_EndQuery();
 
-			p->queryFrame = tr.frameCount;
-			p->sampleCount = -1;	// pending deferred readback
+			p->pendingQueryFrame = frameCount;
 			numIssued++;
 		}
 	}

@@ -507,6 +507,10 @@ struct occlusionCommand_t {
 	renderCommand_t		commandId;
 	renderCommand_t *	next;
 	viewDef_t *			viewDef;
+	// tr.frameCount when the command was built. the back end executes the
+	// command list a frame later, after tr.frameCount was already bumped, so
+	// the frame has to travel with the command
+	int					frameCount;
 };
 
 //=======================================================================
