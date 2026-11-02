@@ -126,7 +126,7 @@ bool idRenderWorldLocal::CullEntityByPortals( const idRenderEntityLocal *entity,
 	if ( r_useEntityPortalCulling.GetInteger() == 1 ) {
 
 		ALIGNTYPE16 frustumCorners_t corners;
-		idRenderMatrix::GetFrustumCorners( corners, entity->inverseBaseModelProject, bounds_unitCube );
+		idRenderMatrix::GetFrustumCorners( corners, entity->committed.inverseBaseModelProject, bounds_unitCube );
 		for ( int i = 0; i < ps->numPortalPlanes; i++ ) {
 			if ( idRenderMatrix::CullFrustumCornersToPlane( corners, ps->portalPlanes[i] ) == FRUSTUM_CULL_FRONT ) {
 				return true;
@@ -136,7 +136,7 @@ bool idRenderWorldLocal::CullEntityByPortals( const idRenderEntityLocal *entity,
 	} else if ( r_useEntityPortalCulling.GetInteger() >= 2 ) {
 
 		idRenderMatrix baseModelProject;
-		idRenderMatrix::Inverse( entity->inverseBaseModelProject, baseModelProject );
+		idRenderMatrix::Inverse( entity->committed.inverseBaseModelProject, baseModelProject );
 
 		idPlane frustumPlanes[6];
 		idRenderMatrix::GetFrustumPlanes( frustumPlanes, baseModelProject, false, true );

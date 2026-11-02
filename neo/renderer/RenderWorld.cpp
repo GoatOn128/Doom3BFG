@@ -276,7 +276,7 @@ void idRenderWorldLocal::UpdateEntityDef( qhandle_t entityHandle, const renderEn
 
 				bool axisMatch = ( re->axis == def->parms.axis );
 				bool originMatch = ( re->origin == def->parms.origin );
-				bool boundsMatch = ( re->bounds == def->localReferenceBounds );
+				bool boundsMatch = ( re->bounds == def->committed.localReferenceBounds );
 				bool modelMatch = ( re->hModel == def->parms.hModel );
 
 				if ( boundsMatch && originMatch && axisMatch && modelMatch ) {
@@ -1098,8 +1098,8 @@ guiPoint_t idRenderWorldLocal::GuiTrace( qhandle_t entityHandle, const idVec3 st
 
 	// transform the points into local space
 	idVec3 localStart, localEnd;
-	R_GlobalPointToLocal( def->modelMatrix, start, localStart );
-	R_GlobalPointToLocal( def->modelMatrix, end, localEnd );
+	R_GlobalPointToLocal( def->committed.modelMatrix, start, localStart );
+	R_GlobalPointToLocal( def->committed.modelMatrix, end, localEnd );
 
 	for ( int i = 0; i < model->NumSurfaces(); i++ ) {
 		const modelSurface_t *surf = model->Surface( i );

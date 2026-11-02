@@ -33,7 +33,7 @@ If you have questions concerning this license or the applicable additional terms
 
 idRenderEntityLocal::idRenderEntityLocal() {
 	memset( &parms, 0, sizeof( parms ) );
-	memset( modelMatrix, 0, sizeof( modelMatrix ) );
+	memset( committed.modelMatrix, 0, sizeof( committed.modelMatrix ) );
 
 	world					= NULL;
 	index					= 0;
@@ -42,8 +42,11 @@ idRenderEntityLocal::idRenderEntityLocal() {
 	dynamicModel			= NULL;
 	dynamicModelFrameCount	= 0;
 	cachedDynamicModel		= NULL;
-	localReferenceBounds	= bounds_zero;
-	globalReferenceBounds	= bounds_zero;
+	committed.modelRenderMatrix.Zero();
+	committed.inverseBaseModelProject.Zero();
+	committed.localReferenceBounds	= bounds_zero;
+	committed.globalReferenceBounds	= bounds_zero;
+	committed.commitFrame		= -1;
 	viewCount				= 0;
 	viewEntity				= NULL;
 	decals					= NULL;
