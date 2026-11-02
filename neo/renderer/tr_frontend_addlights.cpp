@@ -169,17 +169,17 @@ static void R_AddSingleLight( viewLight_t * vLight ) {
 	//--------------------------------------------
 	// copy data used by backend
 	//--------------------------------------------
-	vLight->globalLightOrigin = light->globalLightOrigin;
-	vLight->lightProject[0] = light->lightProject[0];
-	vLight->lightProject[1] = light->lightProject[1];
-	vLight->lightProject[2] = light->lightProject[2];
-	vLight->lightProject[3] = light->lightProject[3];
+	vLight->globalLightOrigin = light->committed.globalLightOrigin;
+	vLight->lightProject[0] = light->committed.lightProject[0];
+	vLight->lightProject[1] = light->committed.lightProject[1];
+	vLight->lightProject[2] = light->committed.lightProject[2];
+	vLight->lightProject[3] = light->committed.lightProject[3];
 
 	// the fog plane is the light far clip plane
-	idPlane fogPlane(	light->baseLightProject[2][0] - light->baseLightProject[3][0],
-						light->baseLightProject[2][1] - light->baseLightProject[3][1],
-						light->baseLightProject[2][2] - light->baseLightProject[3][2],
-						light->baseLightProject[2][3] - light->baseLightProject[3][3] );
+	idPlane fogPlane(	light->committed.baseLightProject[2][0] - light->committed.baseLightProject[3][0],
+						light->committed.baseLightProject[2][1] - light->committed.baseLightProject[3][1],
+						light->committed.baseLightProject[2][2] - light->committed.baseLightProject[3][2],
+						light->committed.baseLightProject[2][3] - light->committed.baseLightProject[3][3] );
 	const float planeScale = idMath::InvSqrt( fogPlane.Normal().LengthSqr() );
 	vLight->fogPlane[0] = fogPlane[0] * planeScale;
 	vLight->fogPlane[1] = fogPlane[1] * planeScale;
@@ -187,7 +187,7 @@ static void R_AddSingleLight( viewLight_t * vLight ) {
 	vLight->fogPlane[3] = fogPlane[3] * planeScale;
 
 	// copy the matrix for deforming the 'zeroOneCubeModel' to exactly cover the light volume in world space
-	vLight->inverseBaseLightProject = light->inverseBaseLightProject;
+	vLight->inverseBaseLightProject = light->committed.inverseBaseLightProject;
 
 	vLight->falloffImage = light->falloffImage;
 	vLight->lightShader = light->lightShader;
@@ -197,7 +197,7 @@ static void R_AddSingleLight( viewLight_t * vLight ) {
 		// Calculate the matrix that projects the zero-to-one cube to exactly cover the
 		// light frustum in clip space.
 		idRenderMatrix invProjectMVPMatrix;
-		idRenderMatrix::Multiply( viewDef->worldSpace.mvp, light->inverseBaseLightProject, invProjectMVPMatrix );
+		idRenderMatrix::Multiply( viewDef->worldSpace.mvp, light->committed.inverseBaseLightProject, invProjectMVPMatrix );
 
 		// Calculate the projected bounds, either not clipped at all, near clipped, or fully clipped.
 		idBounds projected;
@@ -335,7 +335,7 @@ static void R_AddSingleLight( viewLight_t * vLight ) {
 
 			// should we use the shadow bounds from pre-calculated interactions?
 			idBounds shadowBounds;
-			R_ShadowBounds( edef->globalReferenceBounds, light->globalLightBounds, light->globalLightOrigin, shadowBounds );
+			R_ShadowBounds( edef->globalReferenceBounds, light->committed.globalLightBounds, light->committed.globalLightOrigin, shadowBounds );
 
 			// this test is pointless if we knew the light was completely contained
 			// in the view frustum, but the entity would also be directly visible in most

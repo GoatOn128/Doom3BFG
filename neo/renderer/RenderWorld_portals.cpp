@@ -249,7 +249,7 @@ bool idRenderWorldLocal::CullLightByPortals( const idRenderLightLocal *light, co
 	if ( r_useLightPortalCulling.GetInteger() == 1 ) {
 
 		ALIGNTYPE16 frustumCorners_t corners;
-		idRenderMatrix::GetFrustumCorners( corners, light->inverseBaseLightProject, bounds_zeroOneCube );
+		idRenderMatrix::GetFrustumCorners( corners, light->committed.inverseBaseLightProject, bounds_zeroOneCube );
 		for ( int i = 0; i < ps->numPortalPlanes; i++ ) {
 			if ( idRenderMatrix::CullFrustumCornersToPlane( corners, ps->portalPlanes[i] ) == FRUSTUM_CULL_FRONT ) {
 				return true;
@@ -259,7 +259,7 @@ bool idRenderWorldLocal::CullLightByPortals( const idRenderLightLocal *light, co
 	} else if ( r_useLightPortalCulling.GetInteger() >= 2 ) {
 
 		idPlane frustumPlanes[6];
-		idRenderMatrix::GetFrustumPlanes( frustumPlanes, light->baseLightProject, true, true );
+		idRenderMatrix::GetFrustumPlanes( frustumPlanes, light->committed.baseLightProject, true, true );
 
 		// exact clip of light faces against all planes
 		for ( int i = 0; i < 6; i++ ) {
@@ -749,7 +749,7 @@ void idRenderWorldLocal::FloodLightThroughArea_r( idRenderLightLocal *light, int
 	// go through all the portals
 	for ( p = area->portals; p; p = p->next ) {
 		// make sure this portal is facing away from the view
-		d = p->plane.Distance( light->globalLightOrigin );
+		d = p->plane.Distance( light->committed.globalLightOrigin );
 		if ( d < -0.1f ) {
 			continue;
 		}
@@ -817,8 +817,8 @@ void idRenderWorldLocal::FloodLightThroughArea_r( idRenderLightLocal *light, int
 				j = 0;
 			}
 
-			v1 = light->globalLightOrigin - w[i].ToVec3();
-			v2 = light->globalLightOrigin - w[j].ToVec3();
+			v1 = light->committed.globalLightOrigin - w[i].ToVec3();
+			v2 = light->committed.globalLightOrigin - w[j].ToVec3();
 
 			newStack.portalPlanes[newStack.numPortalPlanes].Normal().Cross( v2, v1 );
 
@@ -826,7 +826,7 @@ void idRenderWorldLocal::FloodLightThroughArea_r( idRenderLightLocal *light, int
 			if ( newStack.portalPlanes[newStack.numPortalPlanes].Normalize() < 0.01f ) {
 				continue;
 			}
-			newStack.portalPlanes[newStack.numPortalPlanes].FitThroughPoint( light->globalLightOrigin );
+			newStack.portalPlanes[newStack.numPortalPlanes].FitThroughPoint( light->committed.globalLightOrigin );
 
 			newStack.numPortalPlanes++;
 		}
@@ -852,7 +852,7 @@ void idRenderWorldLocal::FlowLightThroughPortals( idRenderLightLocal *light ) {
 	}
 
 	idPlane frustumPlanes[6];
-	idRenderMatrix::GetFrustumPlanes( frustumPlanes, light->baseLightProject, true, true );
+	idRenderMatrix::GetFrustumPlanes( frustumPlanes, light->committed.baseLightProject, true, true );
 
 	portalStack_t ps;
 	memset( &ps, 0, sizeof( ps ) );

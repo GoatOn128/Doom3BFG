@@ -58,7 +58,7 @@ void R_CalcInteractionFacing( const idRenderEntityLocal *ent, const srfTriangles
 	}
 
 	idVec3 localLightOrigin;
-	R_GlobalPointToLocal( ent->modelMatrix, light->globalLightOrigin, localLightOrigin );
+	R_GlobalPointToLocal( ent->modelMatrix, light->committed.globalLightOrigin, localLightOrigin );
 
 	const int numFaces = tri->numIndexes / 3;
 	cullInfo.facing = (byte *) R_StaticAlloc( ( numFaces + 1 ) * sizeof( cullInfo.facing[0] ), TAG_RENDER_INTERACTION );
@@ -95,7 +95,7 @@ void R_CalcInteractionCullBits( const idRenderEntityLocal *ent, const srfTriangl
 	}
 
 	idPlane frustumPlanes[6];
-	idRenderMatrix::GetFrustumPlanes( frustumPlanes, light->baseLightProject, true, true );
+	idRenderMatrix::GetFrustumPlanes( frustumPlanes, light->committed.baseLightProject, true, true );
 
 	int frontBits = 0;
 

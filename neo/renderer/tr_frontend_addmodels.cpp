@@ -381,7 +381,7 @@ void R_AddSingleModel( viewEntity_t * vEntity ) {
 
 			const idRenderLightLocal * lightDef = vLight->lightDef;
 
-			if ( !lightDef->globalLightBounds.IntersectsBounds( entityDef->globalReferenceBounds ) ) {
+			if ( !lightDef->committed.globalLightBounds.IntersectsBounds( entityDef->globalReferenceBounds ) ) {
 				continue;
 			}
 
@@ -409,7 +409,7 @@ void R_AddSingleModel( viewEntity_t * vEntity ) {
 
 				// check more precisely for shadow visibility
 				idBounds shadowBounds;
-				R_ShadowBounds( entityDef->globalReferenceBounds, lightDef->globalLightBounds, lightDef->globalLightOrigin, shadowBounds );
+				R_ShadowBounds( entityDef->globalReferenceBounds, lightDef->committed.globalLightBounds, lightDef->committed.globalLightOrigin, shadowBounds );
 
 				// this doesn't say that the shadow can't effect anything, only that it can't
 				// effect anything in the view
@@ -677,7 +677,7 @@ void R_AddSingleModel( viewEntity_t * vEntity ) {
 			// Calculate the local light origin to determine if the view is inside the shadow
 			// projection and to calculate the triangle facing for dynamic shadow volumes.
 			idVec3 localLightOrigin;
-			R_GlobalPointToLocal( vEntity->modelMatrix, lightDef->globalLightOrigin, localLightOrigin );
+			R_GlobalPointToLocal( vEntity->modelMatrix, lightDef->committed.globalLightOrigin, localLightOrigin );
 
 			//--------------------------
 			// surface light interactions
@@ -722,7 +722,7 @@ void R_AddSingleModel( viewEntity_t * vEntity ) {
 								dynamicShadowParms->triangleMVP = vEntity->mvp;
 								dynamicShadowParms->localLightOrigin = localLightOrigin;
 								dynamicShadowParms->localViewOrigin = localViewOrigin;
-								idRenderMatrix::Multiply( vLight->lightDef->baseLightProject, entityDef->modelRenderMatrix, dynamicShadowParms->localLightProject );
+								idRenderMatrix::Multiply( vLight->lightDef->committed.baseLightProject, entityDef->modelRenderMatrix, dynamicShadowParms->localLightProject );
 								dynamicShadowParms->zNear = znear;
 								dynamicShadowParms->lightZMin = vLight->scissorRect.zmin;
 								dynamicShadowParms->lightZMax = vLight->scissorRect.zmax;
@@ -905,7 +905,7 @@ void R_AddSingleModel( viewEntity_t * vEntity ) {
 					dynamicShadowParms->triangleMVP = vEntity->mvp;
 					dynamicShadowParms->localLightOrigin = localLightOrigin;
 					dynamicShadowParms->localViewOrigin = localViewOrigin;
-					idRenderMatrix::Multiply( vLight->lightDef->baseLightProject, entityDef->modelRenderMatrix, dynamicShadowParms->localLightProject );
+					idRenderMatrix::Multiply( vLight->lightDef->committed.baseLightProject, entityDef->modelRenderMatrix, dynamicShadowParms->localLightProject );
 					dynamicShadowParms->zNear = znear;
 					dynamicShadowParms->lightZMin = vLight->scissorRect.zmin;
 					dynamicShadowParms->lightZMax = vLight->scissorRect.zmax;

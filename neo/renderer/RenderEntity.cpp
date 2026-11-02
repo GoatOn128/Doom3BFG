@@ -79,7 +79,7 @@ void idRenderEntityLocal::RemoveDecals() {
 
 idRenderLightLocal::idRenderLightLocal() {
 	memset( &parms, 0, sizeof( parms ) );
-	memset( lightProject, 0, sizeof( lightProject ) );
+	memset( committed.lightProject, 0, sizeof( committed.lightProject ) );
 
 	lightHasMoved			= false;
 	world					= NULL;
@@ -89,7 +89,7 @@ idRenderLightLocal::idRenderLightLocal() {
 	archived				= false;
 	lightShader				= NULL;
 	falloffImage			= NULL;
-	globalLightOrigin		= vec3_zero;
+	committed.globalLightOrigin		= vec3_zero;
 	viewCount				= 0;
 	viewLight				= NULL;
 	references				= NULL;
@@ -97,8 +97,10 @@ idRenderLightLocal::idRenderLightLocal() {
 	firstInteraction		= NULL;
 	lastInteraction			= NULL;
 
-	baseLightProject.Zero();
-	inverseBaseLightProject.Zero();
+	committed.baseLightProject.Zero();
+	committed.inverseBaseLightProject.Zero();
+	committed.globalLightBounds.Clear();
+	committed.commitFrame	= -1;
 }
 
 void idRenderLightLocal::FreeRenderLight() {
