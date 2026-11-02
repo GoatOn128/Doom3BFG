@@ -52,8 +52,6 @@ idRenderEntityLocal::idRenderEntityLocal() {
 	decals					= NULL;
 	overlays				= NULL;
 	entityRefs				= NULL;
-	firstInteraction		= NULL;
-	lastInteraction			= NULL;
 	needsPortalSky			= false;
 }
 
@@ -97,8 +95,6 @@ idRenderLightLocal::idRenderLightLocal() {
 	viewLight				= NULL;
 	references				= NULL;
 	foggedPortals			= NULL;
-	firstInteraction		= NULL;
-	lastInteraction			= NULL;
 
 	committed.baseLightProject.Zero();
 	committed.inverseBaseLightProject.Zero();
