@@ -37,7 +37,6 @@ idCVar r_useParallelAddModels( "r_useParallelAddModels", "1", CVAR_RENDERER | CV
 idCVar r_useParallelAddShadows( "r_useParallelAddShadows", "1", CVAR_RENDERER | CVAR_INTEGER, "0 = off, 1 = threaded", 0, 1 );
 idCVar r_useShadowPreciseInsideTest( "r_useShadowPreciseInsideTest", "1", CVAR_RENDERER | CVAR_BOOL, "use a precise and more expensive test to determine whether the view is inside a shadow volume" );
 idCVar r_cullDynamicShadowTriangles( "r_cullDynamicShadowTriangles", "1", CVAR_RENDERER | CVAR_BOOL, "cull occluder triangles that are outside the light frustum so they do not contribute to the dynamic shadow volume" );
-idCVar r_cullDynamicLightTriangles( "r_cullDynamicLightTriangles", "1", CVAR_RENDERER | CVAR_BOOL, "cull surface triangles that are outside the light frustum so they do not get rendered for interactions" );
 idCVar r_forceShadowCaps( "r_forceShadowCaps", "0", CVAR_RENDERER | CVAR_BOOL, "0 = skip rendering shadow caps if view is outside shadow volume, 1 = always render shadow caps" );
 
 static const float CHECK_BOUNDS_EPSILON = 1.0f;
@@ -674,56 +673,6 @@ void R_AddSingleModel( viewEntity_t * vEntity ) {
 				lightDrawSurf->numIndexes = tri->numIndexes;
 				lightDrawSurf->indexCache = tri->indexCache;
 
-				// optionally cull the triangles to the light volume
-				if ( r_cullDynamicLightTriangles.GetBool() ) {
-
-					vertCacheHandle_t lightIndexCache = vertexCache.AllocIndex( NULL, ALIGN( lightDrawSurf->numIndexes * sizeof( triIndex_t ), INDEX_CACHE_ALIGN ) );
-					if ( vertexCache.CacheIsCurrent( lightIndexCache ) ) {
-						lightDrawSurf->indexCache = lightIndexCache;
-
-						dynamicShadowParms = (dynamicShadowVolumeParms_t *)R_FrameAlloc( sizeof( dynamicShadowParms[0] ), FRAME_ALLOC_SHADOW_VOLUME_PARMS );
-
-						dynamicShadowParms->verts = tri->verts;
-						dynamicShadowParms->numVerts = tri->numVerts;
-						dynamicShadowParms->indexes = tri->indexes;
-						dynamicShadowParms->numIndexes = tri->numIndexes;
-						dynamicShadowParms->silEdges = tri->silEdges;
-						dynamicShadowParms->numSilEdges = tri->numSilEdges;
-						dynamicShadowParms->joints = gpuSkinned ? tri->staticModelWithJoints->jointsInverted : NULL;
-						dynamicShadowParms->numJoints = gpuSkinned ? tri->staticModelWithJoints->numInvertedJoints : 0;
-						dynamicShadowParms->triangleBounds = tri->bounds;
-						dynamicShadowParms->triangleMVP = vEntity->mvp;
-						dynamicShadowParms->localLightOrigin = localLightOrigin;
-						dynamicShadowParms->localViewOrigin = localViewOrigin;
-						idRenderMatrix::Multiply( vLight->lightDef->committed.baseLightProject, entityDef->committed.modelRenderMatrix, dynamicShadowParms->localLightProject );
-						dynamicShadowParms->zNear = znear;
-						dynamicShadowParms->lightZMin = vLight->scissorRect.zmin;
-						dynamicShadowParms->lightZMax = vLight->scissorRect.zmax;
-						dynamicShadowParms->cullShadowTrianglesToLight = false;
-						dynamicShadowParms->forceShadowCaps = false;
-						dynamicShadowParms->useShadowPreciseInsideTest = false;
-						dynamicShadowParms->useShadowDepthBounds = false;
-						dynamicShadowParms->tempFacing = NULL;
-						dynamicShadowParms->tempCulled = NULL;
-						dynamicShadowParms->tempVerts = NULL;
-						dynamicShadowParms->indexBuffer = NULL;
-						dynamicShadowParms->shadowIndices = NULL;
-						dynamicShadowParms->maxShadowIndices = 0;
-						dynamicShadowParms->numShadowIndices = NULL;
-						dynamicShadowParms->lightIndices = (triIndex_t *)vertexCache.MappedIndexBuffer( lightIndexCache );
-						dynamicShadowParms->maxLightIndices = lightDrawSurf->numIndexes;
-						dynamicShadowParms->numLightIndices = &lightDrawSurf->numIndexes;
-						dynamicShadowParms->renderZFail = NULL;
-						dynamicShadowParms->shadowZMin = NULL;
-						dynamicShadowParms->shadowZMax = NULL;
-						dynamicShadowParms->shadowVolumeState = & lightDrawSurf->shadowVolumeState;
-
-						lightDrawSurf->shadowVolumeState = SHADOWVOLUME_UNFINISHED;
-
-						dynamicShadowParms->next = vEntity->dynamicShadowVolumes;
-						vEntity->dynamicShadowVolumes = dynamicShadowParms;
-					}
-				}
 				lightDrawSurf->ambientCache = tri->ambientCache;
 				lightDrawSurf->shadowCache = 0;
 				lightDrawSurf->frontEndGeo = tri;
@@ -812,13 +761,7 @@ void R_AddSingleModel( viewEntity_t * vEntity ) {
 			// if the index cache was successfully allocated then setup the parms to create a shadow volume in parallel
 			if ( vertexCache.CacheIsCurrent( shadowDrawSurf->indexCache ) && !r_skipDynamicShadows.GetBool() ) {
 
-				// if the parms were not already allocated for culling interaction triangles to the light frustum
-				if ( dynamicShadowParms == NULL ) {
-					dynamicShadowParms = (dynamicShadowVolumeParms_t *)R_FrameAlloc( sizeof( dynamicShadowParms[0] ), FRAME_ALLOC_SHADOW_VOLUME_PARMS );
-				} else {
-					// the shadow volume will be rendered first so when the interaction surface is drawn the triangles have been culled for sure
-					*dynamicShadowParms->shadowVolumeState = SHADOWVOLUME_DONE;
-				}
+				dynamicShadowParms = (dynamicShadowVolumeParms_t *)R_FrameAlloc( sizeof( dynamicShadowParms[0] ), FRAME_ALLOC_SHADOW_VOLUME_PARMS );
 
 				dynamicShadowParms->verts = tri->verts;
 				dynamicShadowParms->numVerts = tri->numVerts;
@@ -841,15 +784,11 @@ void R_AddSingleModel( viewEntity_t * vEntity ) {
 				dynamicShadowParms->useShadowPreciseInsideTest = r_useShadowPreciseInsideTest.GetBool();
 				dynamicShadowParms->useShadowDepthBounds = r_useShadowDepthBounds.GetBool();
 				dynamicShadowParms->tempFacing = NULL;
-				dynamicShadowParms->tempCulled = NULL;
 				dynamicShadowParms->tempVerts = NULL;
 				dynamicShadowParms->indexBuffer = NULL;
 				dynamicShadowParms->shadowIndices = (triIndex_t *)vertexCache.MappedIndexBuffer( shadowDrawSurf->indexCache );
 				dynamicShadowParms->maxShadowIndices = maxShadowVolumeIndexes;
 				dynamicShadowParms->numShadowIndices = & shadowDrawSurf->numIndexes;
-				// dynamicShadowParms->lightIndices may have already been set for the interaction surface
-				// dynamicShadowParms->maxLightIndices may have already been set for the interaction surface
-				// dynamicShadowParms->numLightIndices may have already been set for the interaction surface
 				dynamicShadowParms->renderZFail = & shadowDrawSurf->renderZFail;
 				dynamicShadowParms->shadowZMin = & shadowDrawSurf->scissorRect.zmin;
 				dynamicShadowParms->shadowZMax = & shadowDrawSurf->scissorRect.zmax;
@@ -857,11 +796,8 @@ void R_AddSingleModel( viewEntity_t * vEntity ) {
 
 				shadowDrawSurf->shadowVolumeState = SHADOWVOLUME_UNFINISHED;
 
-				// if the parms we not already linked for culling interaction triangles to the light frustum
-				if ( dynamicShadowParms->lightIndices == NULL ) {
-					dynamicShadowParms->next = vEntity->dynamicShadowVolumes;
-					vEntity->dynamicShadowVolumes = dynamicShadowParms;
-				}
+				dynamicShadowParms->next = vEntity->dynamicShadowVolumes;
+				vEntity->dynamicShadowVolumes = dynamicShadowParms;
 
 				tr.pc.c_createShadowVolumes++;
 			}
