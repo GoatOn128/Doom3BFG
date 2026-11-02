@@ -86,6 +86,8 @@ SURFACES
 class idRenderWorldLocal;
 struct viewEntity_t;
 struct viewLight_t;
+class idRenderEntityLocal;
+class idRenderLightLocal;
 
 // drawSurf_t structures command the back end to render surfaces
 // a given srfTriangles_t may be used with multiple viewEntity_t,
