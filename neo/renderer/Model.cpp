@@ -388,14 +388,12 @@ bool idRenderModelStatic::LoadBinaryModel( idFile * file, const ID_TIME_T source
 				}
 			}
 
+			// prelight shadow vertices were removed, but the data is still read
+			// so the on-disk format stays compatible with old .bmodel files
 			file->ReadBig( numInFile );
-			if ( numInFile == 0 ) {
-				tri.preLightShadowVertexes = NULL;
-			} else {
-				R_AllocStaticTriSurfPreLightShadowVerts( &tri, numInFile );
-				for ( int j = 0; j < numInFile; j++ ) {
-					file->ReadVec4( tri.preLightShadowVertexes[ j ].xyzw );
-				}
+			idVec4 shadowVertexDiscard;
+			for ( int j = 0; j < numInFile; j++ ) {
+				file->ReadVec4( shadowVertexDiscard );
 			}
 
 			file->ReadBig( tri.numIndexes );
@@ -452,15 +450,17 @@ bool idRenderModelStatic::LoadBinaryModel( idFile * file, const ID_TIME_T source
 				}
 			}
 
-			file->ReadBig( tri.numShadowIndexesNoFrontCaps );
-			file->ReadBig( tri.numShadowIndexesNoCaps );
-			file->ReadBig( tri.shadowCapPlaneBits );
+			// shadow volume data was removed, but the values are still read
+			// so the on-disk format stays compatible with old .bmodel files
+			int shadowDiscard;
+			file->ReadBig( shadowDiscard );
+			file->ReadBig( shadowDiscard );
+			file->ReadBig( shadowDiscard );
 
 			tri.ambientSurface = NULL;
 			tri.nextDeferredFree = NULL;
 			tri.indexCache = 0;
 			tri.ambientCache = 0;
-			tri.shadowCache = 0;
 		}
 	}
 
@@ -545,14 +545,9 @@ void idRenderModelStatic::WriteBinaryModel( idFile * file, ID_TIME_T *_timeStamp
 				}
 			}
 
-			if ( tri.preLightShadowVertexes != NULL ) {
-				file->WriteBig( tri.numVerts * 2 );
-				for ( int j = 0; j < tri.numVerts * 2; j++ ) {
-					file->WriteVec4( tri.preLightShadowVertexes[ j ].xyzw );
-				}
-			} else {
-				file->WriteBig( ( int ) 0 );
-			}
+			// prelight shadow vertices were removed, a zero count is written
+			// so the on-disk format stays compatible with old .bmodel files
+			file->WriteBig( ( int ) 0 );
 
 			file->WriteBig( tri.numIndexes );
 
@@ -601,9 +596,11 @@ void idRenderModelStatic::WriteBinaryModel( idFile * file, ID_TIME_T *_timeStamp
 				}
 			}
 
-			file->WriteBig( tri.numShadowIndexesNoFrontCaps );
-			file->WriteBig( tri.numShadowIndexesNoCaps );
-			file->WriteBig( tri.shadowCapPlaneBits );
+			// shadow volume data was removed, zeros are written
+			// so the on-disk format stays compatible with old .bmodel files
+			file->WriteBig( ( int ) 0 );
+			file->WriteBig( ( int ) 0 );
+			file->WriteBig( ( int ) 0 );
 		}
 	}
 
@@ -613,8 +610,6 @@ void idRenderModelStatic::WriteBinaryModel( idFile * file, ID_TIME_T *_timeStamp
 	file->WriteBig( lastModifiedFrame );
 	file->WriteBig( lastArchivedFrame );
 	file->WriteString( name );
-
-	// shadowHull
 
 	file->WriteBig( isStaticWorldModel );
 	file->WriteBig( defaulted );
@@ -2481,3 +2476,4 @@ bool idRenderModelStatic::FindSurfaceWithId( int id, int &surfaceNum ) const {
 	}
 	return false;
 }
+

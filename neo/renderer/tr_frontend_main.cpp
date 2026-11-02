@@ -390,11 +390,9 @@ void R_RenderView( viewDef_t *parms ) {
 	// for all the the entityDefs and lightDefs that are in the visible portal areas
 	static_cast<idRenderWorldLocal *>(parms->renderWorld)->FindViewLightsAndEntities();
 
-	// wait for any shadow volume jobs from the previous frame to finish
-	tr.frontEndJobList->Wait();
 
 	// make sure that interactions exist for all light / entity combinations that are visible
-	// add any pre-generated light shadows, and calculate the light shader values
+	// and calculate the light shader values
 	R_AddLights();
 
 	// adds ambient surfaces and create any necessary interaction surfaces to add to the light lists

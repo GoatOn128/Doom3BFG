@@ -44,11 +44,10 @@ only be called when the back end thread is idle.
 */
 static void R_PerformanceCounters() {
 	if ( r_showPrimitives.GetInteger() != 0 ) {
-		common->Printf( "views:%i draws:%i tris:%i (shdw:%i)\n",
+		common->Printf( "views:%i draws:%i tris:%i\n",
 			tr.pc.c_numViews,
-			backEnd.pc.c_drawElements + backEnd.pc.c_shadowElements,
-			( backEnd.pc.c_drawIndexes + backEnd.pc.c_shadowIndexes ) / 3,
-			backEnd.pc.c_shadowIndexes / 3
+			backEnd.pc.c_drawElements,
+			backEnd.pc.c_drawIndexes / 3
 			);
 	}
 
@@ -69,10 +68,10 @@ static void R_PerformanceCounters() {
 	}
 
 	if ( r_showAddModel.GetBool() ) {
-		common->Printf( "callback:%i createShadowVolumes:%i\n",
-			tr.pc.c_entityDefCallbacks, tr.pc.c_createShadowVolumes );
-		common->Printf( "viewEntities:%i  shadowEntities:%i  viewLights:%i\n", tr.pc.c_visibleViewEntities,
-			tr.pc.c_shadowViewEntities, tr.pc.c_viewLights );
+		common->Printf( "callback:%i\n",
+			tr.pc.c_entityDefCallbacks );
+		common->Printf( "viewEntities:%i  viewLights:%i\n", tr.pc.c_visibleViewEntities,
+			tr.pc.c_viewLights );
 	}
 	if ( r_showUpdates.GetBool() ) {
 		common->Printf( "entityUpdates:%i  entityRefs:%i  lightUpdates:%i  lightRefs:%i\n",
@@ -655,7 +654,8 @@ void idRenderSystemLocal::SwapCommandBuffers_FinishRendering(
 		*backEndMicroSec = backEnd.pc.totalMicroSec;
 	}
 	if ( shadowMicroSec != NULL ) {
-		*shadowMicroSec = backEnd.pc.shadowMicroSec;
+	// the stencil shadow pass was removed, so there is no shadow timing anymore
+		*shadowMicroSec = 0;
 	}
 
 	// print any other statistics and clear all of them
