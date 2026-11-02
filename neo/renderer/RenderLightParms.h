@@ -106,6 +106,11 @@ struct idRenderLightParms {
 	idVec3			up;
 	idVec3			start;
 	idVec3			end;
+
+		// Dmap will generate an optimized shadow volume named _prelight_<lightName>
+		// for the light against all the _area* models in the map.  The renderer will
+		// ignore this value if the light has been moved after initial creation
+		idRenderModel *	prelightModel;
 	int				lightId;
 	const idMaterial *shader;
 	float			shaderParms[MAX_ENTITY_SHADER_PARMS];

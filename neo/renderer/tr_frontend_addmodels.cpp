@@ -384,13 +384,13 @@ void R_AddSingleModel( viewEntity_t * vEntity ) {
 				if ( lightDef->areaNum != -1 ) {
 					// if no part of the model is in an area that is connected to
 					// the light center (it is behind a solid, closed door), we can ignore it
-					bool areasConnected = false;
-					for ( areaReference_t *ref = entityDef->entityRefs; ref != NULL; ref = ref->ownerNext ) {
-						if ( world->AreasAreConnected( lightDef->areaNum, ref->area->areaNum, PS_BLOCK_VIEW ) ) {
+					for ( int refIndex = 0; refIndex < entityDef->references.Num(); refIndex++ ) {
+						const portalArea_t * area = entityDef->references[refIndex];
+						if ( world->AreasAreConnected( lightDef->areaNum, area->areaNum, PS_BLOCK_VIEW ) ) {
 							areasConnected = true;
-							break;
+								break;
+							}
 						}
-					}
 					if ( areasConnected == false ) {
 						// can't possibly be seen or shadowed
 						continue;

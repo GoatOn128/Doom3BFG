@@ -447,7 +447,7 @@ void R_CreateLightRefs( idRenderLightLocal * light ) {
 		light->world->FlowLightThroughPortals( light );
 	} else {
 		// push the light frustum down the BSP tree into areas
-		light->world->PushFrustumIntoTree( NULL, light, light->committed.inverseBaseLightProject, bounds_zeroOneCube );
+		light->world->LinkLightIntoTree( light, light->committed.inverseBaseLightProject, bounds_zeroOneCube );
 	}
 
 	R_CreateLightDefFogPortals( light );

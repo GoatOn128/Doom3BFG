@@ -85,6 +85,7 @@ void idRenderLightParms::FromRenderLight( const renderLight_t & light ) {
 	up = light.up;
 	start = light.start;
 	end = light.end;
+	prelightModel = light.prelightModel;
 	lightId = light.lightId;
 	shader = light.shader;
 	for ( int i = 0; i < MAX_ENTITY_SHADER_PARMS; i++ ) {
@@ -115,6 +116,7 @@ void idRenderLightParms::ToRenderLight( renderLight_t & light ) const {
 	light.up = up;
 	light.start = start;
 	light.end = end;
+	light.prelightModel = prelightModel;
 	light.lightId = lightId;
 	light.shader = shader;
 	for ( int i = 0; i < MAX_ENTITY_SHADER_PARMS; i++ ) {
