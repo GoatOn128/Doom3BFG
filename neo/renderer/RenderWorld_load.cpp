@@ -854,6 +854,9 @@ bool idRenderWorldLocal::InitFromMap( const char *name ) {
 	AddWorldModelEntities();
 	ClearPortalStates();
 
+	// load the baked ambient lighting and global shadow data of the map
+	R_LoadAmbientAndGlobalShadows( mapName );
+
 	// done!
 	return true;
 }

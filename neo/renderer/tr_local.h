@@ -37,6 +37,8 @@ If you have questions concerning this license or the applicable additional terms
 #include "Image.h"
 #include "RenderTexture.h"
 #include "ShadowMap.h"
+#include "AmbientLighting.h"
+#include "GlobalShadows.h"
 #include "Font.h"
 
 // everything that is needed by the backend needs

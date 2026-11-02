@@ -2050,6 +2050,91 @@ BACKEND COMMANDS
 
 /*
 ==================
+RB_AmbientFillPass
+==================
+*/
+static void RB_AmbientFillPass( drawSurf_t ** drawSurfs, int numDrawSurfs ) {
+	if ( !r_useAmbientLighting.GetBool() || !ambientLighting.IsLoaded() ) {
+		return;
+	}
+
+	renderLog.OpenBlock( "RB_AmbientFillPass" );
+
+	// the fill is additive on the already depth filled surfaces, it must
+	// not write depth and only land on the model pixels
+	GL_State( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHMASK | GLS_DEPTHFUNC_EQUAL );
+	GL_Cull( CT_TWO_SIDED );
+
+	idVec4 fillColor( 0.0f, 0.0f, 0.0f, 0.0f );
+
+	for ( int i = 0; i < numDrawSurfs; i++ ) {
+		const drawSurf_t * surf = drawSurfs[i];
+		const viewEntity_t * space = surf->space;
+		if ( space == NULL ) {
+			continue;
+		}
+		if ( space->isGuiSurface ) {
+			continue;
+		}
+
+		const idMaterial * material = surf->material;
+		if ( material == NULL || !material->ReceivesLighting() ) {
+			continue;
+		}
+		if ( material->Coverage() == MC_TRANSLUCENT ) {
+			continue;
+		}
+
+		// sample the fill at the surface center; the view entity and the
+		// front end geometry stay valid for the whole frame, but the
+		// entityDef they belong to may already be freed when the entity
+		// was removed mid frame, so nothing on this path dereferences it
+		const srfTriangles_t * tri = surf->frontEndGeo;
+		if ( tri == NULL ) {
+			continue;
+		}
+
+		idVec3 globalCenter;
+		R_LocalPointToGlobal( space->modelMatrix, tri->bounds.GetCenter(), globalCenter );
+
+		idVec3 color;
+		if ( !ambientLighting.SampleFillColor( globalCenter, color ) ) {
+			continue;
+		}
+
+		fillColor.x = color.x * r_ambientFillScale.GetFloat();
+		fillColor.y = color.y * r_ambientFillScale.GetFloat();
+		fillColor.z = color.z * r_ambientFillScale.GetFloat();
+		fillColor.w = 0.0f;
+
+		// materials without a fast path diffuse image still take the flat fill
+		idImage * diffuseImage = material->GetFastPathDiffuseImage();
+		if ( diffuseImage == NULL ) {
+			diffuseImage = globalImages->whiteImage;
+		}
+
+		if ( surf->jointCache != 0 ) {
+			renderProgManager.BindShader_AmbientFillSkinned();
+		} else {
+			renderProgManager.BindShader_AmbientFill();
+		}
+		SetFragmentParm( (renderParm_t)( RENDERPARM_USER + 0 ), fillColor.ToFloatPtr() );
+
+		RB_SetMVP( space->mvp );
+
+		GL_SelectTexture( 0 );
+		diffuseImage->Bind();
+
+		RB_DrawElementsWithCounters( surf );
+	}
+
+	GL_Cull( CT_FRONT_SIDED );
+
+	renderLog.CloseBlock();
+}
+
+/*
+==================
 RB_DrawViewInternal
 ==================
 */
@@ -2157,6 +2242,11 @@ void RB_DrawViewInternal( const viewDef_t * viewDef ) {
 	// main light renderer
 	//-------------------------------------------------
 	RB_DrawInteractions();
+
+	//-------------------------------------------------
+	// add the baked ambient fill to the dynamic models
+	//-------------------------------------------------
+	RB_AmbientFillPass( drawSurfs, numDrawSurfs );
 
 	//-------------------------------------------------
 	// now draw any non-light dependent shading passes

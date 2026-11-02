@@ -137,6 +137,8 @@ void idRenderProgManager::Init() {
 		{ BUILTIN_INTERACTION_AMBIENT_SKINNED, "interactionAmbient_skinned.vfp" },
 		{ BUILTIN_INTERACTION_SHADOW, "interaction_shadow.vfp" },
 		{ BUILTIN_INTERACTION_SHADOW_SKINNED, "interaction_shadow_skinned.vfp" },
+		{ BUILTIN_AMBIENT_FILL, "ambientFill.vfp" },
+		{ BUILTIN_AMBIENT_FILL_SKINNED, "ambientFill_skinned.vfp" },
 		{ BUILTIN_ENVIRONMENT, "environment.vfp" },
 		{ BUILTIN_ENVIRONMENT_SKINNED, "environment_skinned.vfp" },
 		{ BUILTIN_BUMPY_ENVIRONMENT, "bumpyEnvironment.vfp" },

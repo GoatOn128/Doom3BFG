@@ -191,6 +191,8 @@ public:
 	void	BindShader_InteractionAmbientSkinned()  { BindShader_Builtin( BUILTIN_INTERACTION_AMBIENT_SKINNED ); }
 	void	BindShader_InteractionShadow()  { BindShader_Builtin( BUILTIN_INTERACTION_SHADOW ); }
 	void	BindShader_InteractionShadowSkinned()  { BindShader_Builtin( BUILTIN_INTERACTION_SHADOW_SKINNED ); }
+	void	BindShader_AmbientFill()  { BindShader_Builtin( BUILTIN_AMBIENT_FILL ); }
+	void	BindShader_AmbientFillSkinned()  { BindShader_Builtin( BUILTIN_AMBIENT_FILL_SKINNED ); }
 	void	BindShader_SimpleShade() { BindShader_Builtin( BUILTIN_SIMPLESHADE ); }
 	void	BindShader_Environment() { BindShader_Builtin( BUILTIN_ENVIRONMENT ); }
 	void	BindShader_EnvironmentSkinned() { BindShader_Builtin( BUILTIN_ENVIRONMENT_SKINNED ); }
@@ -265,6 +267,9 @@ protected:
 
 	BUILTIN_INTERACTION_SHADOW,
 	BUILTIN_INTERACTION_SHADOW_SKINNED,
+
+		BUILTIN_AMBIENT_FILL,
+		BUILTIN_AMBIENT_FILL_SKINNED,
 
 		MAX_BUILTINS
 	};
