@@ -187,7 +187,7 @@ void R_DeriveLightData( idRenderLightLocal * light ) {
 	if ( light->parms.shader != NULL ) {
 		light->lightShader = light->parms.shader;
 	} else if ( light->lightShader == NULL ) {
-		if ( light->parms.pointLight ) {
+		if ( light->parms.lightType == LIGHT_POINT ) {
 			light->lightShader = tr.defaultPointLight;
 		} else {
 			light->lightShader = tr.defaultProjectedLight;
@@ -201,7 +201,7 @@ void R_DeriveLightData( idRenderLightLocal * light ) {
 		// use the falloff from the default shader of the correct type
 		const idMaterial * defaultShader;
 
-		if ( light->parms.pointLight ) {
+		if ( light->parms.lightType == LIGHT_POINT ) {
 			defaultShader = tr.defaultPointLight;
 
 			// Touch the default shader. to make sure it's decl has been parsed ( it might have been purged ).
@@ -255,7 +255,8 @@ R_RenderLightFrustum
 void R_RenderLightFrustum( const renderLight_t &renderLight, idPlane lightFrustum[6] ) {
 	idRenderLightLocal	fakeLight;
 
-	fakeLight.parms = renderLight;
+	fakeLight.renderLight = renderLight;
+	fakeLight.parms.FromRenderLight( renderLight );
 
 	R_DeriveLightData( &fakeLight );
 
@@ -538,7 +539,7 @@ void R_ReCreateWorldReferences() {
 			if ( light == NULL ) {
 				continue;
 			}
-			renderLight_t parms = light->parms;
+			renderLight_t parms = light->renderLight;
 
 			light->world->FreeLightDef( i );
 			rw->UpdateLightDef( i, &parms );
@@ -575,6 +576,7 @@ void R_ModulateLights_f( const idCmdArgs &args ) {
 			count++;
 			for ( int j = 0; j < 3; j++ ) {
 				light->parms.shaderParms[j] *= modulate[j];
+				light->renderLight.shaderParms[j] = light->parms.shaderParms[j];
 			}
 		}
 	}

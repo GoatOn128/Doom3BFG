@@ -311,7 +311,7 @@ void	idRenderWorldLocal::WriteVisibleDefs( const viewDef_t *viewDef ) {
 			continue;
 		}
 		// write it out
-		WriteRenderLight( light->index, &light->parms );
+		WriteRenderLight( light->index, &light->renderLight );
 		light->archived = true;
 	}
 }
