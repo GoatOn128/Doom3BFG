@@ -1,6 +1,6 @@
 # Build digest
 
-commit: c4055c1c022f
+commit: c17292dbed2f
 
 - windows-x64-debug: cancelled
 - windows-x64-release: cancelled
