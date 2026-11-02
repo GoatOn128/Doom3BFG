@@ -34,7 +34,7 @@ extern idCVar r_useShadowMaps;			// render shadow maps for shadow casting lights
 extern idCVar r_shadowMapSize;			// shadow map tile resolution, changes require a vid_restart
 extern idCVar r_shadowMapMaxLights;		// maximum number of lights per view that get a shadow map, changes require a vid_restart
 extern idCVar r_shadowMapZNear;			// near clip plane for shadow map rendering
-extern idCVar r_shadowMapBias;			// shadow map depth compare bias
+extern idCVar r_shadowMapBias;			// minimum variance for the shadow map moments
 extern idCVar r_showShadowMaps;			// print the shadow map slot assignment
 
 // create the shadow map atlas texture and framebuffer, called from R_InitOpenGL
