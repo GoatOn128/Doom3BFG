@@ -777,12 +777,10 @@ drawSurf_t * idRenderModelDecal::CreateDecalDrawSurf( const viewEntity_t *space,
 	drawSurf->numIndexes = newTri->numIndexes;
 	drawSurf->ambientCache = newTri->ambientCache;
 	drawSurf->indexCache = newTri->indexCache;
-	drawSurf->shadowCache = 0;
 	drawSurf->jointCache = 0;
 	drawSurf->space = space;
 	drawSurf->scissorRect = space->scissorRect;
 	drawSurf->extraGLState = 0;
-	drawSurf->renderZFail = 0;
 
 	R_SetupDrawSurfShader( drawSurf, material, &space->entityDef->parms );
 
@@ -806,3 +804,4 @@ idRenderModelDecal::WriteToDemoFile
 void idRenderModelDecal::WriteToDemoFile( idDemoFile *f ) const {
 	// FIXME: implement
 }
+

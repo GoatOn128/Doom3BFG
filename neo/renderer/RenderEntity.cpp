@@ -82,7 +82,6 @@ idRenderLightLocal::idRenderLightLocal() {
 	memset( &parms, 0, sizeof( parms ) );
 	memset( committed.lightProject, 0, sizeof( committed.lightProject ) );
 
-	lightHasMoved			= false;
 	world					= NULL;
 	index					= 0;
 	areaNum					= 0;

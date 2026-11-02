@@ -44,17 +44,19 @@ If you have questions concerning this license or the applicable additional terms
 #define MD5_CAMERA_EXT			"md5camera"
 #define MD5_VERSION				10
 
-#include "jobs/ShadowShared.h"
-#include "jobs/prelightshadowvolume/PreLightShadowVolume.h"
-#include "jobs/dynamicshadowvolume/DynamicShadowVolume.h"
+// a silhouette edge is an edge between a front facing and a back facing triangle
+// in a static mesh, used by the deformable mesh subsystem
+struct silEdge_t {
+	// NOTE: using triIndex_t for the planes is dubious, as there can be 2x the faces as verts
+	triIndex_t					p1, p2;						// planes defining the edge
+	triIndex_t					v1, v2;						// verts defining the edge
+};
 
 // this is used for calculating unsmoothed normals and tangents for deformed models
 struct dominantTri_t {
 	triIndex_t					v2, v3;
 	float						normalizationScale[3];
 };
-
-const int SHADOW_CAP_INFINITE	= 64;
 
 class idRenderModelStatic;
 struct viewDef_t;
@@ -75,7 +77,7 @@ struct srfTriangles_t {
 	int							numVerts;				// number of vertices
 	idDrawVert *				verts;					// vertices, allocated with special allocator
 
-	int							numIndexes;				// for shadows, this has both front and rear end caps and silhouette planes
+	int							numIndexes;				// number of indexes
 	triIndex_t *				indexes;				// indexes, allocated with special allocator
 
 	triIndex_t *				silIndexes;				// indexes changed to be the first vertex with same XYZ, ignoring normal and texcoords
@@ -91,17 +93,6 @@ struct srfTriangles_t {
 
 	dominantTri_t *				dominantTris;			// [numVerts] for deformed surface fast tangent calculation
 
-	int							numShadowIndexesNoFrontCaps;	// shadow volumes with front caps omitted
-	int							numShadowIndexesNoCaps;			// shadow volumes with the front and rear caps omitted
-
-	int							shadowCapPlaneBits;		// bits 0-5 are set when that plane of the interacting light has triangles
-														// projected on it, which means that if the view is on the outside of that
-														// plane, we need to draw the rear caps of the shadow volume
-														// dynamic shadows will have SHADOW_CAP_INFINITE
-
-	idShadowVert *				preLightShadowVertexes;	// shadow vertices in CPU memory for pre-light shadow volumes
-	idShadowVert *				staticShadowVertexes;	// shadow vertices in CPU memory for static shadow volumes
-
 	srfTriangles_t *			ambientSurface;			// for light interactions, point back at the original surface that generated
 														// the interaction, which we will get the ambientCache from
 
@@ -115,7 +106,6 @@ struct srfTriangles_t {
 	// data in vertex object space, not directly readable by the CPU
 	vertCacheHandle_t			indexCache;				// GL_INDEX_TYPE
 	vertCacheHandle_t			ambientCache;			// idDrawVert
-	vertCacheHandle_t			shadowCache;			// idVec4
 
 	bool						facePlanesCalculated;	// set when the face planes have been calculated
 	idPlane *					facePlanes;
@@ -178,7 +168,6 @@ public:
 	virtual void				AddSurface( modelSurface_t surface ) = 0;
 
 	// cleans all the geometry and performs cross-surface processing
-	// like shadow hulls
 	// Creates the duplicated back side geometry for two sided, alpha tested, lit materials
 	// This does not need to be called if none of the surfaces added with AddSurface require
 	// light interaction, and all the triangles are already well formed.
@@ -242,7 +231,7 @@ public:
 	// Frees surfaces triangles.
 	virtual void				FreeSurfaceTriangles( srfTriangles_t *tris ) const = 0;
 
-	// models of the form "_area*" may have a prelight shadow model associated with it
+	// true for the "_area*" models that make up the static world geometry of a map
 	virtual bool				IsStaticWorldModel() const = 0;
 
 	// models parsed from inside map files or dynamically created cannot be reloaded by
@@ -306,3 +295,4 @@ public:
 };
 
 #endif /* !__MODEL_H__ */
+
