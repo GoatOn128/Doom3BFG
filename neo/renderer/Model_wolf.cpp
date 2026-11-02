@@ -491,7 +491,7 @@ bool idRenderModelWolfSkeletal::BuildMeshFromSurface( idWolfMesh &mesh, const ch
 		common->Warning( "Wolf model %s has an invalid number of triangles on a surface (%i)", Name(), numTriangles );
 		return false;
 	}
-	if ( ofsTriangles + numTriangles * 3 * sizeof( int ) > surfaceEnd ) {
+	if ( ofsTriangles + numTriangles * 3 * ( int )sizeof( int ) > surfaceEnd ) {
 		common->Warning( "Wolf model %s has a truncated triangle list", Name() );
 		return false;
 	}
@@ -985,7 +985,7 @@ int idRenderModelWolfSkeletal::Memory() const {
 	for ( int i = 0; i < meshes.Num(); i++ ) {
 		const idWolfMesh *mesh = &meshes[i];
 
-		total += mesh->numMeshJoints * sizeof( mesh->meshJoints[0] );
+		total += mesh->numMeshJoints * ( int )sizeof( mesh->meshJoints[0] );
 
 		// sum up deform info
 		total += sizeof( mesh->deformInfo );

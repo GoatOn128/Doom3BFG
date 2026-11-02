@@ -58,7 +58,7 @@ its parent, the root bone uses the frame parentOffset.
 void idRenderModelMDS::DecodeFrame( int frameNum, idJointQuat *jointQuats ) const {
 	const mdsHeader_t *mds = ( const mdsHeader_t * )fileData;
 
-	const int frameSize = sizeof( wolfFrame_t ) + numBones * sizeof( wolfBoneFrameCompressed_t );
+	const int frameSize = ( int )sizeof( wolfFrame_t ) + numBones * ( int )sizeof( wolfBoneFrameCompressed_t );
 	const wolfFrame_t *frame = ( const wolfFrame_t * )( fileData + LittleInt( mds->ofsFrames ) + frameNum * frameSize );
 	const wolfBoneFrameCompressed_t *bones = ( const wolfBoneFrameCompressed_t * )( ( const byte * )frame + sizeof( wolfFrame_t ) );
 	const wolfBoneInfo_t *boneInfo = ( const wolfBoneInfo_t * )( fileData + LittleInt( mds->ofsBones ) );
@@ -137,12 +137,12 @@ bool idRenderModelMDS::LoadWolfFile( const char *fileName ) {
 		return false;
 	}
 
-	const int frameSize = sizeof( wolfFrame_t ) + numBones * sizeof( wolfBoneFrameCompressed_t );
+	const int frameSize = ( int )sizeof( wolfFrame_t ) + numBones * ( int )sizeof( wolfBoneFrameCompressed_t );
 	if ( LittleInt( mds->ofsFrames ) + numFrames * frameSize > LittleInt( mds->ofsEnd ) ) {
 		common->Warning( "idRenderModelMDS: %s has a truncated frame list", fileName );
 		return false;
 	}
-	if ( LittleInt( mds->ofsBones ) + numBones * sizeof( wolfBoneInfo_t ) > LittleInt( mds->ofsEnd ) ) {
+	if ( LittleInt( mds->ofsBones ) + numBones * ( int )sizeof( wolfBoneInfo_t ) > LittleInt( mds->ofsEnd ) ) {
 		common->Warning( "idRenderModelMDS: %s has a truncated bone list", fileName );
 		return false;
 	}

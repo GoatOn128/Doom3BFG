@@ -61,7 +61,7 @@ The MD4 frames store absolute 3x4 bone matrices directly.
 void idRenderModelMD4::DecodeFrame( int frameNum, idJointQuat *jointQuats ) const {
 	const md4Header_t *md4 = ( const md4Header_t * )fileData;
 
-	const int frameSize = sizeof( md4Frame_t ) + numBones * sizeof( md4Bone_t );
+	const int frameSize = ( int )sizeof( md4Frame_t ) + numBones * ( int )sizeof( md4Bone_t );
 	const md4Frame_t *frame = ( const md4Frame_t * )( fileData + LittleInt( md4->ofsFrames ) + frameNum * frameSize );
 	const md4Bone_t *bones = ( const md4Bone_t * )( ( const byte * )frame + sizeof( md4Frame_t ) );
 
@@ -124,7 +124,7 @@ bool idRenderModelMD4::LoadWolfFile( const char *fileName ) {
 		return false;
 	}
 
-	const int frameSize = sizeof( md4Frame_t ) + numBones * sizeof( md4Bone_t );
+	const int frameSize = ( int )sizeof( md4Frame_t ) + numBones * ( int )sizeof( md4Bone_t );
 	if ( LittleInt( md4->ofsFrames ) + numFrames * frameSize > LittleInt( md4->ofsEnd ) ) {
 		common->Warning( "idRenderModelMD4: %s has a truncated frame list", fileName );
 		return false;
