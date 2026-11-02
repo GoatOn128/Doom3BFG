@@ -374,8 +374,11 @@ Returns -1 on failure, or a pixel format
 ====================
 */
 static int GLW_ChoosePixelFormat( const HDC hdc, const int multisamples ) {
-	FLOAT	fAttributes[] = { 0, 0 };
+	FLOAT	tAttributes[] = { 0, 0 };
 	int		iAttributes[] = {
+		WGL_DRAW_TO_WINDOW_ARB, TRUE,
+		WGL_SUPPORT_OPENGL_ARB, TRUE,
+		WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
 		WGL_SAMPLE_BUFFERS_ARB, ( ( multisamples > 1 ) ? 1 : 0 ),
 		WGL_SAMPLES_ARB, multisamples,
 		WGL_DOUBLE_BUFFER_ARB, TRUE,
@@ -388,9 +391,16 @@ static int GLW_ChoosePixelFormat( const HDC hdc, const int multisamples ) {
 		0, 0
 	};
 
-	int	pixelFormat;
-	UINT numFormats;
-	if ( !wglChoosePixelFormatARB( hdc, iAttributes, fAttributes, 1, &pixelFormat, &numFormats ) ) {
+	int	pixelFormat = 0;
+	UINT numFormats = 0;
+	if ( !wglChoosePixelFormatARB( hdc, iAttributes, tAttributes, 1, &pixelFormat, &numFormats ) ) {
+		common->Printf( "...^3wglChoosePixelFormatARB failed^0\n" );
+		return -1;
+	}
+	// a successful call can still report zero matching formats; the returned
+	// index is meaningless in that case
+	if ( numFormats == 0 || pixelFormat <= 0 ) {
+		common->Printf( "...^3wglChoosePixelFormatARB found no matching pixel format^0\n" );
 		return -1;
 	}
 	return pixelFormat;
@@ -444,10 +454,15 @@ static bool GLW_InitDriver( glimpParms_t parms ) {
 	}
 
 	// the multisample path uses the wgl
+	win32.pixelformat = 0;
 	if ( wglChoosePixelFormatARB ) {
 		win32.pixelformat = GLW_ChoosePixelFormat( win32.hDC, parms.multiSamples );
-	} else {
-		// this is the "classic" choose pixel format path
+	}
+
+	if ( win32.pixelformat <= 0 ) {
+		// the ARB chooser is missing or found no matching format on this
+		// driver; fall back to the classic GDI path instead of passing an
+		// invalid pixel format index to SetPixelFormat
 		common->Printf( "Using classic ChoosePixelFormat\n" );
 
 		//
@@ -459,8 +474,8 @@ static bool GLW_InitDriver( glimpParms_t parms ) {
 			common->Printf( "...^3GLW_ChoosePFD failed^0\n");
 			return false;
 		}
-		common->Printf( "...PIXELFORMAT %d selected\n", win32.pixelformat );
 	}
+	common->Printf( "...PIXELFORMAT %d selected\n", win32.pixelformat );
 
 	// get the full info
 	DescribePixelFormat( win32.hDC, win32.pixelformat, sizeof( win32.pfd ), &win32.pfd );
@@ -1355,3 +1370,4 @@ GLExtension_t GLimp_ExtensionPointer( const char *name ) {
 
 	return proc;
 }
+
