@@ -51,7 +51,7 @@ idRenderEntityLocal::idRenderEntityLocal() {
 	viewEntity				= NULL;
 	decals					= NULL;
 	overlays				= NULL;
-	entityRefs				= NULL;
+	references.Clear();
 	needsPortalSky			= false;
 }
 
@@ -92,7 +92,7 @@ idRenderLightLocal::idRenderLightLocal() {
 	committed.globalLightOrigin		= vec3_zero;
 	viewCount				= 0;
 	viewLight				= NULL;
-	references				= NULL;
+	references.Clear();
 	foggedPortals			= NULL;
 
 	committed.baseLightProject.Zero();
