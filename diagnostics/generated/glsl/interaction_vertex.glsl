@@ -63,6 +63,31 @@ uniform vec4 rpWobbleSkyZ;
 uniform vec4 rpOverbright;
 uniform vec4 rpEnableSkinning;
 uniform vec4 rpAlphaTest;
+uniform vec4 rpGlobalLightOrigin;
+uniform vec4 rpShadowMapMatrix0X;
+uniform vec4 rpShadowMapMatrix0Y;
+uniform vec4 rpShadowMapMatrix0Z;
+uniform vec4 rpShadowMapMatrix0W;
+uniform vec4 rpShadowMapMatrix1X;
+uniform vec4 rpShadowMapMatrix1Y;
+uniform vec4 rpShadowMapMatrix1Z;
+uniform vec4 rpShadowMapMatrix1W;
+uniform vec4 rpShadowMapMatrix2X;
+uniform vec4 rpShadowMapMatrix2Y;
+uniform vec4 rpShadowMapMatrix2Z;
+uniform vec4 rpShadowMapMatrix2W;
+uniform vec4 rpShadowMapMatrix3X;
+uniform vec4 rpShadowMapMatrix3Y;
+uniform vec4 rpShadowMapMatrix3Z;
+uniform vec4 rpShadowMapMatrix3W;
+uniform vec4 rpShadowMapMatrix4X;
+uniform vec4 rpShadowMapMatrix4Y;
+uniform vec4 rpShadowMapMatrix4Z;
+uniform vec4 rpShadowMapMatrix4W;
+uniform vec4 rpShadowMapMatrix5X;
+uniform vec4 rpShadowMapMatrix5Y;
+uniform vec4 rpShadowMapMatrix5Z;
+uniform vec4 rpShadowMapMatrix5W;
 float dot2( vec2 a, vec2 b ) { return dot( a, b ); }
 float dot3( vec3 a, vec3 b ) { return dot( a, b ); }
 float dot3( vec3 a, vec4 b ) { return dot( a, b.xyz ); }

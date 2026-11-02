@@ -63,6 +63,31 @@ uniform vec4 rpWobbleSkyZ;
 uniform vec4 rpOverbright;
 uniform vec4 rpEnableSkinning;
 uniform vec4 rpAlphaTest;
+uniform vec4 rpGlobalLightOrigin;
+uniform vec4 rpShadowMapMatrix0X;
+uniform vec4 rpShadowMapMatrix0Y;
+uniform vec4 rpShadowMapMatrix0Z;
+uniform vec4 rpShadowMapMatrix0W;
+uniform vec4 rpShadowMapMatrix1X;
+uniform vec4 rpShadowMapMatrix1Y;
+uniform vec4 rpShadowMapMatrix1Z;
+uniform vec4 rpShadowMapMatrix1W;
+uniform vec4 rpShadowMapMatrix2X;
+uniform vec4 rpShadowMapMatrix2Y;
+uniform vec4 rpShadowMapMatrix2Z;
+uniform vec4 rpShadowMapMatrix2W;
+uniform vec4 rpShadowMapMatrix3X;
+uniform vec4 rpShadowMapMatrix3Y;
+uniform vec4 rpShadowMapMatrix3Z;
+uniform vec4 rpShadowMapMatrix3W;
+uniform vec4 rpShadowMapMatrix4X;
+uniform vec4 rpShadowMapMatrix4Y;
+uniform vec4 rpShadowMapMatrix4Z;
+uniform vec4 rpShadowMapMatrix4W;
+uniform vec4 rpShadowMapMatrix5X;
+uniform vec4 rpShadowMapMatrix5Y;
+uniform vec4 rpShadowMapMatrix5Z;
+uniform vec4 rpShadowMapMatrix5W;
 float dot2( vec2 a, vec2 b ) { return dot( a, b ); }
 float dot3( vec3 a, vec3 b ) { return dot( a, b ); }
 float dot3( vec3 a, vec4 b ) { return dot( a, b.xyz ); }
@@ -127,7 +152,9 @@ uniform matrices_ubo { vec4 matrices [ 408 ] ; };
 in vec4 in_Color2;
 in vec4 in_Color;
 in vec4 in_Position;
+in vec2 in_TexCoord;
 
+out vec2 vofi_TexCoord0;
 
 void main() {
 {
@@ -161,5 +188,7 @@ gl_Position.x = dot4( modelPosition, rpMVPmatrixX );
 gl_Position.y = dot4( modelPosition, rpMVPmatrixY );
 gl_Position.z = dot4( modelPosition, rpMVPmatrixZ );
 gl_Position.w = dot4( modelPosition, rpMVPmatrixW );
+vofi_TexCoord0.x = dot4( in_TexCoord.xy, rpTextureMatrixS );
+vofi_TexCoord0.y = dot4( in_TexCoord.xy, rpTextureMatrixT );
 }
 }
