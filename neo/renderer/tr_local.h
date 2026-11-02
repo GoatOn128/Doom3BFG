@@ -116,15 +116,10 @@ struct drawSurf_t {
 	idScreenRect			scissorRect;		// for scissor clipping, local inside renderView viewport
 };
 
-// areas have references to hold all the lights and entities in them
-struct areaReference_t {
-	areaReference_t *		areaNext;				// chain in the area
-	areaReference_t *		areaPrev;
-	areaReference_t *		ownerNext;				// chain on either the entityDef or lightDef
-	idRenderEntityLocal *	entity;					// only one of entity / light will be non-NULL
-	idRenderLightLocal *	light;					// only one of entity / light will be non-NULL
-	struct portalArea_s	*	area;					// so owners can find all the areas they are in
-};
+// areas hold flat arrays of references to the lights and entities in them,
+// in the style of the committed render world: each portal area owns entity
+// and light reference lists, and the referenced entity and light defs own
+// back lists of the areas they are linked into
 
 
 // idRenderLight should become the new public interface replacing the qhandle_t to light defs in the idRenderWorld interface
@@ -194,7 +189,7 @@ public:
 	int						viewCount;				// if == tr.viewCount, the light is on the viewDef->viewLights list
 	viewLight_t *			viewLight;
 
-	areaReference_t *		references;				// each area the light is present in will have a lightRef
+	idList<struct portalArea_s *, TAG_LIGHT>	references;	// each area the light is present in will have a lightRef
 
 	struct doublePortal_s *	foggedPortals;
 };
@@ -245,7 +240,7 @@ public:
 	idRenderModelDecal *	decals;					// decals that have been projected on this model
 	idRenderModelOverlay *	overlays;				// blood overlays on animated models
 
-	areaReference_t *		entityRefs;				// chain of all references
+	idList<struct portalArea_s *, TAG_ENTITY>	references;	// each area the entity is present in will have an entityRef
 
 	bool					needsPortalSky;
 };

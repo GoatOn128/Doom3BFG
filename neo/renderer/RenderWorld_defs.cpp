@@ -94,19 +94,8 @@ void R_FreeEntityDefDerivedData( idRenderEntityLocal *def, bool keepDecals, bool
 		def->cachedDynamicModel = NULL;
 	}
 
-	// free the entityRefs from the areas
-	areaReference_t * next = NULL;
-	for ( areaReference_t * ref = def->entityRefs; ref != NULL; ref = next ) {
-		next = ref->ownerNext;
-
-		// unlink from the area
-		ref->areaNext->areaPrev = ref->areaPrev;
-		ref->areaPrev->areaNext = ref->areaNext;
-
-		// put it back on the free list for reuse
-		def->world->areaReferenceAllocator.Free( ref );
-	}
-	def->entityRefs = NULL;
+	// unlink the entity from all areas it is referenced in
+	def->world->UnlinkModelFromTree( def );
 }
 
 /*
@@ -169,12 +158,12 @@ void R_CreateEntityRefs( idRenderEntityLocal *entity ) {
 						entity->committed.localReferenceBounds[1][1] - entity->committed.localReferenceBounds[0][1] );
 	}
 
-	// bump the view count so we can tell if an
-	// area already has a reference
+	// bump the view count so cached view entities of this
+	// entity are not reused after the relink
 	tr.viewCount++;
 
 	// push the model frustum down the BSP tree into areas
-	entity->world->PushFrustumIntoTree( entity, NULL, entity->committed.inverseBaseModelProject, bounds_unitCube );
+	entity->world->LinkModelIntoTree( entity, entity->committed.inverseBaseModelProject, bounds_unitCube );
 }
 
 /*
@@ -254,19 +243,8 @@ void R_FreeLightDefDerivedData( idRenderLightLocal *ldef ) {
 		dp->fogLight = NULL;
 	}
 
-	// free all the references to the light
-	areaReference_t * nextRef = NULL;
-	for ( areaReference_t * lref = ldef->references; lref != NULL; lref = nextRef ) {
-		nextRef = lref->ownerNext;
-
-		// unlink from the area
-		lref->areaNext->areaPrev = lref->areaPrev;
-		lref->areaPrev->areaNext = lref->areaNext;
-
-		// put it back on the free list for reuse
-		ldef->world->areaReferenceAllocator.Free( lref );
-	}
-	ldef->references = NULL;
+	// unlink the light from all areas it is referenced in
+	ldef->world->UnlinkLightFromTree( ldef );
 }
 
 /*
@@ -415,9 +393,9 @@ static void R_CreateLightDefFogPortals( idRenderLightLocal *ldef ) {
 		return;
 	}
 
-	for ( areaReference_t * lref = ldef->references; lref != NULL; lref = lref->ownerNext ) {
+	for ( int refIndex = 0; refIndex < ldef->references.Num(); refIndex++ ) {
 		// check all the models in this area
-		portalArea_t * area = lref->area;
+		portalArea_t * area = ldef->references[refIndex];
 
 		for ( portal_t * prt = area->portals; prt != NULL; prt = prt->next ) {
 			doublePortal_t * dp = prt->doublePortal;
@@ -456,12 +434,12 @@ void R_CreateLightRefs( idRenderLightLocal * light ) {
 		light->areaNum = light->world->PointInArea( light->parms.origin );
 	}
 
-	// bump the view count so we can tell if an
-	// area already has a reference
+	// bump the view count so cached view lights of this
+	// light are not reused after the relink
 	tr.viewCount++;
 
 	// push the light frustum down the BSP tree into areas
-	light->world->PushFrustumIntoTree( NULL, light, light->committed.inverseBaseLightProject, bounds_zeroOneCube );
+	light->world->LinkLightIntoTree( light, light->committed.inverseBaseLightProject, bounds_zeroOneCube );
 
 	R_CreateLightDefFogPortals( light );
 }

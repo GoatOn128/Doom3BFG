@@ -54,10 +54,7 @@ void R_ListRenderLightDefs_f( const idCmdArgs &args ) {
 		}
 
 		// count up the references
-		int	rCount = 0;
-		for ( areaReference_t *ref = ldef->references; ref; ref = ref->ownerNext ) {
-			rCount++;
-		}
+		int	rCount = ldef->references.Num();
 		totalRef += rCount;
 
 		common->Printf( "%4i: %2i refs %s\n", i, rCount, ldef->lightShader->GetName());
@@ -91,10 +88,7 @@ void R_ListRenderEntityDefs_f( const idCmdArgs &args ) {
 
 
 		// count up the references
-		int	rCount = 0;
-		for ( areaReference_t *ref = mdef->entityRefs; ref; ref = ref->ownerNext ) {
-			rCount++;
-		}
+		int	rCount = mdef->references.Num();
 		totalRef += rCount;
 
 		common->Printf( "%4i: %2i refs %s\n", i, rCount, mdef->parms.hModel->Name());
@@ -492,8 +486,8 @@ void idRenderWorldLocal::ProjectDecalOntoWorld( const idFixedWinding &winding, c
 		const portalArea_t * area = &portalAreas[ areas[i] ];
 
 		// check all models in this area
-		for ( const areaReference_t * ref = area->entityRefs.areaNext; ref != &area->entityRefs; ref = ref->areaNext ) {
-			idRenderEntityLocal * def = ref->entity;
+		for ( int refIndex = 0; refIndex < area->entityRefs.Num(); refIndex++ ) {
+			idRenderEntityLocal * def = area->entityRefs[refIndex];
 
 			if ( def->parms.noOverlays ) {
 				continue;
@@ -1198,8 +1192,8 @@ bool idRenderWorldLocal::Trace( modelTrace_t &trace, const idVec3 &start, const 
 		portalArea_t * area = &portalAreas[ areas[i] ];
 
 		// check all models in this area
-		for ( areaReference_t * ref = area->entityRefs.areaNext; ref != &area->entityRefs; ref = ref->areaNext ) {
-			idRenderEntityLocal * def = ref->entity;
+		for ( int refIndex = 0; refIndex < area->entityRefs.Num(); refIndex++ ) {
+			idRenderEntityLocal * def = area->entityRefs[refIndex];
 
 			idRenderModel * model = def->parms.hModel;
 			if ( model == NULL ) {
@@ -1391,35 +1385,24 @@ for the world model references that are precalculated.
 =================
 */
 void idRenderWorldLocal::AddEntityRefToArea( idRenderEntityLocal *def, portalArea_t *area ) {
-	areaReference_t	*ref;
-
 	if ( def == NULL ) {
 		common->Error( "idRenderWorldLocal::AddEntityRefToArea: NULL def" );
 		return;
 	}
 
-	for ( ref = def->entityRefs; ref != NULL; ref = ref->ownerNext ) {
-		if ( ref->area == area ) {
-			return;
-		}
+	// the area and the entity def both track the link,
+	// so make sure neither side gets a duplicate
+	if ( area->entityRefs.FindIndex( def ) >= 0 ) {
+		return;
+	}
+	if ( def->references.FindIndex( area ) >= 0 ) {
+		return;
 	}
 
-	ref = areaReferenceAllocator.Alloc();
+	area->entityRefs.Append( def );
+	def->references.Append( area );
 
 	tr.pc.c_entityReferences++;
-
-	ref->entity = def;
-
-	// link to entityDef
-	ref->ownerNext = def->entityRefs;
-	def->entityRefs = ref;
-
-	// link to end of area list
-	ref->area = area;
-	ref->areaNext = &area->entityRefs;
-	ref->areaPrev = area->entityRefs.areaPrev;
-	ref->areaNext->areaPrev = ref;
-	ref->areaPrev->areaNext = ref;
 }
 
 /*
@@ -1428,27 +1411,19 @@ idRenderWorldLocal::AddLightRefToArea
 ===================
 */
 void idRenderWorldLocal::AddLightRefToArea( idRenderLightLocal *light, portalArea_t *area ) {
-	areaReference_t	*lref;
-
-	for ( lref = light->references; lref != NULL; lref = lref->ownerNext ) {
-		if ( lref->area == area ) {
-			return;
-		}
+	// the area and the light def both track the link,
+	// so make sure neither side gets a duplicate
+	if ( area->lightRefs.FindIndex( light ) >= 0 ) {
+		return;
+	}
+	if ( light->references.FindIndex( area ) >= 0 ) {
+		return;
 	}
 
-	// add a lightref to this area
-	lref = areaReferenceAllocator.Alloc();
-	lref->light = light;
-	lref->area = area;
-	lref->ownerNext = light->references;
-	light->references = lref;
-	tr.pc.c_lightReferences++;
+	area->lightRefs.Append( light );
+	light->references.Append( area );
 
-	// doubly linked list so we can free them easily later
-	area->lightRefs.areaNext->areaPrev = lref;
-	lref->areaNext = area->lightRefs.areaNext;
-	lref->areaPrev = &area->lightRefs;
-	area->lightRefs.areaNext = lref;
+	tr.pc.c_lightReferences++;
 }
 
 /*
@@ -1469,12 +1444,7 @@ We might alternatively choose to do this with an area flow.
 void idRenderWorldLocal::PushFrustumIntoTree_r( idRenderEntityLocal *def, idRenderLightLocal *light,
 												const frustumCorners_t & corners, int nodeNum ) {
 	if ( nodeNum < 0 ) {
-		int areaNum = -1 - nodeNum;
-		portalArea_t * area = &portalAreas[ areaNum ];
-		if ( area->viewCount == tr.viewCount ) {
-			return;	// already added a reference here
-		}
-		area->viewCount = tr.viewCount;
+		portalArea_t * area = &portalAreas[ -1 - nodeNum ];
 
 		if ( def != NULL ) {
 			AddEntityRefToArea( def, area );
@@ -1487,18 +1457,6 @@ void idRenderWorldLocal::PushFrustumIntoTree_r( idRenderEntityLocal *def, idRend
 	}
 
 	areaNode_t * node = areaNodes + nodeNum;
-
-	// if we know that all possible children nodes only touch an area
-	// we have already marked, we can early out
-	if ( node->commonChildrenArea != CHILDREN_HAVE_MULTIPLE_AREAS && r_useNodeCommonChildren.GetBool() ) {
-		// note that we do NOT try to set a reference in this area
-		// yet, because the test volume may yet wind up being in the
-		// solid part, which would cause bounds slightly poked into
-		// a wall to show up in the next room
-		if ( portalAreas[ node->commonChildrenArea ].viewCount == tr.viewCount ) {
-			return;
-		}
-	}
 
 	// exact check all the corners against the node plane
 	frustumCull_t cull = idRenderMatrix::CullFrustumCornersToPlane( corners, node->plane );
@@ -1520,10 +1478,10 @@ void idRenderWorldLocal::PushFrustumIntoTree_r( idRenderEntityLocal *def, idRend
 
 /*
 ==============
-idRenderWorldLocal::PushFrustumIntoTree
+idRenderWorldLocal::LinkModelIntoTree
 ==============
 */
-void idRenderWorldLocal::PushFrustumIntoTree( idRenderEntityLocal *def, idRenderLightLocal *light, const idRenderMatrix & frustumTransform, const idBounds & frustumBounds ) {
+void idRenderWorldLocal::LinkModelIntoTree( idRenderEntityLocal *def, const idRenderMatrix & frustumTransform, const idBounds & frustumBounds ) {
 	if ( areaNodes == NULL ) {
 		return;
 	}
@@ -1532,7 +1490,56 @@ void idRenderWorldLocal::PushFrustumIntoTree( idRenderEntityLocal *def, idRender
 	ALIGNTYPE16 frustumCorners_t corners;
 	idRenderMatrix::GetFrustumCorners( corners, frustumTransform, frustumBounds );
 
-	PushFrustumIntoTree_r( def, light, corners, 0 );
+	PushFrustumIntoTree_r( def, NULL, corners, 0 );
+}
+
+/*
+==============
+idRenderWorldLocal::LinkLightIntoTree
+==============
+*/
+void idRenderWorldLocal::LinkLightIntoTree( idRenderLightLocal *light, const idRenderMatrix & frustumTransform, const idBounds & frustumBounds ) {
+	if ( areaNodes == NULL ) {
+		return;
+	}
+
+	// calculate the corners of the frustum in word space
+	ALIGNTYPE16 frustumCorners_t corners;
+	idRenderMatrix::GetFrustumCorners( corners, frustumTransform, frustumBounds );
+
+	PushFrustumIntoTree_r( NULL, light, corners, 0 );
+}
+
+/*
+==============
+idRenderWorldLocal::UnlinkModelFromTree
+==============
+*/
+void idRenderWorldLocal::UnlinkModelFromTree( idRenderEntityLocal *def ) {
+	for ( int i = 0; i < def->references.Num(); i++ ) {
+		portalArea_t * area = def->references[i];
+		const int refIndex = area->entityRefs.FindIndex( def );
+		if ( refIndex >= 0 ) {
+			area->entityRefs.RemoveIndexFast( refIndex );
+		}
+	}
+	def->references.Clear();
+}
+
+/*
+==============
+idRenderWorldLocal::UnlinkLightFromTree
+==============
+*/
+void idRenderWorldLocal::UnlinkLightFromTree( idRenderLightLocal *light ) {
+	for ( int i = 0; i < light->references.Num(); i++ ) {
+		portalArea_t * area = light->references[i];
+		const int refIndex = area->lightRefs.FindIndex( light );
+		if ( refIndex >= 0 ) {
+			area->lightRefs.RemoveIndexFast( refIndex );
+		}
+	}
+	light->references.Clear();
 }
 
 //===================================================================

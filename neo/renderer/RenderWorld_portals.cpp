@@ -200,8 +200,8 @@ Any models that are visible through the current portalStack will have their scis
 void idRenderWorldLocal::AddAreaViewEntities( int areaNum, const portalStack_t *ps ) {
 	portalArea_t * area = &portalAreas[ areaNum ];
 
-	for ( areaReference_t * ref = area->entityRefs.areaNext; ref != &area->entityRefs; ref = ref->areaNext ) {
-		idRenderEntityLocal	* entity = ref->entity;
+	for ( int refIndex = 0; refIndex < area->entityRefs.Num(); refIndex++ ) {
+		idRenderEntityLocal	* entity = area->entityRefs[refIndex];
 
 		// debug tool to allow viewing of only one entity at a time
 		if ( r_singleEntity.GetInteger() >= 0 && r_singleEntity.GetInteger() != entity->index ) {
@@ -320,8 +320,8 @@ Any lights that are visible through the current portalStack will have their scis
 void idRenderWorldLocal::AddAreaViewLights( int areaNum, const portalStack_t *ps ) {
 	portalArea_t * area = &portalAreas[ areaNum ];
 
-	for ( areaReference_t * lref = area->lightRefs.areaNext; lref != &area->lightRefs; lref = lref->areaNext ) {
-		idRenderLightLocal * light = lref->light;
+	for ( int refIndex = 0; refIndex < area->lightRefs.Num(); refIndex++ ) {
+		idRenderLightLocal * light = area->lightRefs[refIndex];
 
 		// debug tool to allow viewing of only one light at a time
 		if ( r_singleLight.GetInteger() >= 0 && r_singleLight.GetInteger() != light->index ) {
