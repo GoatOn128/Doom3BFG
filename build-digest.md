@@ -1,6 +1,6 @@
 # Build digest
 
-commit: 38305216587f
+commit: c4055c1c022f
 
 - windows-x64-debug: cancelled
 - windows-x64-release: cancelled
@@ -12,7 +12,7 @@ commit: 38305216587f
 status: cancelled
 
 errors: 0
-warnings: 0 in 0 kinds
+warnings: 2 in 1 kinds
 
 ### errors
 
@@ -21,6 +21,10 @@ warnings: 0 in 0 kinds
 
 
 ### warning kinds
+
+- [2x] C4245
+  - neo\d3xp\Game_local.cpp(249): warning C4245: '=': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
+  - neo\d3xp\Game_local.cpp(250): warning C4245: '=': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
 
 ## windows-x64-release
 
