@@ -1485,6 +1485,27 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 			ss->drawStateBits |= GLS_DEPTHMASK;
 			continue;
 		}
+		if ( !token.Icmp( "depthFunc" ) ) {
+			idToken funcTok;
+			if ( !src.ReadTokenOnLine( &funcTok ) ) {
+				common->Warning( "missing depthFunc argument in material '%s'", GetName() );
+				return;
+			}
+			if ( !funcTok.Icmp( "lequal" ) ) {
+				// the engine default depth function is lequal
+				ss->drawStateBits |= GLS_DEPTHFUNC_LESS;
+			} else if ( !funcTok.Icmp( "equal" ) ) {
+				ss->drawStateBits |= GLS_DEPTHFUNC_EQUAL;
+			} else if ( !funcTok.Icmp( "always" ) || !funcTok.Icmp( "disable" ) ) {
+				// the test always passes, which keeps the Quake 3 spelling
+				// "disable" working
+				ss->drawStateBits |= GLS_DEPTHFUNC_ALWAYS;
+			} else {
+				common->Warning( "bad depthFunc '%s' in material '%s'", funcTok.c_str(), GetName() );
+				return;
+			}
+			continue;
+		}
 		if ( !token.Icmp( "alphaTest" ) ) {
 			ss->hasAlphaTest = true;
 			ss->alphaTestRegister = ParseExpression( src );
@@ -2330,6 +2351,14 @@ bool idMaterial::Parse( const char *text, const int textLength, bool allowBinary
 	// set the drawStateBits depth flags
 	for ( i = 0 ; i < numStages ; i++ ) {
 		shaderStage_t	*pStage = &pd->parseStages[i];
+		if ( pStage->drawStateBits & GLS_DEPTHFUNC_BITS ) {
+			// the material set an explicit depth function, only the depth
+			// mask default is applied to it
+			if ( sort != SS_POST_PROCESS ) {
+				pStage->drawStateBits |= GLS_DEPTHMASK;
+			}
+			continue;
+		}
 		if ( sort == SS_POST_PROCESS ) {
 			// post-process effects fill the depth buffer as they draw, so only the
 			// topmost post-process effect is rendered
