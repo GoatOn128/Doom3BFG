@@ -18,6 +18,8 @@ doom_excludes = [
     # sys/stub is the standalone CLI-tool host harness (its own main and
     # sys/common stubs); it must never compile into the engine.
     'sys/stub/*',
+    # The convertidtech3assets CLI tool builds from its own SConscript.
+    'tools/convertidtech3assets/*',
 ]
 doom_all_sources = require_sources(
     'DoomEXE', collect_sources(doom_dirs, doom_excludes)

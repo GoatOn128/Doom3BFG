@@ -547,13 +547,14 @@ Usage:
   scons idLib                                 Build only the idLib project
   scons Game-D3XP                             Build only the game code
   scons DoomEXE                               Build the engine code
+  scons ConvertIdTech3Assets                  Build only the id Tech 3 asset converter
   scons arch=x64 config=debug dll=1 dll       Build the "dll" group
   scons msvc-projects                         Generate/update Visual Studio files when build scripts change
   scons msvc=1                                Same as msvc-projects (generation only)
 
 Project selection (mirrors Premake groups):
   libs               external + idLib + Game-D3XP static library (when dll=0)
-  exes               DoomEXE / bin/Doom3BFG.exe
+  exes               DoomEXE / ConvertIdTech3Assets executables
   dll                Game-D3XP / bin/gamex86.dll (only when dll=1)
   external           Individual external static-library project
   idLib              Individual idLib static-library project
@@ -580,6 +581,7 @@ Project definitions:
   neo/idLib/SConscript
   neo/Game-D3XP/SConscript
   neo/DoomEXE/SConscript
+  neo/tools/convertidtech3assets/SConscript
 
 Build products:
   bin/Doom3BFG.exe
@@ -935,6 +937,9 @@ Export('game_target', 'game_static_lib')
 
 doom_target = SConscript(os.path.join(SCRIPT_DIR, 'neo/SConscript'), chdir=0)
 
+# Standalone CLI tools that host the engine framework through sys/stub.
+convertidtech3assets_target = SConscript(os.path.join(SCRIPT_DIR, 'neo/tools/convertidtech3assets/SConscript'), chdir=0)
+
 # -----------------------------------------------------------------------------
 # Premake-style project targets and groups
 # -----------------------------------------------------------------------------
@@ -944,13 +949,14 @@ external_project = Alias('external', external_lib)
 idlib_project = Alias('idLib', idlib_lib)
 game_project = Alias('Game-D3XP', game_target)
 doom_project = Alias('DoomEXE', doom_target)
+convertidtech3assets_project = Alias('ConvertIdTech3Assets', convertidtech3assets_target)
 Alias('Doom3BFG', doom_target)
 
 libs_members = [external_project, idlib_project]
 if not DLL_BUILD:
     libs_members.append(game_project)
 libs_group = Alias('libs', libs_members)
-exes_group = Alias('exes', [doom_project])
+exes_group = Alias('exes', [doom_project, convertidtech3assets_project])
 all_members = [libs_group, exes_group]
 if DLL_BUILD:
     dll_group = Alias('dll', [game_project])
@@ -1229,6 +1235,7 @@ def _generate_msvc_projects():
             # sys/stub is the standalone CLI-tool host harness (its own
             # main and sys/common stubs); it must never build in the engine.
             'sys/stub/*',
+            'tools/convertidtech3assets/*',
         ],
     )
     idlib_sources, idlib_headers, idlib_resources, idlib_misc = _collect_msvs_files(('idlib',))
