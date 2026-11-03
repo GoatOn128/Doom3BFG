@@ -85,6 +85,34 @@ static idStr Q3Trim( const char *s ) {
 	return out;
 }
 
+// Reads the texture name of a map directive. The lexer hands the leading
+// '$' of the Quake 3 built-in maps back as its own token, so the name is
+// reassembled here.
+static void Q3ReadMapName( idLexer &src, idToken &mapTok ) {
+	idToken nameTok;
+	if ( mapTok == "$" && src.ReadToken( &nameTok ) ) {
+		mapTok = "$";
+		mapTok += nameTok.c_str();
+	}
+}
+
+// Doom 3 picks the image type from whatever file is on disk when the
+// extension is left off, so the Quake 3 image extensions are stripped
+// from every emitted image name.
+static idStr Q3ImageName( const char *name ) {
+	idStr out = name;
+	static const char *q3ImageExts[] = { ".tga", ".jpg", ".jpeg", ".png" };
+	const int numExts = (int)( sizeof( q3ImageExts ) / sizeof( q3ImageExts[0] ) );
+	for ( int i = 0; i < numExts; i++ ) {
+		const int extLen = (int)strlen( q3ImageExts[i] );
+		if ( out.Length() > extLen && idStr::Icmp( out.c_str() + out.Length() - extLen, q3ImageExts[i] ) == 0 ) {
+			out = out.Left( out.Length() - extLen );
+			break;
+		}
+	}
+	return out;
+}
+
 /*
 =================
 Q3WaveExpr
@@ -231,6 +259,7 @@ static void Q3ParseStage( idLexer &src, const char *shaderName, q3Stage_t &stage
 			if ( !src.ReadToken( &mapTok ) ) {
 				continue;
 			}
+			Q3ReadMapName( src, mapTok );
 			if ( !mapTok.Icmp( "$lightmap" ) || !mapTok.Icmp( "$lightimage" ) ) {
 				dropped = true;
 				stage.plainMap = false;
@@ -242,9 +271,17 @@ static void Q3ParseStage( idLexer &src, const char *shaderName, q3Stage_t &stage
 				stage.text += "\t\tmap _white\n";
 				continue;
 			}
-			stage.mapName = mapTok.c_str();
+			if ( mapTok[0] == '$' ) {
+				// unknown Quake 3 built-in map
+				stage.plainMap = false;
+				stage.text += Q3Str( "\t\t//map %s\n", mapTok.c_str() ).c_str();
+				conv->numWarnings++;
+				continue;
+			}
+			idStr image = Q3ImageName( mapTok.c_str() );
+			stage.mapName = image.c_str();
 			stage.text += "\t\tmap ";
-			stage.text += mapTok.c_str();
+			stage.text += image.c_str();
 			stage.text += "\n";
 			continue;
 		}
@@ -254,10 +291,12 @@ static void Q3ParseStage( idLexer &src, const char *shaderName, q3Stage_t &stage
 			if ( !src.ReadToken( &mapTok ) ) {
 				continue;
 			}
+			Q3ReadMapName( src, mapTok );
 			stage.plainMap = false;
-			stage.mapName = mapTok.c_str();
+			idStr image = Q3ImageName( mapTok.c_str() );
+			stage.mapName = image.c_str();
 			stage.text += "\t\tclamp\n\t\tmap ";
-			stage.text += mapTok.c_str();
+			stage.text += image.c_str();
 			stage.text += "\n";
 			continue;
 		}
@@ -271,7 +310,7 @@ static void Q3ParseStage( idLexer &src, const char *shaderName, q3Stage_t &stage
 			int numFrames = 0;
 			while ( src.ReadTokenOnLine( &frame ) ) {
 				line += " ";
-				line += frame.c_str();
+				line += Q3ImageName( frame.c_str() ).c_str();
 				numFrames++;
 			}
 			if ( numFrames == 0 ) {
@@ -477,8 +516,25 @@ static void Q3ParseStage( idLexer &src, const char *shaderName, q3Stage_t &stage
 				stage.text += Q3Str( "\t\trotate ( time * %s )\n", Q3Float( deg / 360.0f ).c_str() ).c_str();
 				continue;
 			}
+			if ( !modTok.Icmp( "stretch" ) ) {
+				idToken funcTok;
+				src.ReadToken( &funcTok );
+				float base = src.ParseFloat();
+				float amp = src.ParseFloat();
+				float phase = src.ParseFloat();
+				float freq = src.ParseFloat();
+				bool valid = false;
+				idStr expr = Q3WaveExpr( funcTok.c_str(), base, amp, phase, freq, valid );
+				if ( valid ) {
+					stage.text += Q3Str( "\t\tcenterScale ( %s ), ( %s )\n", expr.c_str(), expr.c_str() ).c_str();
+				} else {
+					stage.text += Q3Str( "\t\t//tcMod stretch %s (no Doom 3 equivalent)\n", funcTok.c_str() ).c_str();
+					conv->numWarnings++;
+				}
+				continue;
+			}
 			Q3UnknownDirective( src, token.c_str(), "\t\t", stage.text, conv );
-			// stretch, turb and transform carry their arguments on the same line
+			// turb and transform carry their arguments on the same line
 			continue;
 		}
 
@@ -500,6 +556,58 @@ static void Q3ParseStage( idLexer &src, const char *shaderName, q3Stage_t &stage
 
 		if ( !token.Icmp( "detail" ) ) {
 			continue;	// the Doom 3 interaction shader handles detail stages on its own
+		}
+
+		// Quake II style stage keywords kept by Doom 3 under the same names
+		if ( !token.Icmp( "rotate" ) ) {
+			float deg = src.ParseFloat();
+			stage.plainMap = false;
+			// degrees per second becomes cycles per second
+			stage.text += Q3Str( "\t\trotate ( time * %s )\n", Q3Float( deg / 360.0f ).c_str() ).c_str();
+			continue;
+		}
+		if ( !token.Icmp( "scroll" ) ) {
+			float s = src.ParseFloat();
+			float t = src.ParseFloat();
+			stage.plainMap = false;
+			stage.text += Q3Str( "\t\ttranslate ( time * %s ), ( time * %s )\n", Q3Float( s ).c_str(), Q3Float( t ).c_str() ).c_str();
+			continue;
+		}
+		if ( !token.Icmp( "scale" ) ) {
+			float s = src.ParseFloat();
+			float t = src.ParseFloat();
+			stage.plainMap = false;
+			stage.text += Q3Str( "\t\tscale ( %s ), ( %s )\n", Q3Float( s ).c_str(), Q3Float( t ).c_str() ).c_str();
+			continue;
+		}
+		if ( !token.Icmp( "centerScale" ) ) {
+			float s = src.ParseFloat();
+			float t = src.ParseFloat();
+			stage.plainMap = false;
+			stage.text += Q3Str( "\t\tcenterScale ( %s ), ( %s )\n", Q3Float( s ).c_str(), Q3Float( t ).c_str() ).c_str();
+			continue;
+		}
+		if ( !token.Icmp( "shear" ) ) {
+			float s = src.ParseFloat();
+			float t = src.ParseFloat();
+			stage.plainMap = false;
+			stage.text += Q3Str( "\t\tshear ( %s ), ( %s )\n", Q3Float( s ).c_str(), Q3Float( t ).c_str() ).c_str();
+			continue;
+		}
+		if ( !token.Icmp( "texgen" ) ) {
+			idToken genTok;
+			stage.plainMap = false;
+			if ( !src.ReadToken( &genTok ) ) {
+				continue;
+			}
+			if ( !genTok.Icmp( "environment" ) ) {
+				stage.text += "\t\ttexGen reflect\n";
+			} else {
+				src.SkipRestOfLine();
+				stage.text += Q3Str( "\t\t//texgen %s\n", genTok.c_str() ).c_str();
+				conv->numWarnings++;
+			}
+			continue;
 		}
 
 		Q3UnknownDirective( src, token.c_str(), "\t\t", stage.text, conv );
@@ -530,7 +638,7 @@ static void Q3ParseShaderDirective( idLexer &src, const idToken &token, idStr &d
 		idToken image;
 		if ( src.ReadTokenOnLine( &image ) ) {
 			dest += "\tqer_editorimage ";
-			dest += image.c_str();
+			dest += Q3ImageName( image.c_str() ).c_str();
 			dest += "\n";
 		}
 		return;
