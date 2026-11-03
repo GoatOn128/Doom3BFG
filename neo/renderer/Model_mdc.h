@@ -21,15 +21,9 @@ along with Doom 3 BFG Edition Source Code.  If not, see <http://www.gnu.org/lice
 
 In addition, the Doom 3 BFG Edition Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 BFG Edition Source Code.  If not, please request a copy in writing from id Software at the address below.
 
-If you have questions concerning this license or the applicable additional terms, please contact in writing to id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
 
 ===========================================================================
-
-MDC (compressed MD3) support ported from the Wolfenstein: Enemy Territory
-GPL Source Code (Copyright (C) 1999-2010 id Software LLC, a ZeniMax Media
-company). The ET source is GPLv3 like this engine and is also vendored in
-this repository under references/etwolf.
-
 */
 
 #ifndef __MODEL_MDC_H__
@@ -37,23 +31,19 @@ this repository under references/etwolf.
 
 #include "Model_md3.h"
 
-// file format constants from the Enemy Territory qfiles.h
 #define MDC_IDENT			(('C'<<24)+('P'<<16)+('D'<<8)+'I')
 #define MDC_VERSION		2
 
-// resolution of the compressed vertex offset direction
-#define MDC_DIST_SCALE		0.05f
-// to centre the compressed offset per axis
-#define MDC_MAX_OFS		127.0f
-// scale to get degrees out of a compressed tag angle
-#define MDC_TAG_ANGLE_SCALE	(360.0f / 32700.0f)
+#define MDC_DIST_SCALE			0.05f	// resolution of the compressed vertex offset direction
+#define MDC_MAX_OFS				127.0f	// to centre the compressed offset per axis
+#define MDC_TAG_ANGLE_SCALE		(360.0f / 32700.0f)	// scale to get degrees out of a compressed tag angle
 
 typedef struct {
 	unsigned int	ofsVec;		// three 8 bit axis offsets plus a normal index in the high byte
 } mdcXyzCompressed_t;
 
 typedef struct {
-	char			name[MAX_MD3PATH];	// tag name, stored once per tag
+	char			name[MOD_MAX_QPATH];	// tag name, stored once per tag
 } mdcTagName_t;
 
 typedef struct {
@@ -61,16 +51,15 @@ typedef struct {
 	short			angles[3];
 } mdcTag_t;
 
-// the on-disk shader entry, the runtime md3Shader_t replaces the index with a pointer
 typedef struct {
-	char			name[MAX_MD3PATH];
+	char			name[MOD_MAX_QPATH];
 	int				shaderIndex;
 } mdcShaderFile_t;
 
 typedef struct mdcSurface_s {
 	int				ident;
 
-	char			name[MAX_MD3PATH];	// polyset name
+	char			name[MOD_MAX_QPATH];	// polyset name
 
 	int				flags;
 	int				numCompFrames;		// all surfaces in a model should have the same
@@ -97,7 +86,7 @@ typedef struct mdcHeader_s {
 	int				ident;
 	int				version;
 
-	char			name[MAX_MD3PATH];	// model name
+	char			name[MOD_MAX_QPATH];	// model name
 
 	int				flags;
 
@@ -115,9 +104,13 @@ typedef struct mdcHeader_s {
 	int				ofsEnd;			// end of file
 } mdcHeader_t;
 
-// idRenderModelMDC loads an MDC file and decodes the compressed data into a
-// synthesized MD3 layout at load time, so the whole MD3 path (instantiate,
-// LOD chain, tags as joints, per frame bounds) is shared unchanged.
+/*
+===============================================================================
+
+	MDC loader (Compressed Model Data)
+
+===============================================================================
+*/
 class idRenderModelMDC : public idRenderModelMD3 {
 public:
 	idRenderModelMDC() { }

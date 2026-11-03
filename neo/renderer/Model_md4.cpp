@@ -19,30 +19,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Doom 3 BFG Edition Source Code.  If not, see <http://www.gnu.org/licenses/>.
 
-In addition, the Doom 3 BFG Edition Source Code is also subject to certain additional terms.
-You should have received a copy of these additional terms immediately following
-the terms and conditions of the GNU General Public License which accompanied the
-Doom 3 BFG Edition Source Code.  If not, please request a copy in writing from
-id Software at the address below.
+In addition, the Doom 3 BFG Edition Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 BFG Edition Source Code.  If not, please request a copy in writing from id Software at the address below.
 
-If you have questions concerning this license, the applicable additional terms,
-or would like to contact id Software, please write:
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
 
-id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================*/
-
-// MD4 model support ported from the Wolfenstein: Enemy Territory GPL Source
-// Code (Copyright (C) 1999-2010 id Software LLC, a ZeniMax Media company).
-// The ET source is GPLv3 like this engine and is also vendored in this
-// repository under references/etwolf.
-//
-// The MD4 format has no loader in the released ET sources, only the on-disk
-// structures in qfiles.h. The decode below follows the Quake III 3x4 matrix
-// convention used everywhere in the ET code base: each row holds a rotation
-// basis vector with the translation in the last column. The runtime
-// pipeline is modeled on the Doom 3 MD5 loader (Model_md5.cpp) and lives
-// in Model_wolf.cpp.
+===========================================================================
+*/
 
 #include "precompiled.h"
 #pragma hdrstop
@@ -54,8 +36,6 @@ id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 US
 /*
 ====================
 idRenderModelMD4::DecodeFrame
-
-The MD4 frames store absolute 3x4 bone matrices directly.
 ====================
 */
 void idRenderModelMD4::DecodeFrame( int frameNum, idJointQuat *jointQuats ) const {
@@ -81,12 +61,12 @@ void idRenderModelMD4::DecodeFrame( int frameNum, idJointQuat *jointQuats ) cons
 
 /*
 ====================
-idRenderModelMD4::LoadWolfFile
+idRenderModelMD4::LoadMODFile
 ====================
 */
-bool idRenderModelMD4::LoadWolfFile( const char *fileName ) {
+bool idRenderModelMD4::LoadMODFile( const char *fileName ) {
 	int fileSize = 0;
-	fileData = WolfLoadFile( fileName, &fileSize, &timeStamp );
+	fileData = MOD_LoadFile( fileName, &fileSize, &timeStamp );
 	if ( fileData == NULL ) {
 		common->Warning( "idRenderModelMD4: %s not found", fileName );
 		return false;
@@ -183,9 +163,9 @@ bool idRenderModelMD4::LoadWolfFile( const char *fileName ) {
 				return false;
 			}
 
-			idWolfMesh &mesh = meshes.Alloc();
+			idMODMesh &mesh = meshes.Alloc();
 			if ( !BuildMeshFromSurface( mesh, surf->shader,
-					LittleInt( surf->numVerts ), surfaceOfs + LittleInt( surf->ofsVerts ), WOLF_MD4_VERTEX_HEADER_SIZE,
+					LittleInt( surf->numVerts ), surfaceOfs + LittleInt( surf->ofsVerts ), MD4_VERTEX_HEADER_SIZE,
 					LittleInt( surf->numTriangles ), surfaceOfs + LittleInt( surf->ofsTriangles ),
 					surfEnd, bindPose ) ) {
 				return false;

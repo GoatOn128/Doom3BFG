@@ -21,31 +21,20 @@ along with Doom 3 BFG Edition Source Code.  If not, see <http://www.gnu.org/lice
 
 In addition, the Doom 3 BFG Edition Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 BFG Edition Source Code.  If not, please request a copy in writing from id Software at the address below.
 
-If you have questions concerning this license or the applicable additional terms, please contact in writing to id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
 
 ===========================================================================
-
-MDC (compressed MD3) support ported from the Wolfenstein: Enemy Territory
-GPL Source Code (Copyright (C) 1999-2010 id Software LLC, a ZeniMax Media
-company), mostly from R_LoadMDC in src/renderer/tr_model.c, the decode macro
-R_MDC_DecodeXyzCompressed in src/renderer/tr_local.h and the compressed
-frame decode in LerpCMeshVertexes in src/renderer/tr_surface.c. The ET
-source is GPLv3 like this engine and is also vendored in this repository
-under references/etwolf.
-
 */
 
 #include "precompiled.h"
 #pragma hdrstop
 
 #include "tr_local.h"
+
 #include "Model_local.h"
 #include "Model_md3.h"
 #include "Model_mdc.h"
 
-
-// the 256 vertex normals the compressed frames index into, from the Enemy
-// Territory src/renderer/anorms256.h
 static const float mdcAnorms[256][3] = {
 {1.000000f, 0.000000f, 0.000000f},
 {0.980785f, 0.195090f, 0.000000f},
@@ -308,9 +297,6 @@ static const float mdcAnorms[256][3] = {
 /*
 =================
 MDC_EncodeNormal
-
-Inverse of MD3_DecodeNormal, packs a unit normal into the lat/lng byte pair
-the MD3 layout stores per vertex.
 =================
 */
 static short MDC_EncodeNormal( const idVec3 &n ) {
@@ -329,10 +315,6 @@ static short MDC_EncodeNormal( const idVec3 &n ) {
 /*
 =================
 MDC_LoadHeader
-
-Loads an MDC file, decodes the compressed frames and tags and stores the
-result in a synthesized MD3 layout block that the idRenderModelMD3 path
-consumes unchanged. The block is freed by PurgeModel like an MD3 block.
 =================
 */
 static bool MDC_LoadHeader( const char *fileName, md3Header_t **headerOut, ID_TIME_T *timestamp ) {
@@ -429,8 +411,8 @@ static bool MDC_LoadHeader( const char *fileName, md3Header_t **headerOut, ID_TI
 
 	header->ident = MD3_IDENT;
 	header->version = MD3_VERSION;
-	memcpy( header->name, pinmodel->name, MAX_MD3PATH );
-	header->name[MAX_MD3PATH-1] = '\0';
+	memcpy( header->name, pinmodel->name, MOD_MAX_QPATH );
+	header->name[MOD_MAX_QPATH-1] = '\0';
 	header->flags = LittleInt( pinmodel->flags );
 	header->numFrames = numFrames;
 	header->numTags = numTags;
@@ -458,8 +440,8 @@ static bool MDC_LoadHeader( const char *fileName, md3Header_t **headerOut, ID_TI
 	const mdcTag_t *inTag = (const mdcTag_t *)( (const byte *)buffer + LittleInt( pinmodel->ofsTags ) );
 	md3Tag_t *outTag = (md3Tag_t *)( (byte *)header + header->ofsTags );
 	for ( i = 0; i < numFrames * numTags; i++, inTag++, outTag++ ) {
-		memcpy( outTag->name, tagNames[i % numTags].name, MAX_MD3PATH );
-		outTag->name[MAX_MD3PATH-1] = '\0';
+		memcpy( outTag->name, tagNames[i % numTags].name, MOD_MAX_QPATH );
+		outTag->name[MOD_MAX_QPATH-1] = '\0';
 		for ( j = 0; j < 3; j++ ) {
 			outTag->origin[j] = LittleShort( inTag->xyz[j] ) * MD3_XYZ_SCALE;
 		}
@@ -490,8 +472,8 @@ static bool MDC_LoadHeader( const char *fileName, md3Header_t **headerOut, ID_TI
 		const int numCompFrames = LittleInt( surf->numCompFrames );
 
 		out->ident = 0;
-		memcpy( out->name, surf->name, MAX_MD3PATH );
-		out->name[MAX_MD3PATH-1] = '\0';
+		memcpy( out->name, surf->name, MOD_MAX_QPATH );
+		out->name[MOD_MAX_QPATH-1] = '\0';
 		out->flags = LittleInt( surf->flags );
 		out->numFrames = numFrames;
 		out->numShaders = numShaders;
@@ -514,8 +496,8 @@ static bool MDC_LoadHeader( const char *fileName, md3Header_t **headerOut, ID_TI
 		const mdcShaderFile_t *inShader = (const mdcShaderFile_t *)( (const byte *)surf + LittleInt( surf->ofsShaders ) );
 		md3Shader_t *outShader = (md3Shader_t *)( dst + out->ofsShaders );
 		for ( j = 0; j < numShaders; j++, inShader++, outShader++ ) {
-			memcpy( outShader->name, inShader->name, MAX_MD3PATH );
-			outShader->name[MAX_MD3PATH-1] = '\0';
+			memcpy( outShader->name, inShader->name, MOD_MAX_QPATH );
+			outShader->name[MOD_MAX_QPATH-1] = '\0';
 			outShader->shader = declManager->FindMaterial( outShader->name );
 		}
 		ofsCur += numShaders * ( int )sizeof( md3Shader_t );

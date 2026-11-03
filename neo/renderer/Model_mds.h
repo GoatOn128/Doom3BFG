@@ -19,39 +19,83 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Doom 3 BFG Edition Source Code.  If not, see <http://www.gnu.org/licenses/>.
 
-In addition, the Doom 3 BFG Edition Source Code is also subject to certain additional terms.
-You should have received a copy of these additional terms immediately following
-the terms and conditions of the GNU General Public License which accompanied the
-Doom 3 BFG Edition Source Code.  If not, please request a copy in writing from
-id Software at the address below.
+In addition, the Doom 3 BFG Edition Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 BFG Edition Source Code.  If not, please request a copy in writing from id Software at the address below.
 
-If you have questions concerning this license, the applicable additional terms,
-or would like to contact id Software, please write:
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
 
-id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================*/
-
-// MDS model support ported from the Wolfenstein: Enemy Territory GPL Source
-// Code (Copyright (C) 1999-2010 id Software LLC, a ZeniMax Media company).
-// The ET source is GPLv3 like this engine and is also vendored in this
-// repository under references/etwolf. The shared skeletal base lives in
-// Model_wolf.cpp.
+===========================================================================
+*/
 
 #ifndef __MODEL_MDS_H__
 #define __MODEL_MDS_H__
 
-#include "Model_wolf.h"
+#include "Model_common.h"
 
-// MDS: bones, frames, surfaces and tags all in one file
-class idRenderModelMDS : public idRenderModelWolfSkeletal {
+#define MDS_IDENT				( ( 'W' << 24 ) + ( 'S' << 16 ) + ( 'D' << 8 ) + 'M' )
+#define MDS_VERSION				4
+#define MDS_MAX_VERTS			6000
+#define MDS_MAX_TRIANGLES		8192
+#define MDS_MAX_BONES			128
+#define MDS_MAX_SURFACES		32
+#define MDS_MAX_TAGS			128
+#define MDS_VERTEX_HEADER_SIZE	32	// + fixedParent + fixedDist
+
+typedef struct {
+	char		name[MOD_MAX_QPATH];
+	float		torsoWeight;
+	int			boneIndex;
+} mdsTag_t;
+
+typedef struct {
+	int			ident;
+	char		name[MOD_MAX_QPATH];
+	char		shader[MOD_MAX_QPATH];
+	int			shaderIndex;
+	int			minLod;
+	int			ofsHeader;
+	int			numVerts;
+	int			ofsVerts;
+	int			numTriangles;
+	int			ofsTriangles;
+	int			ofsCollapseMap;
+	int			numBoneReferences;
+	int			ofsBoneReferences;
+	int			ofsEnd;			// next surface follows
+} mdsSurface_t;
+
+typedef struct {
+	int			ident;
+	int			version;
+	char		name[MOD_MAX_QPATH];
+	float		lodScale;
+	float		lodBias;
+	int			numFrames;
+	int			numBones;
+	int			ofsFrames;		// modFrame_t[numFrames]
+	int			ofsBones;		// mdsBoneInfo_t[numBones]
+	int			torsoParent;
+	int			numSurfaces;
+	int			ofsSurfaces;
+	int			numTags;
+	int			ofsTags;		// mdsTag_t[numTags]
+	int			ofsEnd;
+} mdsHeader_t;
+
+/*
+===============================================================================
+
+	MDS loader.
+
+===============================================================================
+*/
+class idRenderModelMDS : public idRenderModelMODSkeletal {
 public:
 					idRenderModelMDS() {}
 	virtual			~idRenderModelMDS() {}
 
 protected:
 	virtual void	DecodeFrame( int frameNum, idJointQuat *jointQuats ) const;
-	virtual bool	LoadWolfFile( const char *fileName );
+	virtual bool	LoadMODFile( const char *fileName );
 };
 
 #endif /* !__MODEL_MDS_H__ */

@@ -19,47 +19,33 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Doom 3 BFG Edition Source Code.  If not, see <http://www.gnu.org/licenses/>.
 
-In addition, the Doom 3 BFG Edition Source Code is also subject to certain additional terms.
-You should have received a copy of these additional terms immediately following
-the terms and conditions of the GNU General Public License which accompanied the
-Doom 3 BFG Edition Source Code.  If not, please request a copy in writing from
-id Software at the address below.
+In addition, the Doom 3 BFG Edition Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 BFG Edition Source Code.  If not, please request a copy in writing from id Software at the address below.
 
-If you have questions concerning this license, the applicable additional terms,
-or would like to contact id Software, please write:
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
 
-id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================*/
-
-// MDS/MDM/MDX/MD4 model support ported from the Wolfenstein: Enemy Territory
-// GPL Source Code (Copyright (C) 1999-2010 id Software LLC, a ZeniMax Media
-// company). The ET source is GPLv3 like this engine and is also vendored in
-// this repository under references/etwolf. The runtime pipeline (weight
-// folding, deformInfo, GPU skinning joints array) is modeled on the Doom 3
-// MD5 loader (Model_md5.cpp).
+===========================================================================
+*/
 
 #include "precompiled.h"
 #pragma hdrstop
 
 #include "tr_local.h"
-#include "Model_local.h"
-#include "Model_wolf.h"
 
-static const char *Wolf_SnapshotName = "_Wolf_Snapshot_";
+#include "Model_local.h"
+#include "Model_common.h"
+#include "Model_mds.h"
+
+static const char *MOD_SnapshotName = "_MOD_Snapshot_";
 
 // up to this many influences are folded into the vertex color bytes
 static const int MAX_VERTEX_WEIGHTS = 4;
 
 /*
 ========================
-WolfLoadFile
-
-Reads a file into a TAG_MODEL block owned by the model. The caller is
-responsible for freeing it with Mem_Free.
+MOD_LoadFile
 ========================
 */
-byte *WolfLoadFile( const char *fileName, int *fileSizeOut, ID_TIME_T *timestamp ) {
+byte *MOD_LoadFile( const char *fileName, int *fileSizeOut, ID_TIME_T *timestamp ) {
 	void *buffer = NULL;
 	int fileLen = fileSystem->ReadFile( fileName, &buffer, timestamp );
 	if ( fileLen <= 0 ) {
@@ -76,26 +62,23 @@ byte *WolfLoadFile( const char *fileName, int *fileSizeOut, ID_TIME_T *timestamp
 
 /*
 ========================
-WolfName
-
-Copies a fixed size file name field into a zero terminated buffer.
+MOD_Name
 ========================
 */
-const char *WolfName( const char *name, char *buffer ) {
-	memcpy( buffer, name, WOLF_MAX_QPATH );
-	buffer[WOLF_MAX_QPATH] = '\0';
+const char *MOD_Name( const char *name, char *buffer ) {
+	memcpy( buffer, name, MOD_MAX_QPATH );
+	buffer[MOD_MAX_QPATH] = '\0';
 	return buffer;
 }
 
 /*
 ========================
-WolfTransformVertsAndTangents
+MOD_TransformVertsAndTangents
 
-Deforms the base pose verts with the skinned joint matrices. Scalar version
-of the idMD5Mesh code in Model_md5.cpp.
+Deforms the base pose verts with the skinned joint matrices.
 ========================
 */
-static void WolfTransformVertsAndTangents( idDrawVert *targetVerts, const int numVerts, const idDrawVert *baseVerts, const idJointMat *joints ) {
+static void MOD_TransformVertsAndTangents( idDrawVert *targetVerts, const int numVerts, const idDrawVert *baseVerts, const idJointMat *joints ) {
 	for ( int i = 0; i < numVerts; i++ ) {
 		const idDrawVert &base = baseVerts[i];
 
@@ -124,13 +107,12 @@ static void WolfTransformVertsAndTangents( idDrawVert *targetVerts, const int nu
 
 /*
 ========================
-WolfTransformJoints
+MOD_TransformJoints
 
 Builds the GPU skinning matrices, current pose times inverse bind pose.
-Scalar version of TransformJoints in Model_md5.cpp.
 ========================
 */
-static void WolfTransformJoints( idJointMat *outJoints, const int numJoints, const idJointMat *inJoints, const idJointMat *inverseBindJoints ) {
+static void MOD_TransformJoints( idJointMat *outJoints, const int numJoints, const idJointMat *inJoints, const idJointMat *inverseBindJoints ) {
 	for ( int i = 0; i < numJoints; i++ ) {
 		idJointMat::Multiply( outJoints[i], inJoints[i], inverseBindJoints[i] );
 	}
@@ -138,11 +120,11 @@ static void WolfTransformJoints( idJointMat *outJoints, const int numJoints, con
 
 /***********************************************************************
 
-	idWolfMesh
+	idMODMesh
 
 ***********************************************************************/
 
-idWolfMesh::idWolfMesh() {
+idMODMesh::idMODMesh() {
 	shader = NULL;
 	deformInfo = NULL;
 	surfaceNum = 0;
@@ -153,7 +135,7 @@ idWolfMesh::idWolfMesh() {
 	maxJointVertDist = 0.0f;
 }
 
-idWolfMesh::~idWolfMesh() {
+idMODMesh::~idMODMesh() {
 	if ( deformInfo != NULL ) {
 		R_FreeDeformInfo( deformInfo );
 		deformInfo = NULL;
@@ -166,13 +148,10 @@ idWolfMesh::~idWolfMesh() {
 
 /*
 ====================
-idWolfMesh::UpdateSurface
-
-Mirrors idMD5Mesh::UpdateSurface, the surface geometry is rebuilt from the
-deformInfo and either transformed on the CPU or referenced for GPU skinning.
+idMODMesh::UpdateSurface
 ====================
 */
-void idWolfMesh::UpdateSurface( const struct renderEntity_s *ent, const idJointMat *entJoints,
+void idMODMesh::UpdateSurface( const struct renderEntity_s *ent, const idJointMat *entJoints,
 								const idJointMat *entJointsInverted, modelSurface_t *surf ) const {
 
 	tr.pc.c_deformedSurfaces++;
@@ -225,7 +204,7 @@ void idWolfMesh::UpdateSurface( const struct renderEntity_s *ent, const idJointM
 			assert( tri->verts != NULL );	// quiet analyze warning
 			memcpy( tri->verts, deformInfo->verts, deformInfo->numOutputVerts * sizeof( deformInfo->verts[0] ) );	// copy over the texture coordinates
 		}
-		WolfTransformVertsAndTangents( tri->verts, deformInfo->numOutputVerts, deformInfo->verts, entJointsInverted );
+		MOD_TransformVertsAndTangents( tri->verts, deformInfo->numOutputVerts, deformInfo->verts, entJointsInverted );
 		tri->referencedVerts = false;
 	}
 	tri->tangentsCalculated = true;
@@ -235,12 +214,10 @@ void idWolfMesh::UpdateSurface( const struct renderEntity_s *ent, const idJointM
 
 /*
 ====================
-idWolfMesh::CalculateBounds
-
-Rough bounds from the joint radii, mirroring idMD5Mesh::CalculateBounds.
+idMODMesh::CalculateBounds
 ====================
 */
-void idWolfMesh::CalculateBounds( const idJointMat *entJoints, idBounds &bounds ) const {
+void idMODMesh::CalculateBounds( const idJointMat *entJoints, idBounds &bounds ) const {
 	bounds.Clear();
 	for ( int i = 0; i < numMeshJoints; i++ ) {
 		const idJointMat &joint = entJoints[meshJoints[i]];
@@ -251,10 +228,10 @@ void idWolfMesh::CalculateBounds( const idJointMat *entJoints, idBounds &bounds 
 
 /*
 ====================
-idWolfMesh::NearestJoint
+idMODMesh::NearestJoint
 ====================
 */
-int idWolfMesh::NearestJoint( int a, int b, int c ) const {
+int idMODMesh::NearestJoint( int a, int b, int c ) const {
 	// duplicated vertices might not have weights
 	int vertNum;
 	if ( a >= 0 && a < numVerts ) {
@@ -271,42 +248,42 @@ int idWolfMesh::NearestJoint( int a, int b, int c ) const {
 
 /***********************************************************************
 
-	idRenderModelWolfSkeletal
+	idRenderModelMODSkeletal
 
 ***********************************************************************/
 
-idRenderModelWolfSkeletal::idRenderModelWolfSkeletal() {
+idRenderModelMODSkeletal::idRenderModelMODSkeletal() {
 	numBones = 0;
 	numFrames = 0;
 	fileData = NULL;
 	skeletonData = NULL;
 }
 
-idRenderModelWolfSkeletal::~idRenderModelWolfSkeletal() {
+idRenderModelMODSkeletal::~idRenderModelMODSkeletal() {
 	PurgeModel();
 }
 
-void idRenderModelWolfSkeletal::InitFromFile( const char *fileName ) {
+void idRenderModelMODSkeletal::InitFromFile( const char *fileName ) {
 	name = fileName;
 	LoadModel();
 }
 
-dynamicModel_t idRenderModelWolfSkeletal::IsDynamicModel() const {
+dynamicModel_t idRenderModelMODSkeletal::IsDynamicModel() const {
 	return DM_CACHED;
 }
 
 /*
 ===================
-idRenderModelWolfSkeletal::LoadModel
+idRenderModelMODSkeletal::LoadModel
 ===================
 */
-void idRenderModelWolfSkeletal::LoadModel() {
+void idRenderModelMODSkeletal::LoadModel() {
 	if ( !purged ) {
 		PurgeModel();
 	}
 	purged = false;
 
-	if ( !LoadWolfFile( name.c_str() ) ) {
+	if ( !LoadMODFile( name.c_str() ) ) {
 		MakeDefaultModel();
 		return;
 	}
@@ -316,10 +293,10 @@ void idRenderModelWolfSkeletal::LoadModel() {
 
 /*
 ===================
-idRenderModelWolfSkeletal::PurgeModel
+idRenderModelMODSkeletal::PurgeModel
 ===================
 */
-void idRenderModelWolfSkeletal::PurgeModel() {
+void idRenderModelMODSkeletal::PurgeModel() {
 	purged = true;
 
 	joints.Clear();
@@ -345,10 +322,10 @@ void idRenderModelWolfSkeletal::PurgeModel() {
 
 /*
 ===================
-idRenderModelWolfSkeletal::TouchData
+idRenderModelMODSkeletal::TouchData
 ===================
 */
-void idRenderModelWolfSkeletal::TouchData() {
+void idRenderModelMODSkeletal::TouchData() {
 	for ( int i = 0; i < meshes.Num(); i++ ) {
 		declManager->FindMaterial( meshes[i].shader->GetName() );
 	}
@@ -356,13 +333,10 @@ void idRenderModelWolfSkeletal::TouchData() {
 
 /*
 ====================
-idRenderModelWolfSkeletal::GetFrameParms
-
-Reads the frame, old frame and backlerp the entity wants to show, the same
-shader parms the MD3 loader uses.
+idRenderModelMODSkeletal::GetFrameParms
 ====================
 */
-void idRenderModelWolfSkeletal::GetFrameParms( const struct renderEntity_s *ent, int &frame, int &oldframe, float &backlerp ) const {
+void idRenderModelMODSkeletal::GetFrameParms( const struct renderEntity_s *ent, int &frame, int &oldframe, float &backlerp ) const {
 	frame = 0;
 	oldframe = 0;
 	backlerp = 0.0f;
@@ -382,12 +356,10 @@ void idRenderModelWolfSkeletal::GetFrameParms( const struct renderEntity_s *ent,
 
 /*
 ====================
-idRenderModelWolfSkeletal::DecodePose
-
-Decodes two frames and blends them into absolute joint matrices.
+idRenderModelMODSkeletal::DecodePose
 ====================
 */
-void idRenderModelWolfSkeletal::DecodePose( int frame, int oldframe, float backlerp, idJointMat *outJoints ) const {
+void idRenderModelMODSkeletal::DecodePose( int frame, int oldframe, float backlerp, idJointMat *outJoints ) const {
 	idJointQuat *quatA = ( idJointQuat * )_alloca16( numBones * sizeof( idJointQuat ) );
 	idJointQuat *quatB = ( idJointQuat * )_alloca16( numBones * sizeof( idJointQuat ) );
 
@@ -405,14 +377,10 @@ void idRenderModelWolfSkeletal::DecodePose( int frame, int oldframe, float backl
 
 /*
 ====================
-idRenderModelWolfSkeletal::PoseJoints
-
-Returns the posed bones of the entity. Game supplied joints are used when
-the renderEntity carries a matching skeleton, otherwise the pose is decoded
-from the file frames.
+idRenderModelMODSkeletal::PoseJoints
 ====================
 */
-const idJointMat *idRenderModelWolfSkeletal::PoseJoints( const struct renderEntity_s *ent, int &frame, int &oldframe, float &backlerp, idJointMat *posedJoints ) const {
+const idJointMat *idRenderModelMODSkeletal::PoseJoints( const struct renderEntity_s *ent, int &frame, int &oldframe, float &backlerp, idJointMat *posedJoints ) const {
 	if ( ent != NULL && ent->joints != NULL && ent->numJoints == numBones ) {
 		return ent->joints;
 	}
@@ -423,13 +391,10 @@ const idJointMat *idRenderModelWolfSkeletal::PoseJoints( const struct renderEnti
 
 /*
 ====================
-idRenderModelWolfSkeletal::FinishSkeleton
-
-Builds the parent relative default pose for game animators and the inverse
-bind pose used for skinning, both from frame 0.
+idRenderModelMODSkeletal::FinishSkeleton
 ====================
 */
-void idRenderModelWolfSkeletal::FinishSkeleton() {
+void idRenderModelMODSkeletal::FinishSkeleton() {
 	idJointQuat *bindQuats = ( idJointQuat * )_alloca16( numBones * sizeof( idJointQuat ) );
 	idJointMat *bindPose = ( idJointMat * )_alloca16( numBones * sizeof( idJointMat ) );
 
@@ -472,27 +437,24 @@ void idRenderModelWolfSkeletal::FinishSkeleton() {
 
 /*
 ====================
-idRenderModelWolfSkeletal::BuildMeshFromSurface
-
-Walks the variable sized vertices of a surface, validates the data and
-builds the skinning mesh with the MD5 weight folding.
+idRenderModelMODSkeletal::BuildMeshFromSurface
 ====================
 */
-bool idRenderModelWolfSkeletal::BuildMeshFromSurface( idWolfMesh &mesh, const char *shaderName,
+bool idRenderModelMODSkeletal::BuildMeshFromSurface( idMODMesh &mesh, const char *shaderName,
 		int numVerts, int ofsVerts, int vertexHeaderSize,
 		int numTriangles, int ofsTriangles,
 		int surfaceEnd, const idJointMat *bindPose ) {
 
 	if ( numVerts < 1 || numVerts > MDS_MAX_VERTS ) {
-		common->Warning( "Wolf model %s has an invalid number of verts on a surface (%i)", Name(), numVerts );
+		common->Warning( "Model %s has an invalid number of verts on a surface (%i)", Name(), numVerts );
 		return false;
 	}
 	if ( numTriangles < 1 || numTriangles > MDS_MAX_TRIANGLES ) {
-		common->Warning( "Wolf model %s has an invalid number of triangles on a surface (%i)", Name(), numTriangles );
+		common->Warning( "Model %s has an invalid number of triangles on a surface (%i)", Name(), numTriangles );
 		return false;
 	}
 	if ( ofsTriangles + numTriangles * 3 * ( int )sizeof( int ) > surfaceEnd ) {
-		common->Warning( "Wolf model %s has a truncated triangle list", Name() );
+		common->Warning( "Model %s has a truncated triangle list", Name() );
 		return false;
 	}
 
@@ -500,7 +462,7 @@ bool idRenderModelWolfSkeletal::BuildMeshFromSurface( idWolfMesh &mesh, const ch
 	idList<idVec2, TAG_MODEL> texCoords;
 	idList<int, TAG_MODEL> firstWeight;
 	idList<int, TAG_MODEL> numWeights;
-	idList<wolfWeight_t, TAG_MODEL> weights;
+	idList<modWeight_t, TAG_MODEL> weights;
 
 	texCoords.SetGranularity( 1 );
 	firstWeight.SetGranularity( 1 );
@@ -514,50 +476,50 @@ bool idRenderModelWolfSkeletal::BuildMeshFromSurface( idWolfMesh &mesh, const ch
 	int offset = ofsVerts;
 	for ( int i = 0; i < numVerts; i++ ) {
 		if ( offset + vertexHeaderSize > surfaceEnd ) {
-			common->Warning( "Wolf model %s has a truncated vertex list", Name() );
+			common->Warning( "Model %s has a truncated vertex list", Name() );
 			return false;
 		}
 
 		const byte *vert = fileData + offset;
-		const int vertNumWeights = LittleInt( *( const int * )( vert + WOLF_VERTEX_NUMWEIGHTS_OFFSET ) );
+		const int vertNumWeights = LittleInt( *( const int * )( vert + MOD_VERTEX_NUMWEIGHTS_OFFSET ) );
 		if ( vertNumWeights < 1 || vertNumWeights > 256 ) {
-			common->Warning( "Wolf model %s has a vertex with an invalid number of weights (%i)", Name(), vertNumWeights );
+			common->Warning( "Model %s has a vertex with an invalid number of weights (%i)", Name(), vertNumWeights );
 			return false;
 		}
-		if ( offset + vertexHeaderSize + vertNumWeights * WOLF_WEIGHT_SIZE > surfaceEnd ) {
-			common->Warning( "Wolf model %s has a truncated weight list", Name() );
+		if ( offset + vertexHeaderSize + vertNumWeights * MOD_WEIGHT_SIZE > surfaceEnd ) {
+			common->Warning( "Model %s has a truncated weight list", Name() );
 			return false;
 		}
 
-		texCoords[i] = idVec2( LittleFloat( *( const float * )( vert + WOLF_VERTEX_TEXCOORD_OFFSET ) ),
-								LittleFloat( *( const float * )( vert + WOLF_VERTEX_TEXCOORD_OFFSET + sizeof( float ) ) ) );
+		texCoords[i] = idVec2( LittleFloat( *( const float * )( vert + MOD_VERTEX_TEXCOORD_OFFSET ) ),
+								LittleFloat( *( const float * )( vert + MOD_VERTEX_TEXCOORD_OFFSET + sizeof( float ) ) ) );
 
 		firstWeight[i] = weights.Num();
 		numWeights[i] = vertNumWeights;
 
 		const byte *weightData = vert + vertexHeaderSize;
-		for ( int k = 0; k < vertNumWeights; k++, weightData += WOLF_WEIGHT_SIZE ) {
-			wolfWeight_t weight;
+		for ( int k = 0; k < vertNumWeights; k++, weightData += MOD_WEIGHT_SIZE ) {
+			modWeight_t weight;
 			weight.boneIndex = LittleInt( *( const int * )( weightData + 0 ) );
 			weight.boneWeight = LittleFloat( *( const float * )( weightData + 4 ) );
 			weight.offset[0] = LittleFloat( *( const float * )( weightData + 8 ) );
 			weight.offset[1] = LittleFloat( *( const float * )( weightData + 12 ) );
 			weight.offset[2] = LittleFloat( *( const float * )( weightData + 16 ) );
 			if ( weight.boneIndex < 0 || weight.boneIndex >= numBones ) {
-				common->Warning( "Wolf model %s has a weight with an out of range bone index (%i)", Name(), weight.boneIndex );
+				common->Warning( "Model %s has a weight with an out of range bone index (%i)", Name(), weight.boneIndex );
 				return false;
 			}
 			weights.Append( weight );
 		}
 
-		offset += vertexHeaderSize + vertNumWeights * WOLF_WEIGHT_SIZE;
+		offset += vertexHeaderSize + vertNumWeights * MOD_WEIGHT_SIZE;
 	}
 
 	// the shader
 	const idMaterial *material = NULL;
 	if ( shaderName != NULL && shaderName[0] != '\0' ) {
-		char shaderBuffer[WOLF_MAX_QPATH + 1];
-		material = declManager->FindMaterial( WolfName( shaderName, shaderBuffer ) );
+		char shaderBuffer[MOD_MAX_QPATH + 1];
+		material = declManager->FindMaterial( MOD_Name( shaderName, shaderBuffer ) );
 	}
 	if ( material == NULL ) {
 		material = declManager->FindMaterial( "_default" );
@@ -569,7 +531,7 @@ bool idRenderModelWolfSkeletal::BuildMeshFromSurface( idWolfMesh &mesh, const ch
 		idVec3 v = vec3_zero;
 		const int first = firstWeight[i];
 		for ( int k = 0; k < numWeights[i]; k++ ) {
-			const wolfWeight_t &weight = weights[first + k];
+			const modWeight_t &weight = weights[first + k];
 			v += bindPose[weight.boneIndex] * idVec4( weight.offset[0], weight.offset[1], weight.offset[2], weight.boneWeight );
 		}
 		basePose[i].Clear();
@@ -618,7 +580,7 @@ bool idRenderModelWolfSkeletal::BuildMeshFromSurface( idWolfMesh &mesh, const ch
 			byte finalJointIndecies[MAX_VERTEX_WEIGHTS] = { 0 };
 			if ( usedWeight > 0.0f ) {
 				for ( int j = 0; j < usedWeights; j++ ) {
-					const wolfWeight_t &weight = weights[sorted[j]];
+					const modWeight_t &weight = weights[sorted[j]];
 					const float normalizedWeight = weight.boneWeight / usedWeight;
 					finalWeights[j] = idMath::Ftob( normalizedWeight * 255.0f );
 					finalJointIndecies[j] = ( byte )weight.boneIndex;
@@ -679,7 +641,7 @@ bool idRenderModelWolfSkeletal::BuildMeshFromSurface( idWolfMesh &mesh, const ch
 	for ( int j = 0; j < numTriangles * 3; j++ ) {
 		const int index = LittleInt( triangles[j] );
 		if ( index < 0 || index >= numVerts ) {
-			common->Warning( "Wolf model %s has an out of range triangle index (%i)", Name(), index );
+			common->Warning( "Model %s has an out of range triangle index (%i)", Name(), index );
 			Mem_Free( basePose );
 			Mem_Free( indexes );
 			return false;
@@ -696,7 +658,7 @@ bool idRenderModelWolfSkeletal::BuildMeshFromSurface( idWolfMesh &mesh, const ch
 	for ( int i = 0; i < mesh.deformInfo->numOutputVerts; i++ ) {
 		for ( int j = 0; j < 4; j++ ) {
 			if ( mesh.deformInfo->verts[i].color[j] >= numBones ) {
-				common->Warning( "Wolf model %s has a bad joint index", Name() );
+				common->Warning( "Model %s has a bad joint index", Name() );
 				Mem_Free( basePose );
 				Mem_Free( indexes );
 				return false;
@@ -712,10 +674,10 @@ bool idRenderModelWolfSkeletal::BuildMeshFromSurface( idWolfMesh &mesh, const ch
 
 /*
 ====================
-idRenderModelWolfSkeletal::InstantiateDynamicModel
+idRenderModelMODSkeletal::InstantiateDynamicModel
 ====================
 */
-idRenderModel *idRenderModelWolfSkeletal::InstantiateDynamicModel( const struct renderEntity_s *ent, const viewDef_t *view, idRenderModel *cachedModel ) {
+idRenderModel *idRenderModelMODSkeletal::InstantiateDynamicModel( const struct renderEntity_s *ent, const viewDef_t *view, idRenderModel *cachedModel ) {
 	if ( cachedModel != NULL && !r_useCachedDynamicModels.GetBool() ) {
 		delete cachedModel;
 		cachedModel = NULL;
@@ -745,11 +707,11 @@ idRenderModel *idRenderModelWolfSkeletal::InstantiateDynamicModel( const struct 
 	idRenderModelStatic *staticModel;
 	if ( cachedModel != NULL ) {
 		assert( dynamic_cast<idRenderModelStatic *>( cachedModel ) != NULL );
-		assert( idStr::Icmp( cachedModel->Name(), Wolf_SnapshotName ) == 0 );
+		assert( idStr::Icmp( cachedModel->Name(), MOD_SnapshotName ) == 0 );
 		staticModel = static_cast<idRenderModelStatic *>( cachedModel );
 	} else {
 		staticModel = new ( TAG_MODEL ) idRenderModelStatic;
-		staticModel->InitEmpty( Wolf_SnapshotName );
+		staticModel->InitEmpty( MOD_SnapshotName );
 	}
 
 	staticModel->bounds.Clear();
@@ -765,10 +727,10 @@ idRenderModel *idRenderModelWolfSkeletal::InstantiateDynamicModel( const struct 
 		assert( staticModel->numInvertedJoints == numInvertedJoints );
 	}
 
-	WolfTransformJoints( staticModel->jointsInverted, numBones, entJoints, invertedDefaultPose.Ptr() );
+	MOD_TransformJoints( staticModel->jointsInverted, numBones, entJoints, invertedDefaultPose.Ptr() );
 
 	// create all the surfaces
-	idWolfMesh *mesh = meshes.Ptr();
+	idMODMesh *mesh = meshes.Ptr();
 	for ( int i = 0; i < meshes.Num(); i++, mesh++ ) {
 		// avoid deforming the surface if it will be a nodraw due to a skin remapping
 		const idMaterial *shader = mesh->shader;
@@ -807,10 +769,10 @@ idRenderModel *idRenderModelWolfSkeletal::InstantiateDynamicModel( const struct 
 
 /*
 ====================
-idRenderModelWolfSkeletal::Bounds
+idRenderModelMODSkeletal::Bounds
 ====================
 */
-idBounds idRenderModelWolfSkeletal::Bounds( const struct renderEntity_s *ent ) const {
+idBounds idRenderModelMODSkeletal::Bounds( const struct renderEntity_s *ent ) const {
 	if ( ent == NULL || frameBounds.Num() == 0 ) {
 		return bounds;
 	}
@@ -834,19 +796,39 @@ idBounds idRenderModelWolfSkeletal::Bounds( const struct renderEntity_s *ent ) c
 	return ret;
 }
 
-int idRenderModelWolfSkeletal::NumJoints() const {
+/*
+====================
+idRenderModelMODSkeletal::NumJoints
+====================
+*/
+int idRenderModelMODSkeletal::NumJoints() const {
 	return numBones;
 }
 
-const idMD5Joint *idRenderModelWolfSkeletal::GetJoints() const {
+/*
+====================
+idRenderModelMODSkeletal::GetJoints
+====================
+*/
+const idMD5Joint *idRenderModelMODSkeletal::GetJoints() const {
 	return joints.Ptr();
 }
 
-const idJointQuat *idRenderModelWolfSkeletal::GetDefaultPose() const {
+/*
+====================
+idRenderModelMODSkeletal::GetDefaultPose
+====================
+*/
+const idJointQuat *idRenderModelMODSkeletal::GetDefaultPose() const {
 	return defaultPose.Ptr();
 }
 
-jointHandle_t idRenderModelWolfSkeletal::GetJointHandle( const char *name ) const {
+/*
+====================
+idRenderModelMODSkeletal::GetJointHandle
+====================
+*/
+jointHandle_t idRenderModelMODSkeletal::GetJointHandle( const char *name ) const {
 	const idMD5Joint *joint = joints.Ptr();
 	for ( int i = 0; i < joints.Num(); i++, joint++ ) {
 		if ( idStr::Icmp( joint->name.c_str(), name ) == 0 ) {
@@ -857,7 +839,12 @@ jointHandle_t idRenderModelWolfSkeletal::GetJointHandle( const char *name ) cons
 	return INVALID_JOINT;
 }
 
-const char *idRenderModelWolfSkeletal::GetJointName( jointHandle_t handle ) const {
+/*
+====================
+idRenderModelMODSkeletal::GetJointName
+====================
+*/
+const char *idRenderModelMODSkeletal::GetJointName( jointHandle_t handle ) const {
 	if ( ( handle < 0 ) || ( handle >= joints.Num() ) ) {
 		return "<invalid joint>";
 	}
@@ -867,12 +854,12 @@ const char *idRenderModelWolfSkeletal::GetJointName( jointHandle_t handle ) cons
 
 /*
 =====================
-idRenderModelWolfSkeletal::GetJointTransform
+idRenderModelMODSkeletal::GetJointTransform
 
 Returns the transform of the given bone or tag for the given entity.
 =====================
 */
-bool idRenderModelWolfSkeletal::GetJointTransform( jointHandle_t handle, const struct renderEntity_s *ent, idVec3 &origin, idMat3 &axis ) const {
+bool idRenderModelMODSkeletal::GetJointTransform( jointHandle_t handle, const struct renderEntity_s *ent, idVec3 &origin, idMat3 &axis ) const {
 	if ( fileData == NULL || ( handle < 0 ) || ( handle >= joints.Num() ) ) {
 		return false;
 	}
@@ -892,7 +879,7 @@ bool idRenderModelWolfSkeletal::GetJointTransform( jointHandle_t handle, const s
 	}
 
 	// the tags ride on their parent bone
-	const wolfTag_t &tag = tags[handle - numBones];
+	const modTag_t &tag = tags[handle - numBones];
 	const idJointMat &bone = pose[tag.boneIndex];
 
 	origin = bone * idVec4( tag.offset.x, tag.offset.y, tag.offset.z, 1.0f );
@@ -907,11 +894,11 @@ bool idRenderModelWolfSkeletal::GetJointTransform( jointHandle_t handle, const s
 
 /*
 =====================
-idRenderModelWolfSkeletal::NearestJoint
+idRenderModelMODSkeletal::NearestJoint
 =====================
 */
-int idRenderModelWolfSkeletal::NearestJoint( int surfaceNum, int a, int b, int c ) const {
-	const idWolfMesh *mesh = meshes.Ptr();
+int idRenderModelMODSkeletal::NearestJoint( int surfaceNum, int a, int b, int c ) const {
+	const idMODMesh *mesh = meshes.Ptr();
 	for ( int i = 0; i < meshes.Num(); i++, mesh++ ) {
 		if ( mesh->surfaceNum == surfaceNum ) {
 			return mesh->NearestJoint( a, b, c );
@@ -922,16 +909,16 @@ int idRenderModelWolfSkeletal::NearestJoint( int surfaceNum, int a, int b, int c
 
 /*
 ==============
-idRenderModelWolfSkeletal::Print
+idRenderModelMODSkeletal::Print
 ==============
 */
-void idRenderModelWolfSkeletal::Print() const {
+void idRenderModelMODSkeletal::Print() const {
 	common->Printf( "%s\n", name.c_str() );
 	common->Printf( "Dynamic skeletal model.\n" );
 	common->Printf( "    verts  tris material\n" );
 	int totalVerts = 0;
 	int totalTris = 0;
-	const idWolfMesh *mesh = meshes.Ptr();
+	const idMODMesh *mesh = meshes.Ptr();
 	for ( int i = 0; i < meshes.Num(); i++, mesh++ ) {
 		totalVerts += mesh->NumVerts();
 		totalTris += mesh->NumTris();
@@ -947,18 +934,18 @@ void idRenderModelWolfSkeletal::Print() const {
 
 /*
 ==============
-idRenderModelWolfSkeletal::List
+idRenderModelMODSkeletal::List
 ==============
 */
-void idRenderModelWolfSkeletal::List() const {
+void idRenderModelMODSkeletal::List() const {
 	int totalTris = 0;
 	int totalVerts = 0;
-	const idWolfMesh *mesh = meshes.Ptr();
+	const idMODMesh *mesh = meshes.Ptr();
 	for ( int i = 0; i < meshes.Num(); i++, mesh++ ) {
 		totalTris += mesh->NumTris();
 		totalVerts += mesh->NumVerts();
 	}
-	common->Printf( " %4ik %3i %4i %4i %4i %s(Wolf)", Memory() / 1024, meshes.Num(), totalVerts, totalTris, numBones, Name() );
+	common->Printf( " %4ik %3i %4i %4i %4i %s", Memory() / 1024, meshes.Num(), totalVerts, totalTris, numBones, Name() );
 
 	if ( defaulted ) {
 		common->Printf( " (DEFAULTED)" );
@@ -969,10 +956,10 @@ void idRenderModelWolfSkeletal::List() const {
 
 /*
 ===============
-idRenderModelWolfSkeletal::Memory
+idRenderModelMODSkeletal::Memory
 ===============
 */
-int idRenderModelWolfSkeletal::Memory() const {
+int idRenderModelMODSkeletal::Memory() const {
 	int total = sizeof( *this );
 	total += joints.MemoryUsed() + defaultPose.MemoryUsed() + invertedDefaultPose.MemoryUsed() + meshes.MemoryUsed();
 
@@ -983,7 +970,7 @@ int idRenderModelWolfSkeletal::Memory() const {
 
 	// count up meshes
 	for ( int i = 0; i < meshes.Num(); i++ ) {
-		const idWolfMesh *mesh = &meshes[i];
+		const idMODMesh *mesh = &meshes[i];
 
 		total += mesh->numMeshJoints * ( int )sizeof( mesh->meshJoints[0] );
 

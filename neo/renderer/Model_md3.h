@@ -29,6 +29,8 @@ If you have questions concerning this license or the applicable additional terms
 #ifndef __MODEL_MD3_H__
 #define __MODEL_MD3_H__
 
+#include "Model_common.h"
+
 /*
 ========================================================================
 
@@ -54,7 +56,6 @@ Private structures used by the MD3 loader.
 #define MD3_MAX_FRAMES		1024	// per model
 #define	MD3_MAX_SURFACES	32		// per model
 #define MD3_MAX_TAGS		16		// per frame
-#define MAX_MD3PATH			64		// from quake3
 
 // vertex scales
 #define	MD3_XYZ_SCALE		(1.0/64)
@@ -67,7 +68,7 @@ typedef struct md3Frame_s {
 } md3Frame_t;
 
 typedef struct md3Tag_s {
-	char		name[MAX_MD3PATH];	// tag name
+	char		name[MOD_MAX_QPATH];	// tag name
 	idVec3		origin;
 	idVec3		axis[3];
 } md3Tag_t;
@@ -86,7 +87,7 @@ typedef struct md3Tag_s {
 typedef struct md3Surface_s {
 	int			ident;				//
 
-	char		name[MAX_MD3PATH];	// polyset name
+	char		name[MOD_MAX_QPATH];	// polyset name
 
 	int			flags;
 	int			numFrames;			// all surfaces in a model should have the same
@@ -105,7 +106,7 @@ typedef struct md3Surface_s {
 } md3Surface_t;
 
 typedef struct {
-	char				name[MAX_MD3PATH];
+	char				name[MOD_MAX_QPATH];
 	const idMaterial *	shader;			// for in-game use
 } md3Shader_t;
 
@@ -126,7 +127,7 @@ typedef struct md3Header_s {
 	int			ident;
 	int			version;
 
-	char		name[MAX_MD3PATH];	// model name
+	char		name[MOD_MAX_QPATH];	// model name
 
 	int			flags;
 
@@ -142,5 +143,54 @@ typedef struct md3Header_s {
 
 	int			ofsEnd;				// end of file
 } md3Header_t;
+
+/*
+===============================================================================
+
+	MD3 animated model
+
+===============================================================================
+*/
+
+class idRenderModelMD3 : public idRenderModelStatic {
+public:
+								idRenderModelMD3();
+	virtual						~idRenderModelMD3();
+
+	virtual void				InitFromFile( const char *fileName );
+	virtual bool				SupportsBinaryModel() { return false; }
+	virtual void				PurgeModel();
+	virtual void				LoadModel();
+	virtual void				TouchData();
+	virtual void				List() const;
+	virtual int					Memory() const;
+	virtual dynamicModel_t		IsDynamicModel() const;
+	virtual idRenderModel *		InstantiateDynamicModel( const struct renderEntity_s *ent, const viewDef_t *view, idRenderModel *cachedModel );
+	virtual idBounds			Bounds( const struct renderEntity_s *ent ) const;
+
+
+	virtual int					NumJoints() const;	// the MD3 tags are exposed as joints so attachments can find them
+	virtual const idMD5Joint *	GetJoints() const;
+	virtual jointHandle_t		GetJointHandle( const char *name ) const;
+	virtual const char *		GetJointName( jointHandle_t handle ) const;
+	virtual bool				GetJointTransform( jointHandle_t handle, const struct renderEntity_s *ent, idVec3 &origin, idMat3 &axis ) const;
+
+protected:
+	// format hook points, MDC shares the whole MD3 path through these
+	virtual bool				LoadHeader( const char *fileName, struct md3Header_s **headerOut, ID_TIME_T *timestamp );
+	virtual const char *		LodFileExtension() const;
+
+private:
+	int							index;			// model = tr.models[model->index]
+	int							dataSize;		// just for listing purposes
+	struct md3Header_s *		md3;			// only if type == MOD_MESH
+	struct md3Header_s *		lods[MD3_MAX_LODS];	// base model plus lower detail levels
+	int							numLods;		// number of valid entries in lods[]
+	idList<idMD5Joint, TAG_MODEL>	joints;		// the MD3 tags exposed as joints
+
+	void						LerpMeshVertexes( srfTriangles_t *tri, const struct md3Surface_s *surf, const float backlerp, const int frame, const int oldframe ) const;
+	void						GetFrameParms( const struct renderEntity_s *ent, const struct md3Header_s *header, int &frame, int &oldframe, float &backlerp ) const;
+	int							SelectLodForView( const struct renderEntity_s *ent, const viewDef_t *view, int frame ) const;
+};
 
 #endif /* !__MODEL_MD3_H__ */

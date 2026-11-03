@@ -19,48 +19,35 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Doom 3 BFG Edition Source Code.  If not, see <http://www.gnu.org/licenses/>.
 
-In addition, the Doom 3 BFG Edition Source Code is also subject to certain additional terms.
-You should have received a copy of these additional terms immediately following
-the terms and conditions of the GNU General Public License which accompanied the
-Doom 3 BFG Edition Source Code.  If not, please request a copy in writing from
-id Software at the address below.
+In addition, the Doom 3 BFG Edition Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 BFG Edition Source Code.  If not, please request a copy in writing from id Software at the address below.
 
-If you have questions concerning this license, the applicable additional terms,
-or would like to contact id Software, please write:
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
 
-id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================*/
-
-// MDM model support ported from the Wolfenstein: Enemy Territory GPL Source
-// Code (Copyright (C) 1999-2010 id Software LLC, a ZeniMax Media company).
-// The ET source is GPLv3 like this engine and is also vendored in this
-// repository under references/etwolf. The .mdm file carries the mesh and
-// tags, the sibling .mdx file the skeleton and frames. The runtime
-// pipeline is modeled on the Doom 3 MD5 loader (Model_md5.cpp) and lives
-// in Model_wolf.cpp.
+===========================================================================
+*/
 
 #include "precompiled.h"
 #pragma hdrstop
 
 #include "tr_local.h"
 #include "Model_local.h"
+#include "Model_mds.h"
 #include "Model_mdm.h"
 
 /*
 ====================
 idRenderModelMDM::DecodeFrame
 
-The skeleton and frames come from the sibling .mdx file.
+The skeleton and frames come from the .mdx file.
 ====================
 */
 void idRenderModelMDM::DecodeFrame( int frameNum, idJointQuat *jointQuats ) const {
 	const mdxHeader_t *mdx = ( const mdxHeader_t * )skeletonData;
 
-	const int frameSize = ( int )sizeof( wolfFrame_t ) + numBones * ( int )sizeof( wolfBoneFrameCompressed_t );
-	const wolfFrame_t *frame = ( const wolfFrame_t * )( skeletonData + LittleInt( mdx->ofsFrames ) + frameNum * frameSize );
-	const wolfBoneFrameCompressed_t *bones = ( const wolfBoneFrameCompressed_t * )( ( const byte * )frame + sizeof( wolfFrame_t ) );
-	const wolfBoneInfo_t *boneInfo = ( const wolfBoneInfo_t * )( skeletonData + LittleInt( mdx->ofsBones ) );
+	const int frameSize = ( int )sizeof( modFrame_t ) + numBones * ( int )sizeof( modBoneFrameCompressed_t );
+	const modFrame_t *frame = ( const modFrame_t * )( skeletonData + LittleInt( mdx->ofsFrames ) + frameNum * frameSize );
+	const modBoneFrameCompressed_t *bones = ( const modBoneFrameCompressed_t * )( ( const byte * )frame + sizeof( modFrame_t ) );
+	const modBoneInfo_t *boneInfo = ( const modBoneInfo_t * )( skeletonData + LittleInt( mdx->ofsBones ) );
 
 	for ( int i = 0; i < numBones; i++ ) {
 		const idAngles angles( SHORT2ANGLE( LittleShort( bones[i].angles[0] ) ),
@@ -87,15 +74,14 @@ void idRenderModelMDM::DecodeFrame( int frameNum, idJointQuat *jointQuats ) cons
 
 /*
 ====================
-idRenderModelMDM::LoadWolfFile
+idRenderModelMDM::LoadMODFile
 
-The mesh and tags come from the .mdm, the skeleton and frames from the
-sibling .mdx file.
+The mesh and tags come from the .mdm, the skeleton and frames from the .mdx file.
 ====================
 */
-bool idRenderModelMDM::LoadWolfFile( const char *fileName ) {
+bool idRenderModelMDM::LoadMODFile( const char *fileName ) {
 	int fileSize = 0;
-	fileData = WolfLoadFile( fileName, &fileSize, &timeStamp );
+	fileData = MOD_LoadFile( fileName, &fileSize, &timeStamp );
 	if ( fileData == NULL ) {
 		common->Warning( "idRenderModelMDM: %s not found", fileName );
 		return false;
@@ -133,7 +119,7 @@ bool idRenderModelMDM::LoadWolfFile( const char *fileName ) {
 	skeletonName += ".mdx";
 
 	int skeletonSize = 0;
-	skeletonData = WolfLoadFile( skeletonName.c_str(), &skeletonSize, NULL );
+	skeletonData = MOD_LoadFile( skeletonName.c_str(), &skeletonSize, NULL );
 	if ( skeletonData == NULL ) {
 		common->Warning( "idRenderModelMDM: %s not found", skeletonName.c_str() );
 		return false;
@@ -161,17 +147,17 @@ bool idRenderModelMDM::LoadWolfFile( const char *fileName ) {
 		return false;
 	}
 
-	const int frameSize = ( int )sizeof( wolfFrame_t ) + numBones * ( int )sizeof( wolfBoneFrameCompressed_t );
+	const int frameSize = ( int )sizeof( modFrame_t ) + numBones * ( int )sizeof( modBoneFrameCompressed_t );
 	if ( LittleInt( mdx->ofsFrames ) + numFrames * frameSize > LittleInt( mdx->ofsEnd ) ) {
 		common->Warning( "idRenderModelMDM: %s has a truncated frame list", skeletonName.c_str() );
 		return false;
 	}
-	if ( LittleInt( mdx->ofsBones ) + numBones * ( int )sizeof( wolfBoneInfo_t ) > LittleInt( mdx->ofsEnd ) ) {
+	if ( LittleInt( mdx->ofsBones ) + numBones * ( int )sizeof( modBoneInfo_t ) > LittleInt( mdx->ofsEnd ) ) {
 		common->Warning( "idRenderModelMDM: %s has a truncated bone list", skeletonName.c_str() );
 		return false;
 	}
 
-	const wolfBoneInfo_t *boneInfo = ( const wolfBoneInfo_t * )( skeletonData + LittleInt( mdx->ofsBones ) );
+	const modBoneInfo_t *boneInfo = ( const modBoneInfo_t * )( skeletonData + LittleInt( mdx->ofsBones ) );
 	for ( int i = 0; i < numBones; i++ ) {
 		const int parent = LittleInt( boneInfo[i].parent );
 		if ( parent >= i ) {
@@ -184,8 +170,8 @@ bool idRenderModelMDM::LoadWolfFile( const char *fileName ) {
 	joints.SetGranularity( 1 );
 	joints.SetNum( numBones + numTags );
 	for ( int i = 0; i < numBones; i++ ) {
-		char nameBuffer[WOLF_MAX_QPATH + 1];
-		joints[i].name = WolfName( boneInfo[i].name, nameBuffer );
+		char nameBuffer[MOD_MAX_QPATH + 1];
+		joints[i].name = MOD_Name( boneInfo[i].name, nameBuffer );
 		joints[i].parent = ( LittleInt( boneInfo[i].parent ) >= 0 ) ? &joints[LittleInt( boneInfo[i].parent )] : NULL;
 	}
 
@@ -193,7 +179,7 @@ bool idRenderModelMDM::LoadWolfFile( const char *fileName ) {
 	frameBounds.SetGranularity( 1 );
 	frameBounds.SetNum( numFrames );
 	for ( int i = 0; i < numFrames; i++ ) {
-		const wolfFrame_t *frame = ( const wolfFrame_t * )( skeletonData + LittleInt( mdx->ofsFrames ) + i * frameSize );
+		const modFrame_t *frame = ( const modFrame_t * )( skeletonData + LittleInt( mdx->ofsFrames ) + i * frameSize );
 		idBounds &frameBound = frameBounds[i];
 		frameBound.Clear();
 		frameBound.AddPoint( idVec3( LittleFloat( frame->bounds[0][0] ), LittleFloat( frame->bounds[0][1] ), LittleFloat( frame->bounds[0][2] ) ) );
@@ -227,16 +213,16 @@ bool idRenderModelMDM::LoadWolfFile( const char *fileName ) {
 			common->Warning( "idRenderModelMDM: %s has a tag with an out of range bone index", fileName );
 			return false;
 		}
-		char nameBuffer[WOLF_MAX_QPATH + 1];
-		wolfTag_t wolfTag;
-		wolfTag.name = WolfName( tag->name, nameBuffer );
+		char nameBuffer[MOD_MAX_QPATH + 1];
+		modTag_t wolfTag;
+		wolfTag.name = MOD_Name( tag->name, nameBuffer );
 		wolfTag.boneIndex = boneIndex;
 		wolfTag.offset = idVec3( LittleFloat( tag->offset[0] ), LittleFloat( tag->offset[1] ), LittleFloat( tag->offset[2] ) );
 		for ( int r = 0; r < 3; r++ ) {
 			wolfTag.axis[r] = idVec3( LittleFloat( tag->axis[r][0] ), LittleFloat( tag->axis[r][1] ), LittleFloat( tag->axis[r][2] ) );
 		}
 		tags.Append( wolfTag );
-		joints[numBones + i].name = WolfName( tag->name, nameBuffer );
+		joints[numBones + i].name = MOD_Name( tag->name, nameBuffer );
 		joints[numBones + i].parent = NULL;
 		tagOfs += LittleInt( tag->ofsEnd );
 	}
@@ -257,7 +243,7 @@ bool idRenderModelMDM::LoadWolfFile( const char *fileName ) {
 			return false;
 		}
 		if ( !BuildMeshFromSurface( meshes[i], surf->shader,
-				LittleInt( surf->numVerts ), surfaceOfs + LittleInt( surf->ofsVerts ), WOLF_MDM_VERTEX_HEADER_SIZE,
+				LittleInt( surf->numVerts ), surfaceOfs + LittleInt( surf->ofsVerts ), MDM_VERTEX_HEADER_SIZE,
 				LittleInt( surf->numTriangles ), surfaceOfs + LittleInt( surf->ofsTriangles ),
 				surfEnd, bindPose ) ) {
 			return false;
