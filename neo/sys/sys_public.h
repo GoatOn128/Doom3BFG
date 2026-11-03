@@ -435,18 +435,9 @@ void			Sys_ShowWindow( bool show );
 bool			Sys_IsWindowVisible();
 void			Sys_ShowConsole( int visLevel, bool quitOnClose );
 
-// This really isn't the right place to have this, but since this is the 'top level' include
-// and has a function signature with 'FILE' in it, it kinda needs to be here =/
-typedef HANDLE idFileHandle;
-
-
-ID_TIME_T		Sys_FileTimeStamp( idFileHandle fp );
 // NOTE: do we need to guarantee the same output on all platforms?
 const char *	Sys_TimeStampToStr( ID_TIME_T timeStamp );
 const char *	Sys_SecToStr( int sec );
-
-const char *	Sys_DefaultBasePath();
-const char *	Sys_DefaultSavePath();
 
 // Execute the specified process and wait until it's done, calling workFn every waitMS milliseconds.
 // If showOutput == true, std IO from the executed process will be output to the console.

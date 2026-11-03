@@ -28,6 +28,10 @@ If you have questions concerning this license or the applicable additional terms
 #ifndef __SYS_FILESYSTEM_H__
 #define __SYS_FILESYSTEM_H__
 
+// This really isn't the right place to have this, but since this is the 'top level' include
+// and has a function signature with 'FILE' in it, it kinda needs to be here =/
+typedef HANDLE idFileHandle;
+
 void			Sys_Mkdir( const char *path );
 bool			Sys_Rmdir( const char *path );
 bool			Sys_IsFileWritable( const char *path );
@@ -49,9 +53,12 @@ bool			Sys_IsFileOnHdd( const char *path );
 // returns -1 if directory was not found (the list is cleared)
 int				Sys_ListFiles( const char * directory, const char * extension, idList<class idStr> & list );
 
+ID_TIME_T		Sys_FileTimeStamp( idFileHandle fp );
+
 const char *	Sys_EXEPath();
 const char *	Sys_CWD();
 
-const char *	Sys_LaunchPath();
+const char *	Sys_DefaultBasePath();
+const char *	Sys_DefaultSavePath();
 
 #endif /* !__SYS_FILESYSTEM_H__ */
