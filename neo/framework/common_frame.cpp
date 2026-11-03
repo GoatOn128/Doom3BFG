@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "Common_local.h"
+#include "../ui/MenuFormat.h"
 #include "../renderer/Image.h"
 #include "../renderer/ImageOpts.h"
 
@@ -255,6 +256,9 @@ void idCommonLocal::Draw() {
 		// draw the wipe material on top of this if it hasn't completed yet
 		DrawWipeModel();
 
+		// the legacy TA/RTCW/ET menu stack draws under the dialogs and the console
+		idMenuFormat::DrawActiveMenus( Sys_Milliseconds() );
+
 		Dialog().Render( loadGUI != NULL );
 
 		// draw the half console / notify console on top of everything
@@ -377,8 +381,8 @@ void idCommonLocal::Frame() {
 
 		// if the console or another gui is down, we don't need to hold the mouse cursor
 		bool chatting = false;
-		if ( common->IsPaused() || console->Active() || Dialog().IsDialogActive() || session->IsSystemUIShowing() || (game && game->InhibitControls())) {
-			if ( console->Active() || !mapSpawned ) {
+		if ( common->IsPaused() || console->Active() || Dialog().IsDialogActive() || session->IsSystemUIShowing() || idMenuFormat::IsActive() || (game && game->InhibitControls())) {
+			if ( console->Active() || !mapSpawned || idMenuFormat::IsActive() ) {
 				if ( inputDevice ) {
 					inputDevice->GrabMouseCursor( false );
 				}

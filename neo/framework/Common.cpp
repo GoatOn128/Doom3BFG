@@ -31,6 +31,8 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "Common_local.h"
 
+#include "../ui/MenuFormat.h"
+
 #include "ConsoleHistory.h"
 #include "../renderer/AutoRenderBink.h"
 
@@ -1593,6 +1595,11 @@ bool idCommonLocal::ProcessEvent( const sysEvent_t *event ) {
 
 	// let the pull-down console take it if desired
 	if ( console->ProcessEvent( event, false ) ) {
+		return true;
+	}
+
+	// the legacy TA/RTCW/ET menu stack takes events while it is up and the console is down
+	if ( !console->Active() && idMenuFormat::ProcessEvent( event ) ) {
 		return true;
 	}
 	if ( session->ProcessInputEvent( event ) ) {

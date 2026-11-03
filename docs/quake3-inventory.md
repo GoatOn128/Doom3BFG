@@ -1,6 +1,6 @@
 # Quake 3 / Wolfenstein: Enemy Territory content support inventory
 
-Audited at commit `0c79836747bc850e93e3bfda8f5a4213d36924e5` (master) on 2026-11-02. Updated 2026-11-02: the MD3 parity work landed (`81dc731`) and MDC/MDS/MDM/MDX/MD4 loaders were added, see sections 2.1-2.3. Updated 2026-11-03: PK3 archive mounting and the Team Arena/ET menu (.menu) GUI format audited, see sections 4-5 and steps 8-9.
+Audited at commit `0c79836747bc850e93e3bfda8f5a4213d36924e5` (master) on 2026-11-02. Updated 2026-11-02: the MD3 parity work landed (`81dc731`) and MDC/MDS/MDM/MDX/MD4 loaders were added, see sections 2.1-2.3. Updated 2026-11-03: PK3 archive mounting and the Team Arena/ET menu (.menu) GUI format audited, see sections 4-5 and steps 8-9. Updated again 2026-11-03: the legacy .menu GUI parser landed (step 9), see section 5.5.
 
 Purpose: gap analysis before implementing Q3/ET content support. Two areas as requested: shader (material) syntax and model formats. The engine side was read directly from this repo (`neo/renderer/Material.cpp`, `neo/renderer/Model_md3.cpp`, `neo/renderer/ModelManager.cpp`, `neo/framework/DeclManager.cpp`, `neo/renderer/Image_files.cpp`). The Q3/ET requirement side is taken from the ET: Legacy renderer sources (GPLv3, `src/renderer/tr_shader.c` and `src/renderer/tr_model.c`) and published format references.
 
@@ -177,7 +177,7 @@ Licensing note: reference implementations for MD3/MDC/MDS/MDM/MDX live in the ET
 6. Global fog system, `skyparms` sky stage, sun flare.
 7. ~~MDS/MDM/MDX~~ Done (plus MD4 for completion).
 8. ~~PK3 mounting~~ Done: `AddSearchPath` enumerates `.pk3` alongside `.pk4` into one alphabetically sorted list (`FileSystem.cpp`), so Q3/ET paks mount through the existing `idZipContainer` machinery and everything below reads from them. Details in section 4.
-9. Legacy .menu GUI parser (Team Arena/RTCW/ET menu format onto the Doom 3 window system). Start with the static keyword subset and a warn-and-skip pass, phase ownerdraw/feeder support until a UI/game module exists, details in section 5.
+9. ~~Legacy .menu GUI parser~~ Done: `neo/ui/MenuFormat.h/.cpp` parses the `ui_menuFiles` list (TA `ui/menus.txt` layout), indexes the menuDef names per .menu file and translates one menuDef on demand into Doom 3 gui source. `menu_<name>` guis load lazily through `InitFromFile`, a menu stack with open/close/ESC handling runs engine-side, and the static subset plus edit/choice/slider/bind items is covered. Ownerdraw/feeder items and model/cinematic bridges stay warn-and-skip until a UI/game module exists, details in sections 5.3-5.5.
 
 ## 4. Package archives (pk3)
 
@@ -245,10 +245,20 @@ The Team Arena menu script format, carried unchanged through RTCW and W:ET. Refe
 
 Phasing:
 
-1. Parser skeleton: menus.txt + .menu loading, menuDef/itemDef accepted, unknown keywords warn-and-skip (the shader-parser approach).
-2. Static menus: rects, colors, borders, background images, text, decoration items; open/close stack plus exec/cvar wiring.
-3. Interactive items: action/hover/focus events, sounds, checkbox/slider/editfield/bind through the typed windows.
+1. ~~Parser skeleton~~ Done: menus.txt + .menu loading, menuDef/itemDef accepted, unknown keywords warn-and-skip (the shader-parser approach).
+2. ~~Static menus~~ Done: rects, colors, borders, background images, text, decoration items; open/close stack plus exec/cvar wiring.
+3. ~~Interactive items~~ Done: action/hover/focus events, checkbox/slider/editfield/bind through the typed windows; focusSound plays through localSound (menu sound decl synthesis is still open).
 4. Ownerdraw/feeder items only once a UI/game module exists.
+
+### 5.5 What landed (step 9)
+
+- `neo/ui/MenuFormat.h/.cpp`: reads the menus file named by `ui_menuFiles` (TA `ui/menus.txt` layout, `loadMenu { "..." }` entries), indexes the menuDef names per file with a depth-aware scan, and translates one menuDef on demand into Doom 3 gui source. `#` preprocessor lines are blanked out first.
+- `idUserInterfaceLocal::InitFromFile` falls back to `idMenuFormat::TranslateMenuDef` when a `menu_<name>` gui is not on disk, so `uiManager->FindGui("menu_<menuDef>")` and every gui loading path see legacy menus with no manager changes. The translated source runs through the regular gui parser (and the binary gui cache path), staying compatible with `binaryLoadGuis`.
+- menuDef becomes one desktop windowDef (rect/fullscreen, visible, backcolor/forecolor/bordercolor, borderSize, background material path, focuscolor -> hovercolor, modal + menugui, onOpen/onClose/onESC -> onActivate/onDeactivate/onESC). itemDef becomes a typed window per ITEM_TYPE (numeric in the data, values per the vendored menudef.h): text/button/timeout_counter -> windowDef; checkbox/radiobutton/yesno/multi/combo/tricheckbox -> choiceDef (cvarStrList/cvarFloatList -> `;`-separated choices/values, choicetype 1; checkbox-style items without a list get an Off/On pair); editfield/numericfield -> editDef (maxChars, numeric); slider -> sliderDef (cvarFloat cvar/default/min/max, flat or braced, -> cvar/low/high); bind -> bindDef. listbox/model/menumodel/ownerdraw items keep their static parts as plain windows and warn.
+- Events: action -> onAction, mouseEnter/onFocus -> onMouseEnter, mouseExit/leaveFocus -> onMouseExit, focusSound -> localSound first in onMouseEnter, item onEnter -> onEnter. ET textalign values map onto the D3 ALIGN constants (ET's second center mode 3 -> center), shadowed text styles (3/5/6) -> shadow 1, blink/pulse warn-and-skip. textscale passes through unmodified; calibration is still open because it needs real content.
+- Script commands: close/open/closeall(s) -> `set cmd "menu_*"`, setcvar -> `set cmd "set <c> <v>"`, clearcvar -> `set cmd "reset <c>"`, exec/execnow -> `set cmd "<console command>"`, setfocus -> setFocus, show/hide -> `set <window>::visible`. Everything else (play, transitions, conditionalscript, setitemcolor and friends) warn-and-skip, throttled to once per keyword.
+- Engine integration: `idCommonLocal::ProcessEvent` feeds events to the top menu while the console is down (returned cmd strings execute; ESC drops the top menu when no onESC handled it, matching ET), `idCommonLocal::Draw` redraws the stack under the dialogs and console, and `Frame()` releases the mouse and inhibits usercmds while menus are up. Usable from the console at the no-map state: `menu_open <menuDef>`, `menu_close`, `menu_closeall`, `menu_list`, `menu_check <name>` (prints the translated source), `menu_reload`.
+- Remaining for phase 4: ownerdraw/feeder items, model previews and cinematics (render bridges), blink/pulse text styles, menu sound decl synthesis (play/focusSound paths), and textscale calibration against real ET content.
 
 ## Sources
 

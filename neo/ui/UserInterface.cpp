@@ -33,6 +33,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "DeviceContext.h"
 #include "Window.h"
 #include "UserInterfaceLocal.h"
+#include "MenuFormat.h"
 
 extern idCVar r_skipGuiShaders;		// 1 = don't render any gui elements on surfaces
 
@@ -349,12 +350,26 @@ bool idUserInterfaceLocal::InitFromFile( const char *qpath, bool rebuild, bool c
 			break;
 		}
 	}
+	// Legacy TA/RTCW/ET menus: a "menu_<name>" gui that is not on disk falls back
+	// to the menuDef <name> translated from the ui_menuFiles set.
+	idStr menuSource;
+	if ( timeStamp == FILE_NOT_FOUND_TIMESTAMP && idStr::Icmpn( qpath, "menu_", 5 ) == 0 ) {
+		if ( idMenuFormat::TranslateMenuDef( qpath + 5, menuSource ) ) {
+			source = qpath;
+		}
+	}
+
 	state.Set( "text", "Test Text!" );
 
 	idTokenParser &bsrc = uiManagerLocal.GetBinaryParser();
 	if ( !bsrc.IsLoaded() || !bsrc.StartParsing( source ) || !binaryLoadGuis.GetBool() ) {
 		idParser src( LEXFL_NOFATALERRORS | LEXFL_NOSTRINGCONCAT | LEXFL_ALLOWMULTICHARLITERALS | LEXFL_ALLOWBACKSLASHSTRINGCONCAT );
-		src.LoadFile( source );
+		if ( menuSource.Length() > 0 ) {
+			// translated legacy .menu source, not a file on disk
+			src.LoadMemory( menuSource, menuSource.Length(), source );
+		} else {
+			src.LoadFile( source );
+		}
 		if ( src.IsLoaded() ) {
 			bsrc.LoadFromParser( src, source );
 			ID_TIME_T ts = fileSystem->GetTimestamp( source );
