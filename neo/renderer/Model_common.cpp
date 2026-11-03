@@ -440,7 +440,7 @@ void idRenderModelMODSkeletal::FinishSkeleton() {
 idRenderModelMODSkeletal::BuildMeshFromSurface
 ====================
 */
-bool idRenderModelMODSkeletal::BuildMeshFromSurface( idMODMesh &mesh, const char *shaderName,
+bool idRenderModelMODSkeletal::BuildMeshFromSurface( idMODMesh &mesh, const char *shaderName, const char *surfaceName,
 		int numVerts, int ofsVerts, int vertexHeaderSize,
 		int numTriangles, int ofsTriangles,
 		int surfaceEnd, const idJointMat *bindPose ) {
@@ -650,6 +650,11 @@ bool idRenderModelMODSkeletal::BuildMeshFromSurface( idMODMesh &mesh, const char
 	}
 
 	mesh.shader = material;
+	if ( surfaceName != NULL ) {
+		char nameBuffer[MOD_MAX_QPATH + 1];
+		mesh.surfaceName = MOD_Name( surfaceName, nameBuffer );
+		mesh.surfaceName.ToLower();
+	}
 	mesh.numVerts = numVerts;
 	mesh.numTris = numTriangles;
 
@@ -735,7 +740,7 @@ idRenderModel *idRenderModelMODSkeletal::InstantiateDynamicModel( const struct r
 		// avoid deforming the surface if it will be a nodraw due to a skin remapping
 		const idMaterial *shader = mesh->shader;
 		if ( ent != NULL ) {
-			shader = R_RemapShaderBySkin( shader, ent->customSkin, ent->customShader );
+			shader = R_RemapShaderBySkin( shader, ent->customSkin, ent->customShader, mesh->surfaceName.c_str() );
 		}
 		if ( !shader || ( !shader->IsDrawn() && !shader->SurfaceCastsShadow() ) ) {
 			staticModel->DeleteSurfaceWithId( i );

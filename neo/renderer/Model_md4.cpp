@@ -164,7 +164,7 @@ bool idRenderModelMD4::LoadMODFile( const char *fileName ) {
 			}
 
 			idMODMesh &mesh = meshes.Alloc();
-			if ( !BuildMeshFromSurface( mesh, surf->shader,
+			if ( !BuildMeshFromSurface( mesh, surf->shader, surf->name,
 					LittleInt( surf->numVerts ), surfaceOfs + LittleInt( surf->ofsVerts ), MD4_VERTEX_HEADER_SIZE,
 					LittleInt( surf->numTriangles ), surfaceOfs + LittleInt( surf->ofsTriangles ),
 					surfEnd, bindPose ) ) {

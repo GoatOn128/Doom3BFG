@@ -242,7 +242,7 @@ bool idRenderModelMDM::LoadMODFile( const char *fileName ) {
 			common->Warning( "idRenderModelMDM: %s has a truncated surface", fileName );
 			return false;
 		}
-		if ( !BuildMeshFromSurface( meshes[i], surf->shader,
+		if ( !BuildMeshFromSurface( meshes[i], surf->shader, surf->name,
 				LittleInt( surf->numVerts ), surfaceOfs + LittleInt( surf->ofsVerts ), MDM_VERTEX_HEADER_SIZE,
 				LittleInt( surf->numTriangles ), surfaceOfs + LittleInt( surf->ofsTriangles ),
 				surfEnd, bindPose ) ) {
