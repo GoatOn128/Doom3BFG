@@ -563,6 +563,159 @@ static drawSurf_t * R_TurbulentDeform( drawSurf_t * surf ) {
 
 /*
 =====================
+R_DeformVertexNoise
+
+Smooth lattice noise in the -1 to 1 range for the normal deform.
+=====================
+*/
+static float R_DeformVertexNoise( float x, float y, float z, float t ) {
+	static const unsigned int hashScales[4] = { 83492791u, 28047901u, 114061489u, 183481273u };
+
+	float in[4] = { x, y, z, t };
+	int corner[4];
+	float frac[4];
+	for ( int i = 0; i < 4; i++ ) {
+		corner[i] = idMath::Ftoi( idMath::Floor( in[i] ) );
+		frac[i] = in[i] - corner[i];
+		// quintic smoothing so the interpolated noise has no visible lattice edges
+		frac[i] = frac[i] * frac[i] * frac[i] * ( frac[i] * ( frac[i] * 6.0f - 15.0f ) + 10.0f );
+	}
+
+	float value = 0.0f;
+	for ( int i = 0; i < 16; i++ ) {
+		// hash the lattice corner into the -1 to 1 range
+		unsigned int hash = 0;
+		float weight = 1.0f;
+		for ( int j = 0; j < 4; j++ ) {
+			hash = hash * 3u + ( unsigned int )( corner[j] + ( ( i >> j ) & 1 ) ) * hashScales[j];
+			weight *= ( i & ( 1 << j ) ) ? frac[j] : 1.0f - frac[j];
+		}
+		hash = ( hash ^ ( hash >> 13u ) ) * 1274126177u;
+		hash ^= hash >> 16u;
+		value += ( ( float )( hash & 65535u ) * ( 2.0f / 65535.0f ) - 1.0f ) * weight;
+	}
+
+	return value;
+}
+
+/*
+=====================
+R_WaveDeform
+
+Displaces the vertexes along their normals with a wave table lookup
+over the vertex position and the wave time expression.
+=====================
+*/
+static drawSurf_t * R_WaveDeform( drawSurf_t * surf ) {
+	const srfTriangles_t * srcTri = surf->frontEndGeo;
+
+	assert( srcTri->staticModelWithJoints == NULL );
+
+	// the srfTriangles_t are in frame memory and will be automatically disposed of
+	srfTriangles_t * newTri = (srfTriangles_t *)R_ClearedFrameAlloc( sizeof( *newTri ), FRAME_ALLOC_SURFACE_TRIANGLES );
+	newTri->numVerts = srcTri->numVerts;
+	newTri->numIndexes = srcTri->numIndexes;
+
+	idDrawVert *newVerts = (idDrawVert *)_alloca16( ALIGN( newTri->numVerts * sizeof( idDrawVert ), 16 ) );
+
+	const idDeclTable * table = (const idDeclTable *)surf->material->GetDeformDecl();
+	const float spread = surf->shaderRegisters[ surf->material->GetDeformRegister(0) ];
+	const float base = surf->shaderRegisters[ surf->material->GetDeformRegister(1) ];
+	const float amplitude = surf->shaderRegisters[ surf->material->GetDeformRegister(2) ];
+	const float phase = surf->shaderRegisters[ surf->material->GetDeformRegister(3) ];
+	const float waveTime = surf->shaderRegisters[ surf->material->GetDeformRegister(4) ];
+
+	for ( int i = 0; i < srcTri->numVerts; i++ ) {
+		const idVec3 xyz = srcTri->verts[i].xyz;
+		// the position adds a per vertex phase so the wave travels across the surface
+		const float offset = ( xyz[0] + xyz[1] + xyz[2] ) * spread;
+		const float scale = base + amplitude * table->TableLookup( phase + offset + waveTime );
+
+		newVerts[i] = srcTri->verts[i];
+		newVerts[i].xyz = xyz + srcTri->verts[i].GetNormal() * scale;
+	}
+
+	return R_FinishDeform( surf, newTri, newVerts, srcTri->indexes );
+}
+
+/*
+=====================
+R_BulgeDeform
+
+Pushes the vertexes along their normals with a wave table lookup over
+the first texture coordinate and the bulge time expression, which
+bulges the surface.
+=====================
+*/
+static drawSurf_t * R_BulgeDeform( drawSurf_t * surf ) {
+	const srfTriangles_t * srcTri = surf->frontEndGeo;
+
+	assert( srcTri->staticModelWithJoints == NULL );
+
+	// the srfTriangles_t are in frame memory and will be automatically disposed of
+	srfTriangles_t * newTri = (srfTriangles_t *)R_ClearedFrameAlloc( sizeof( *newTri ), FRAME_ALLOC_SURFACE_TRIANGLES );
+	newTri->numVerts = srcTri->numVerts;
+	newTri->numIndexes = srcTri->numIndexes;
+
+	idDrawVert *newVerts = (idDrawVert *)_alloca16( ALIGN( newTri->numVerts * sizeof( idDrawVert ), 16 ) );
+
+	const idDeclTable * table = (const idDeclTable *)surf->material->GetDeformDecl();
+	const float width = surf->shaderRegisters[ surf->material->GetDeformRegister(0) ];
+	const float height = surf->shaderRegisters[ surf->material->GetDeformRegister(1) ];
+	const float bulgeTime = surf->shaderRegisters[ surf->material->GetDeformRegister(2) ];
+
+	for ( int i = 0; i < srcTri->numVerts; i++ ) {
+		const float scale = height * table->TableLookup( srcTri->verts[i].GetTexCoordS() * width + bulgeTime );
+
+		newVerts[i] = srcTri->verts[i];
+		newVerts[i].xyz = srcTri->verts[i].xyz + srcTri->verts[i].GetNormal() * scale;
+	}
+
+	return R_FinishDeform( surf, newTri, newVerts, srcTri->indexes );
+}
+
+/*
+=====================
+R_NormalDeform
+
+Adds position based noise to the normals and renormalizes them for
+wavy environment mapping, the vertexes stay in place.
+=====================
+*/
+static drawSurf_t * R_NormalDeform( drawSurf_t * surf ) {
+	const srfTriangles_t * srcTri = surf->frontEndGeo;
+
+	assert( srcTri->staticModelWithJoints == NULL );
+
+	// the srfTriangles_t are in frame memory and will be automatically disposed of
+	srfTriangles_t * newTri = (srfTriangles_t *)R_ClearedFrameAlloc( sizeof( *newTri ), FRAME_ALLOC_SURFACE_TRIANGLES );
+	newTri->numVerts = srcTri->numVerts;
+	newTri->numIndexes = srcTri->numIndexes;
+
+	idDrawVert *newVerts = (idDrawVert *)_alloca16( ALIGN( newTri->numVerts * sizeof( idDrawVert ), 16 ) );
+
+	const float amplitude = surf->shaderRegisters[ surf->material->GetDeformRegister(0) ];
+	const float noiseTime = surf->shaderRegisters[ surf->material->GetDeformRegister(1) ];
+
+	for ( int i = 0; i < srcTri->numVerts; i++ ) {
+		const idVec3 xyz = srcTri->verts[i].xyz;
+		idVec3 normal = srcTri->verts[i].GetNormal();
+
+		// the offset on the first dimension keeps the three noise samples uncorrelated
+		normal.x += amplitude * R_DeformVertexNoise( xyz.x, xyz.y, xyz.z, noiseTime );
+		normal.y += amplitude * R_DeformVertexNoise( xyz.x + 100.0f, xyz.y, xyz.z, noiseTime );
+		normal.z += amplitude * R_DeformVertexNoise( xyz.x + 200.0f, xyz.y, xyz.z, noiseTime );
+		normal.Normalize();
+
+		newVerts[i] = srcTri->verts[i];
+		newVerts[i].SetNormal( normal );
+	}
+
+	return R_FinishDeform( surf, newTri, newVerts, srcTri->indexes );
+}
+
+/*
+=====================
 AddTriangleToIsland_r
 =====================
 */
@@ -1021,6 +1174,9 @@ drawSurf_t * R_DeformDrawSurf( drawSurf_t * drawSurf ) {
 		case DFRM_EXPAND:		return R_ExpandDeform( drawSurf );
 		case DFRM_MOVE:			return R_MoveDeform( drawSurf );
 		case DFRM_TURB:			return R_TurbulentDeform( drawSurf );
+		case DFRM_WAVE:			return R_WaveDeform( drawSurf );
+		case DFRM_BULGE:		return R_BulgeDeform( drawSurf );
+		case DFRM_NORMAL:		return R_NormalDeform( drawSurf );
 		case DFRM_EYEBALL:		return R_EyeballDeform( drawSurf );
 		case DFRM_PARTICLE:		return R_ParticleDeform( drawSurf, true );
 		case DFRM_PARTICLE2:	return R_ParticleDeform( drawSurf, false );
