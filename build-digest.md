@@ -1,88 +1,23 @@
 # Build digest
 
-commit: 6ce42b70fa35
+commit: 2a7a98be2b33
 
-- windows-x64-debug: cancelled
-- windows-x64-release: cancelled
-- windows-x86-debug: failure
-- windows-x86-release: cancelled
+- windows-x64-debug: success
+- windows-x64-release: success
+- windows-x86-debug: success
+- windows-x86-release: success
 
 ## windows-x64-debug
 
-status: cancelled
+status: success
 
-errors: 29
-warnings: 17 in 6 kinds
+errors: 0
+warnings: 24 in 7 kinds
 
 ### errors
 
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1669): error C2601: 'idMaterial::ParseDeform': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1764): error C2601: 'idMaterial::AddImplicitStages': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1827): error C2601: 'idMaterial::SortInteractionStages': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1868): error C2601: 'idMaterial::ParseMaterial': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2196): error C2601: 'idMaterial::SetGui': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2207): error C2601: 'idMaterial::Parse': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2433): error C2601: 'idMaterial::Print': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2455): error C2601: 'idMaterial::Save': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2464): error C2601: 'idMaterial::AddReference': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2485): error C2601: 'idMaterial::EvaluateRegisters': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2594): error C2601: 'idMaterial::Texgen': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2611): error C2601: 'idMaterial::GetImageWidth': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2621): error C2601: 'idMaterial::GetImageHeight': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2631): error C2601: 'idMaterial::CinematicLength': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2643): error C2601: 'idMaterial::UpdateCinematic': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2655): error C2601: 'idMaterial::CloseCinematic': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2670): error C2601: 'idMaterial::ResetCinematicTime': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2683): error C2601: 'idMaterial::GetCinematicStartTime': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2697): error C2601: 'idMaterial::CinematicIsPlaying': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2713): error C2601: 'idMaterial::CheckForConstantRegisters': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2739): error C2601: 'idMaterial::ImageName': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2755): error C2601: 'idMaterial::Size': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2764): error C2601: 'idMaterial::SetDefaultText': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2790): error C2601: 'idMaterial::DefaultDefinition': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2806): error C2601: 'idMaterial::GetBumpStage': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2820): error C2601: 'idMaterial::ReloadImages': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2841): error C2601: 'idMaterial::SetFastPathImages': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): fatal error C1075: '{': no matching token found
-scons: *** [build\scons\windows-x64-debug-msvc\obj\DoomEXE\renderer\Material.cpp.obj] Error 2
 
 ### failure context
-
-- build\scons\windows-x64-debug-msvc\obj\DoomEXE\renderer\Material.cpp.obj
-
-```
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2631): error C2601: 'idMaterial::CinematicLength': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2643): error C2601: 'idMaterial::UpdateCinematic': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2655): error C2601: 'idMaterial::CloseCinematic': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2670): error C2601: 'idMaterial::ResetCinematicTime': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2683): error C2601: 'idMaterial::GetCinematicStartTime': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2697): error C2601: 'idMaterial::CinematicIsPlaying': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2713): error C2601: 'idMaterial::CheckForConstantRegisters': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2739): error C2601: 'idMaterial::ImageName': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2755): error C2601: 'idMaterial::Size': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2764): error C2601: 'idMaterial::SetDefaultText': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2790): error C2601: 'idMaterial::DefaultDefinition': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2806): error C2601: 'idMaterial::GetBumpStage': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2820): error C2601: 'idMaterial::ReloadImages': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2841): error C2601: 'idMaterial::SetFastPathImages': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): fatal error C1075: '{': no matching token found
-scons: *** [build\scons\windows-x64-debug-msvc\obj\DoomEXE\renderer\Material.cpp.obj] Error 2
-```
 
 
 ### warning kinds
@@ -106,87 +41,30 @@ scons: *** [build\scons\windows-x64-debug-msvc\obj\DoomEXE\renderer\Material.cpp
   - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\Game_local.cpp(249): warning C4245: '=': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
   - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\Game_local.cpp(250): warning C4245: '=': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\CinematicBink.cpp(59): warning C4245: '=': conversion from 'int' to 'uint32', signed/unsigned mismatch
-- [1x] C4311
+- [3x] C4311
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_rendertools.cpp(724): warning C4311: 'type cast': pointer truncation from 'void *' to 'GLuint'
-- [1x] C4302
+  - D:\a\Doom3BFG\Doom3BFG\neo\sys\win32\win_syscon.cpp(119): warning C4311: 'type cast': pointer truncation from 'HBRUSH' to 'long'
+  - D:\a\Doom3BFG\Doom3BFG\neo\sys\win32\win_syscon.cpp(128): warning C4311: 'type cast': pointer truncation from 'HBRUSH' to 'long'
+- [3x] C4302
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_rendertools.cpp(724): warning C4302: 'type cast': truncation from 'void *' to 'GLuint'
+  - D:\a\Doom3BFG\Doom3BFG\neo\sys\win32\win_syscon.cpp(119): warning C4302: 'type cast': truncation from 'HBRUSH' to 'long'
+  - D:\a\Doom3BFG\Doom3BFG\neo\sys\win32\win_syscon.cpp(128): warning C4302: 'type cast': truncation from 'HBRUSH' to 'long'
+- [3x] C4701
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\aas\AASReach.cpp(267) : warning C4701: potentially uninitialized local variable 'edge1Num' used
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\amplitude\amplitude.cpp(177) : warning C4701: potentially uninitialized local variable 'format' used
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\renderbump\renderbump.cpp(1318) : warning C4701: potentially uninitialized local variable 'opt' used
 
 ## windows-x64-release
 
-status: cancelled
+status: success
 
-errors: 29
-warnings: 23 in 7 kinds
+errors: 0
+warnings: 30 in 8 kinds
 
 ### errors
 
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1669): error C2601: 'idMaterial::ParseDeform': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1764): error C2601: 'idMaterial::AddImplicitStages': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1827): error C2601: 'idMaterial::SortInteractionStages': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1868): error C2601: 'idMaterial::ParseMaterial': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2196): error C2601: 'idMaterial::SetGui': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2207): error C2601: 'idMaterial::Parse': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2433): error C2601: 'idMaterial::Print': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2455): error C2601: 'idMaterial::Save': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2464): error C2601: 'idMaterial::AddReference': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2485): error C2601: 'idMaterial::EvaluateRegisters': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2594): error C2601: 'idMaterial::Texgen': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2611): error C2601: 'idMaterial::GetImageWidth': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2621): error C2601: 'idMaterial::GetImageHeight': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2631): error C2601: 'idMaterial::CinematicLength': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2643): error C2601: 'idMaterial::UpdateCinematic': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2655): error C2601: 'idMaterial::CloseCinematic': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2670): error C2601: 'idMaterial::ResetCinematicTime': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2683): error C2601: 'idMaterial::GetCinematicStartTime': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2697): error C2601: 'idMaterial::CinematicIsPlaying': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2713): error C2601: 'idMaterial::CheckForConstantRegisters': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2739): error C2601: 'idMaterial::ImageName': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2755): error C2601: 'idMaterial::Size': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2764): error C2601: 'idMaterial::SetDefaultText': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2790): error C2601: 'idMaterial::DefaultDefinition': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2806): error C2601: 'idMaterial::GetBumpStage': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2820): error C2601: 'idMaterial::ReloadImages': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2841): error C2601: 'idMaterial::SetFastPathImages': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): fatal error C1075: '{': no matching token found
-scons: *** [build\scons\windows-x64-release-msvc\obj\DoomEXE\renderer\Material.cpp.obj] Error 2
 
 ### failure context
-
-- build\scons\windows-x64-release-msvc\obj\DoomEXE\renderer\Material.cpp.obj
-
-```
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2631): error C2601: 'idMaterial::CinematicLength': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2643): error C2601: 'idMaterial::UpdateCinematic': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2655): error C2601: 'idMaterial::CloseCinematic': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2670): error C2601: 'idMaterial::ResetCinematicTime': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2683): error C2601: 'idMaterial::GetCinematicStartTime': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2697): error C2601: 'idMaterial::CinematicIsPlaying': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2713): error C2601: 'idMaterial::CheckForConstantRegisters': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2739): error C2601: 'idMaterial::ImageName': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2755): error C2601: 'idMaterial::Size': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2764): error C2601: 'idMaterial::SetDefaultText': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2790): error C2601: 'idMaterial::DefaultDefinition': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2806): error C2601: 'idMaterial::GetBumpStage': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2820): error C2601: 'idMaterial::ReloadImages': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2841): error C2601: 'idMaterial::SetFastPathImages': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): fatal error C1075: '{': no matching token found
-scons: *** [build\scons\windows-x64-release-msvc\obj\DoomEXE\renderer\Material.cpp.obj] Error 2
-```
 
 
 ### warning kinds
@@ -217,87 +95,30 @@ scons: *** [build\scons\windows-x64-release-msvc\obj\DoomEXE\renderer\Material.c
   - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\Game_local.cpp(249): warning C4245: '=': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
   - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\Game_local.cpp(250): warning C4245: '=': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\CinematicBink.cpp(59): warning C4245: '=': conversion from 'int' to 'uint32', signed/unsigned mismatch
-- [1x] C4311
+- [3x] C4311
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_rendertools.cpp(724): warning C4311: 'type cast': pointer truncation from 'void *' to 'GLuint'
-- [1x] C4302
+  - D:\a\Doom3BFG\Doom3BFG\neo\sys\win32\win_syscon.cpp(119): warning C4311: 'type cast': pointer truncation from 'HBRUSH' to 'long'
+  - D:\a\Doom3BFG\Doom3BFG\neo\sys\win32\win_syscon.cpp(128): warning C4311: 'type cast': pointer truncation from 'HBRUSH' to 'long'
+- [3x] C4302
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_rendertools.cpp(724): warning C4302: 'type cast': truncation from 'void *' to 'GLuint'
+  - D:\a\Doom3BFG\Doom3BFG\neo\sys\win32\win_syscon.cpp(119): warning C4302: 'type cast': truncation from 'HBRUSH' to 'long'
+  - D:\a\Doom3BFG\Doom3BFG\neo\sys\win32\win_syscon.cpp(128): warning C4302: 'type cast': truncation from 'HBRUSH' to 'long'
+- [3x] C4701
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\aas\AASReach.cpp(267) : warning C4701: potentially uninitialized local variable 'edge1Num' used
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\amplitude\amplitude.cpp(177) : warning C4701: potentially uninitialized local variable 'format' used
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\renderbump\renderbump.cpp(1318) : warning C4701: potentially uninitialized local variable 'opt' used
 
 ## windows-x86-debug
 
-status: failure
+status: success
 
-errors: 29
+errors: 0
 warnings: 18 in 4 kinds
 
 ### errors
 
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1669): error C2601: 'idMaterial::ParseDeform': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1764): error C2601: 'idMaterial::AddImplicitStages': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1827): error C2601: 'idMaterial::SortInteractionStages': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1868): error C2601: 'idMaterial::ParseMaterial': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2196): error C2601: 'idMaterial::SetGui': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2207): error C2601: 'idMaterial::Parse': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2433): error C2601: 'idMaterial::Print': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2455): error C2601: 'idMaterial::Save': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2464): error C2601: 'idMaterial::AddReference': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2485): error C2601: 'idMaterial::EvaluateRegisters': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2594): error C2601: 'idMaterial::Texgen': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2611): error C2601: 'idMaterial::GetImageWidth': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2621): error C2601: 'idMaterial::GetImageHeight': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2631): error C2601: 'idMaterial::CinematicLength': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2643): error C2601: 'idMaterial::UpdateCinematic': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2655): error C2601: 'idMaterial::CloseCinematic': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2670): error C2601: 'idMaterial::ResetCinematicTime': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2683): error C2601: 'idMaterial::GetCinematicStartTime': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2697): error C2601: 'idMaterial::CinematicIsPlaying': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2713): error C2601: 'idMaterial::CheckForConstantRegisters': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2739): error C2601: 'idMaterial::ImageName': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2755): error C2601: 'idMaterial::Size': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2764): error C2601: 'idMaterial::SetDefaultText': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2790): error C2601: 'idMaterial::DefaultDefinition': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2806): error C2601: 'idMaterial::GetBumpStage': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2820): error C2601: 'idMaterial::ReloadImages': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2841): error C2601: 'idMaterial::SetFastPathImages': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): fatal error C1075: '{': no matching token found
-scons: *** [build\scons\windows-x86-debug-msvc\obj\DoomEXE\renderer\Material.cpp.obj] Error 2
 
 ### failure context
-
-- build\scons\windows-x86-debug-msvc\obj\DoomEXE\renderer\Material.cpp.obj
-
-```
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2631): error C2601: 'idMaterial::CinematicLength': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2643): error C2601: 'idMaterial::UpdateCinematic': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2655): error C2601: 'idMaterial::CloseCinematic': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2670): error C2601: 'idMaterial::ResetCinematicTime': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2683): error C2601: 'idMaterial::GetCinematicStartTime': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2697): error C2601: 'idMaterial::CinematicIsPlaying': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2713): error C2601: 'idMaterial::CheckForConstantRegisters': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2739): error C2601: 'idMaterial::ImageName': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2755): error C2601: 'idMaterial::Size': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2764): error C2601: 'idMaterial::SetDefaultText': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2790): error C2601: 'idMaterial::DefaultDefinition': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2806): error C2601: 'idMaterial::GetBumpStage': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2820): error C2601: 'idMaterial::ReloadImages': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2841): error C2601: 'idMaterial::SetFastPathImages': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): fatal error C1075: '{': no matching token found
-scons: *** [build\scons\windows-x86-debug-msvc\obj\DoomEXE\renderer\Material.cpp.obj] Error 2
-```
 
 
 ### warning kinds
@@ -327,80 +148,15 @@ scons: *** [build\scons\windows-x86-debug-msvc\obj\DoomEXE\renderer\Material.cpp
 
 ## windows-x86-release
 
-status: cancelled
+status: success
 
-errors: 29
-warnings: 19 in 4 kinds
+errors: 0
+warnings: 22 in 5 kinds
 
 ### errors
 
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1669): error C2601: 'idMaterial::ParseDeform': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1764): error C2601: 'idMaterial::AddImplicitStages': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1827): error C2601: 'idMaterial::SortInteractionStages': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1868): error C2601: 'idMaterial::ParseMaterial': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2196): error C2601: 'idMaterial::SetGui': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2207): error C2601: 'idMaterial::Parse': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2433): error C2601: 'idMaterial::Print': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2455): error C2601: 'idMaterial::Save': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2464): error C2601: 'idMaterial::AddReference': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2485): error C2601: 'idMaterial::EvaluateRegisters': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2594): error C2601: 'idMaterial::Texgen': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2611): error C2601: 'idMaterial::GetImageWidth': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2621): error C2601: 'idMaterial::GetImageHeight': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2631): error C2601: 'idMaterial::CinematicLength': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2643): error C2601: 'idMaterial::UpdateCinematic': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2655): error C2601: 'idMaterial::CloseCinematic': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2670): error C2601: 'idMaterial::ResetCinematicTime': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2683): error C2601: 'idMaterial::GetCinematicStartTime': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2697): error C2601: 'idMaterial::CinematicIsPlaying': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2713): error C2601: 'idMaterial::CheckForConstantRegisters': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2739): error C2601: 'idMaterial::ImageName': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2755): error C2601: 'idMaterial::Size': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2764): error C2601: 'idMaterial::SetDefaultText': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2790): error C2601: 'idMaterial::DefaultDefinition': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2806): error C2601: 'idMaterial::GetBumpStage': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2820): error C2601: 'idMaterial::ReloadImages': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2841): error C2601: 'idMaterial::SetFastPathImages': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): fatal error C1075: '{': no matching token found
-scons: *** [build\scons\windows-x86-release-msvc\obj\DoomEXE\renderer\Material.cpp.obj] Error 2
 
 ### failure context
-
-- build\scons\windows-x86-release-msvc\obj\DoomEXE\renderer\Material.cpp.obj
-
-```
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2631): error C2601: 'idMaterial::CinematicLength': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2643): error C2601: 'idMaterial::UpdateCinematic': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2655): error C2601: 'idMaterial::CloseCinematic': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2670): error C2601: 'idMaterial::ResetCinematicTime': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2683): error C2601: 'idMaterial::GetCinematicStartTime': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2697): error C2601: 'idMaterial::CinematicIsPlaying': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2713): error C2601: 'idMaterial::CheckForConstantRegisters': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2739): error C2601: 'idMaterial::ImageName': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2755): error C2601: 'idMaterial::Size': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2764): error C2601: 'idMaterial::SetDefaultText': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2790): error C2601: 'idMaterial::DefaultDefinition': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2806): error C2601: 'idMaterial::GetBumpStage': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2820): error C2601: 'idMaterial::ReloadImages': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(2841): error C2601: 'idMaterial::SetFastPathImages': local function definitions are illegal
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): note: this line contains a '{' which has not yet been matched
-D:\a\Doom3BFG\Doom3BFG\neo\renderer\Material.cpp(1115): fatal error C1075: '{': no matching token found
-scons: *** [build\scons\windows-x86-release-msvc\obj\DoomEXE\renderer\Material.cpp.obj] Error 2
-```
 
 
 ### warning kinds
@@ -428,4 +184,8 @@ scons: *** [build\scons\windows-x86-release-msvc\obj\DoomEXE\renderer\Material.c
   - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\Game_local.cpp(249): warning C4245: '=': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
   - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\Game_local.cpp(250): warning C4245: '=': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\CinematicBink.cpp(59): warning C4245: '=': conversion from 'int' to 'uint32', signed/unsigned mismatch
+- [3x] C4701
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\aas\AASReach.cpp(267) : warning C4701: potentially uninitialized local variable 'edge1Num' used
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\amplitude\amplitude.cpp(177) : warning C4701: potentially uninitialized local variable 'format' used
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\renderbump\renderbump.cpp(1318) : warning C4701: potentially uninitialized local variable 'opt' used
 
