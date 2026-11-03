@@ -58,6 +58,11 @@ idRenderProgManager::idRenderProgManager() {
 	currentDecl = nullptr;
 	currentUsesJoints = false;
 	currentOptionalSkinning = false;
+
+	// idStaticList::operator[] asserts index < num, and num starts at 0; the uniform
+	// table is indexed directly by renderParm_t so it must be fully sized up front.
+	glslUniforms.SetNum( glslUniforms.Max() );
+	ZeroUniforms();
 }
 
 /*
