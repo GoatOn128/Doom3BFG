@@ -38,6 +38,10 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "stb/stb_image_write.h"
 
+// single header PCX loader; expands indexed and truecolor PCX files to
+// RGBA on the CPU so mipmaps and texture compression keep working
+#include "../external/libpcx/pcx.h"
+
 static const char *cameraSides[6] = {
 	"_forward", "_back", "_left", "_right",
 	"_up", "_down"
@@ -143,6 +147,55 @@ void RB_LoadImage( const char *filename, unsigned char **pic, int *width, int *h
 	*height = h;
 	// now that decodedImageData has been copied into *pic, it's not needed anymore
 	stbi_image_free( decodedImageData );
+}
+
+//===================================================================
+
+/*
+=============
+LoadPCX
+=============
+*/
+void LoadPCX( const char *filename, byte **pic, int *width, int *height, ID_TIME_T *timestamp ) {
+	if ( pic ) {
+		*pic = NULL;		// until proven otherwise
+	}
+
+	idFile *f = fileSystem->OpenFileRead( filename );
+	if ( !f ) {
+		return;
+	}
+	int len = f->Length();
+	if ( timestamp ) {
+		*timestamp = f->Timestamp();
+	}
+	if ( !pic ) {
+		fileSystem->CloseFile( f );
+		return;	// just getting the timestamp
+	}
+	byte *fbuffer = ( byte * )Mem_ClearedAlloc( len, TAG_IMAGE );
+	f->Read( fbuffer, len );
+	fileSystem->CloseFile( f );
+
+	uint32_t w = 0, h = 0;
+	PCXError err = PCX_OK;
+	uint8_t *decodedImageData = pcx_load_rgba( fbuffer, len, &w, &h, &err );
+
+	Mem_Free( fbuffer );
+
+	if ( decodedImageData == NULL ) {
+		common->Warning( "pcx loader was unable to load image %s : %s\n", filename, pcx_error_string( err ) );
+		return;
+	}
+
+	// *pic must be allocated with R_StaticAlloc(), but the pcx loader
+	// allocates with malloc(), so the decoded data is copied once
+	int size = (int)w * (int)h * 4;
+	*pic = ( byte * )R_StaticAlloc( size );
+	memcpy( *pic, decodedImageData, size );
+	*width = (int)w;
+	*height = (int)h;
+	pcx_free( decodedImageData );
 }
 
 //===================================================================

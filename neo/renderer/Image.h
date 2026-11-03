@@ -228,6 +228,7 @@ enum idImageType {
 
 void	R_WriteImage( idImageType filetype, const char *filename, const byte *data, int bytesPerPixel, int width, int height, bool flipVertical = false, const char *basePath = "fs_savepath" );
 void	RB_LoadImage( const char *name, byte **pic, int *width, int *height, ID_TIME_T *timestamp );
+void	LoadPCX( const char *name, byte **pic, int *width, int *height, ID_TIME_T *timestamp );
 
 typedef struct {
 	const char*	ext;
@@ -239,6 +240,7 @@ static imageExtToLoader_t imageLoaders[] = {
 	{"bmp", RB_LoadImage},
 	{"png", RB_LoadImage},
 	{"jpg", RB_LoadImage},
+	{"pcx", LoadPCX},
 };
 
 static const int numImageLoaders = sizeof(imageLoaders) / sizeof(imageLoaders[0]);
