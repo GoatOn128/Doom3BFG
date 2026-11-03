@@ -258,6 +258,7 @@ struct q3Stage_t {
 	idStr		text;			// converted Doom 3 stage lines
 	idStr		dropComment;	// set when the stage is dropped entirely
 	idStr		mapName;		// texture of a plain map directive
+	idStr		deformText;	// material level deform line collected from a stage
 	bool		plainMap;		// the stage is nothing but a single map line
 };
 
@@ -567,8 +568,35 @@ static void Q3ParseStage( idLexer &src, const char *shaderName, q3Stage_t &stage
 				}
 				continue;
 			}
+			if ( !modTok.Icmp( "turb" ) ) {
+				// tcMod turb <base> <amplitude> <phase> <frequency>
+				// Quake 3 never reads the base and always uses the sin table;
+				// the Doom 3 turbulent deform is the same texture coordinate
+				// wobble, but it is a material level directive, so the line is
+				// collected here and merged once the whole shader is parsed
+				src.ParseFloat();	// the base is never read by Quake 3
+				float amp = src.ParseFloat();
+				float phase = src.ParseFloat();
+				float freq = src.ParseFloat();
+				// the Doom 3 turbulent lookup adds the time offset twice, so
+				// the Quake 3 frequency and phase are halved; the domain is
+				// picked so the y axis weight matches Quake 3's 1/1024 per
+				// unit phase
+				idStr timeOfs;
+				if ( freq != 0.0f && phase != 0.0f ) {
+					timeOfs = Q3Str( "( ( time * %s ) + %s )", Q3Float( freq * 0.5f ).c_str(), Q3Float( phase * 0.5f ).c_str() ).c_str();
+				} else if ( freq != 0.0f ) {
+					timeOfs = Q3Str( "( time * %s )", Q3Float( freq * 0.5f ).c_str() ).c_str();
+				} else {
+					timeOfs = Q3Float( phase * 0.5f ).c_str();
+				}
+				stage.deformText = Q3Str( "\tdeform turbulent %s %s %s %s //tcMod turb\n",
+					Q3WaveTable( "sin" ), Q3Float( amp ).c_str(), timeOfs.c_str(),
+					Q3Float( 1.0f / ( 1024.0f * 0.007f ) ).c_str() ).c_str();
+				continue;
+			}
 			Q3UnknownDirective( src, token.c_str(), "\t\t", stage.text, conv );
-			// turb and transform carry their arguments on the same line
+			// transform carries its arguments on the same line
 			continue;
 		}
 
@@ -811,6 +839,7 @@ static idStr Q3ParseShader( idLexer &src, const char *shaderName, Q3ShaderConver
 	idToken token;
 	idStr body;
 	idStr stages;
+	idStr deformLine;
 	q3Stage_t pending;
 	bool havePending = false;
 
@@ -821,6 +850,14 @@ static idStr Q3ParseShader( idLexer &src, const char *shaderName, Q3ShaderConver
 		if ( token == "{" ) {
 			q3Stage_t stage;
 			Q3ParseStage( src, shaderName, stage, conv );
+			if ( stage.deformText.Length() > 0 ) {
+				if ( deformLine.Length() > 0 ) {
+					stages += "\t//tcMod turb dropped, the material already has a turbulent deform\n";
+					conv->numWarnings++;
+				} else {
+					deformLine = stage.deformText;
+				}
+			}
 			if ( stage.dropComment.Length() > 0 ) {
 				conv->numStagesDropped++;
 				stages += "\t";
@@ -850,6 +887,17 @@ static idStr Q3ParseShader( idLexer &src, const char *shaderName, Q3ShaderConver
 		body += pending.mapName.c_str();
 		body += "\n";
 		conv->numStages++;
+	}
+
+	// the Doom 3 material only carries one deform, so a converted
+	// deformVertexes deform wins over the collected turbulent wobble
+	if ( deformLine.Length() > 0 ) {
+		if ( body.Find( "\tdeform ", false ) >= 0 ) {
+			stages += "\t//tcMod turb dropped, the material already has a deform\n";
+			conv->numWarnings++;
+		} else {
+			body += deformLine.c_str();
+		}
 	}
 
 	idStr out = "material ";
