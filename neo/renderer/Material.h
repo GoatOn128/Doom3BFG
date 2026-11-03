@@ -626,7 +626,9 @@ private:
 	void				ParseVertexParm2( idLexer &src, newShaderStage_t *newStage );
 	void				ParseFragmentMap( idLexer &src, newShaderStage_t *newStage );
 	void				ParseStage( idLexer &src, const textureRepeat_t trpDefault = TR_REPEAT );
-	void				FinishStage( shaderStage_t *ss, const newShaderStage_t &newStage, const char *imageName, textureFilter_t tf, textureRepeat_t trp, textureUsage_t td, cubeFiles_t cubeMap );
+	// td is a textureUsage_t and cubeMap a cubeFiles_t (Image.h); they are passed
+	// as plain ints here so this header does not need to include Image.h
+	void				FinishStage( shaderStage_t *ss, const newShaderStage_t &newStage, const char *imageName, textureFilter_t tf, textureRepeat_t trp, int td, int cubeMap );
 	void				ParseLegacyMaterial( idLexer &src );
 	void				ParseLegacyStage( idLexer &src, const textureRepeat_t trpDefault );
 	int					ParseLegacyWaveform( idLexer &src );

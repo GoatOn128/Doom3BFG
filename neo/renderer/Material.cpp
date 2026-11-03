@@ -1632,7 +1632,7 @@ parsers: the program stage copy, the stage count, the texture usage
 selection, the alpha test coverage stage, and the image load.
 =================
 */
-void idMaterial::FinishStage( shaderStage_t *ss, const newShaderStage_t &newStage, const char *imageName, textureFilter_t tf, textureRepeat_t trp, textureUsage_t td, cubeFiles_t cubeMap ) {
+void idMaterial::FinishStage( shaderStage_t *ss, const newShaderStage_t &newStage, const char *imageName, textureFilter_t tf, textureRepeat_t trp, int td, int cubeMap ) {
 	textureStage_t *ts = &ss->texture;
 
 	// if we are using newStage, allocate a copy of it
@@ -1679,7 +1679,7 @@ void idMaterial::FinishStage( shaderStage_t *ss, const newShaderStage_t &newStag
 
 		// now load the image with all the parms we parsed for the coverage stage
 		if ( imageName[0] ) {
-			coverageTS->image = globalImages->ImageFromFile( imageName, tf, trp, TD_COVERAGE, cubeMap );
+			coverageTS->image = globalImages->ImageFromFile( imageName, tf, trp, TD_COVERAGE, (cubeFiles_t)cubeMap );
 			if ( !coverageTS->image ) {
 				coverageTS->image = globalImages->defaultImage;
 			}
@@ -1691,7 +1691,7 @@ void idMaterial::FinishStage( shaderStage_t *ss, const newShaderStage_t &newStag
 
 	// now load the image with all the parms we parsed
 	if ( imageName[0] ) {
-		ts->image = globalImages->ImageFromFile( imageName, tf, trp, td, cubeMap );
+		ts->image = globalImages->ImageFromFile( imageName, tf, trp, (textureUsage_t)td, (cubeFiles_t)cubeMap );
 		if ( !ts->image ) {
 			ts->image = globalImages->defaultImage;
 		}
