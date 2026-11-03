@@ -251,6 +251,15 @@ materials. Falls back to the material keyed path when the skin
 has no Q3 surface mappings.
 */
 const idMaterial *idDeclSkin::RemapShaderBySurfaceName( const char *surfaceName, const idMaterial *shader ) const {
+	// ET style blink skins key the blink entry as "<surface>_b"
+	idStr blinkName( surfaceName );
+	blinkName.Append( "_b" );
+	for ( int i = 0; i < surfaceMappings.Num(); i++ ) {
+		if ( surfaceMappings[i].surfaceName.Icmp( blinkName.c_str() ) == 0 ) {
+			return surfaceMappings[i].to;
+		}
+	}
+
 	for ( int i = 0; i < surfaceMappings.Num(); i++ ) {
 		if ( surfaceMappings[i].surfaceName.Icmp( surfaceName ) == 0 ) {
 			return surfaceMappings[i].to;

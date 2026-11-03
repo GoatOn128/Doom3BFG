@@ -98,6 +98,7 @@ public:
 	const idMaterial *		shader;
 	deformInfo_t *			deformInfo;
 
+	idStr					surfaceName;	// lowercased surface name, keys Q3/ET skin remapping
 	int						surfaceNum;		// only needed for the interactions with UpdateSurface
 
 private:
@@ -162,7 +163,7 @@ protected:
 
 	void					FinishSkeleton();
 	// build a mesh from the surface data, the weights index global bones
-	bool					BuildMeshFromSurface( idMODMesh &mesh, const char *shaderName,
+	bool					BuildMeshFromSurface( idMODMesh &mesh, const char *shaderName, const char *surfaceName,
 								int numVerts, int ofsVerts, int vertexHeaderSize,
 								int numTriangles, int ofsTriangles,
 								int surfaceEnd, const idJointMat *bindPose );
