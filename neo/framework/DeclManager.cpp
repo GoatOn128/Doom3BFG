@@ -833,6 +833,8 @@ void idDeclManagerLocal::Init() {
 	RegisterDeclType( "renderProg",			DECL_RENDERPROG,		idDeclAllocator<idDeclRenderProg> );
 
 	RegisterDeclFolder( "materials",		".mtr",				DECL_MATERIAL );
+	// Q3 / ET style shaders, idMaterial::Parse picks the legacy syntax from the .shader extension
+	RegisterDeclFolder( "scripts",		".shader",			DECL_MATERIAL );
 
 	// add console commands
 	cmdSystem->AddCommand( "listDecls", ListDecls_f, CMD_FL_SYSTEM, "lists all decls" );
