@@ -1929,7 +1929,7 @@ bool R_GlobalShaderOverride( const idMaterial **shader ) {
 R_RemapShaderBySkin
 ===============
 */
-const idMaterial *R_RemapShaderBySkin( const idMaterial *shader, const idDeclSkin *skin, const idMaterial *customShader ) {
+const idMaterial *R_RemapShaderBySkin( const idMaterial *shader, const idDeclSkin *skin, const idMaterial *customShader, const char *surfaceName ) {
 
 	if ( !shader ) {
 		return NULL;
@@ -1951,6 +1951,11 @@ const idMaterial *R_RemapShaderBySkin( const idMaterial *shader, const idDeclSki
 
 	if ( !skin ) {
 		return const_cast<idMaterial *>(shader);
+	}
+
+	if ( surfaceName != NULL ) {
+		// Q3 / ET skin files key on surface names, D3 skins fall back to the material keyed path
+		return skin->RemapShaderBySurfaceName( surfaceName, shader );
 	}
 
 	return skin->RemapShaderBySkin( shader );

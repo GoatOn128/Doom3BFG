@@ -654,7 +654,8 @@ idRenderModel *idRenderModelMD3::InstantiateDynamicModel( const struct renderEnt
 			shader = declManager->FindMaterial( "_default" );
 		}
 		if ( ent != NULL ) {
-			shader = R_RemapShaderBySkin( shader, ent->customSkin, ent->customShader );
+			// pass the surface name so Q3 skins remap by surface, D3 skins by material
+			shader = R_RemapShaderBySkin( shader, ent->customSkin, ent->customShader, surface->name );
 		}
 		if ( !shader || ( !shader->IsDrawn() && !shader->SurfaceCastsShadow() ) ) {
 			staticModel->DeleteSurfaceWithId( i );

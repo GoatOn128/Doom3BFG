@@ -544,7 +544,7 @@ void *R_GetCommandBuffer( int bytes );
 bool R_GlobalShaderOverride( const idMaterial **shader );
 
 // this does various checks before calling the idDeclSkin
-const idMaterial *R_RemapShaderBySkin( const idMaterial *shader, const idDeclSkin *customSkin, const idMaterial *customShader );
+const idMaterial *R_RemapShaderBySkin( const idMaterial *shader, const idDeclSkin *customSkin, const idMaterial *customShader, const char *surfaceName = NULL );
 
 
 //====================================================
