@@ -1226,6 +1226,9 @@ def _generate_msvc_projects():
             'sys/win32/win_snd.cpp',
             'sys/win32/win_gamma.cpp',
             'renderer/BoundsTrack.cpp',
+            # sys/stub is the standalone CLI-tool host harness (its own
+            # main and sys/common stubs); it must never build in the engine.
+            'sys/stub/*',
         ],
     )
     idlib_sources, idlib_headers, idlib_resources, idlib_misc = _collect_msvs_files(('idlib',))

@@ -15,6 +15,9 @@ doom_excludes = [
     'sys/win32/win_snd.cpp',
     'sys/win32/win_gamma.cpp',
     'renderer/BoundsTrack.cpp',
+    # sys/stub is the standalone CLI-tool host harness (its own main and
+    # sys/common stubs); it must never compile into the engine.
+    'sys/stub/*',
 ]
 doom_all_sources = require_sources(
     'DoomEXE', collect_sources(doom_dirs, doom_excludes)
