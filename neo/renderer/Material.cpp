@@ -1739,6 +1739,44 @@ void idMaterial::ParseDeform( idLexer &src ) {
 		deformRegisters[2] = ParseExpression( src );
 		return;
 	}
+	if ( !token.Icmp( "wave" ) ) {
+		deform = DFRM_WAVE;
+
+		if ( !src.ExpectAnyToken( &token ) ) {
+			src.Warning( "deform wave missing wave table name" );
+			SetMaterialFlag( MF_DEFAULTED );
+			return;
+		}
+		deformDecl = declManager->FindType( DECL_TABLE, token.c_str(), true );
+
+		deformRegisters[0] = ParseExpression( src );	// spread, cycle fraction over the x + y + z position
+		deformRegisters[1] = ParseExpression( src );	// base
+		deformRegisters[2] = ParseExpression( src );	// amplitude
+		deformRegisters[3] = ParseExpression( src );	// phase
+		deformRegisters[4] = ParseExpression( src );	// wave time, usually time * frequency
+		return;
+	}
+	if ( !token.Icmp( "bulge" ) ) {
+		deform = DFRM_BULGE;
+
+		if ( !src.ExpectAnyToken( &token ) ) {
+			src.Warning( "deform bulge missing wave table name" );
+			SetMaterialFlag( MF_DEFAULTED );
+			return;
+		}
+		deformDecl = declManager->FindType( DECL_TABLE, token.c_str(), true );
+
+		deformRegisters[0] = ParseExpression( src );	// width in texture coordinate cycles
+		deformRegisters[1] = ParseExpression( src );	// height
+		deformRegisters[2] = ParseExpression( src );	// bulge time, usually time * speed
+		return;
+	}
+	if ( !token.Icmp( "normal" ) ) {
+		deform = DFRM_NORMAL;
+		deformRegisters[0] = ParseExpression( src );	// amplitude
+		deformRegisters[1] = ParseExpression( src );	// noise time, usually time * frequency
+		return;
+	}
 	if ( !token.Icmp( "eyeBall" ) ) {
 		deform = DFRM_EYEBALL;
 		return;
