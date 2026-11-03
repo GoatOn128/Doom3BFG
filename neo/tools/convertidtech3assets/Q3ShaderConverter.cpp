@@ -159,6 +159,40 @@ static idStr Q3WaveExpr( const char *func, float base, float amp, float phase, f
 	return idStr();
 }
 
+/*
+=================
+Q3WaveTable
+
+Returns the name of the Doom 3 wave table that holds the values of a
+Quake 3 wave function, or NULL when the function has no table. Used
+by the deformVertexes conversion, which looks the wave up outside of
+an expression.
+=================
+*/
+static const char *Q3WaveTable( const char *func ) {
+	if ( idStr::Icmp( func, "sin" ) == 0 ) {
+		q3NeedWaveTables = true;
+		return "q3waveSin";
+	}
+	if ( idStr::Icmp( func, "square" ) == 0 ) {
+		q3NeedWaveTables = true;
+		return "q3waveSquare";
+	}
+	if ( idStr::Icmp( func, "triangle" ) == 0 ) {
+		q3NeedWaveTables = true;
+		return "q3waveTriangle";
+	}
+	if ( idStr::Icmp( func, "sawtooth" ) == 0 ) {
+		q3NeedWaveTables = true;
+		return "q3waveSawtooth";
+	}
+	if ( idStr::Icmp( func, "inversesawtooth" ) == 0 ) {
+		q3NeedWaveTables = true;
+		return "q3waveInversesawtooth";
+	}
+	return NULL;
+}
+
 // Quake 3 surfaceparms with a matching Doom 3 material keyword; any other
 // surfaceparm falls back to a comment.
 typedef struct {
@@ -689,6 +723,66 @@ static void Q3ParseShaderDirective( idLexer &src, const idToken &token, idStr &d
 				dest += "\tdeform sprite\n";
 				return;
 			}
+			if ( !deformTok.Icmp( "wave" ) ) {
+				// deformVertexes wave <div> <func> <base> <amplitude> <phase> <freq>
+				const float div = src.ParseFloat();
+				idToken funcTok;
+				if ( src.ReadTokenOnLine( &funcTok ) ) {
+					const float base = src.ParseFloat();
+					const float amp = src.ParseFloat();
+					const float phase = src.ParseFloat();
+					const float freq = src.ParseFloat();
+					const char *table = Q3WaveTable( funcTok.c_str() );
+					if ( table == NULL ) {
+						dest += Q3Str( "\t//deformVertexes wave %s (no Doom 3 equivalent)\n", funcTok.c_str() ).c_str();
+						conv->numWarnings++;
+						return;
+					}
+					// the wave deform looks the value up in a table that covers one
+					// cycle, and the square table stores 1 and 0, so the base and
+					// amplitude are moved to the range Quake 3 squares between
+					float outBase = base;
+					float outAmp = amp;
+					if ( idStr::Icmp( funcTok.c_str(), "square" ) == 0 ) {
+						outBase = base - amp;
+						outAmp = amp * 2.0f;
+					}
+					if ( freq == 0.0f ) {
+						// a zero frequency freezes the wave in Quake 3
+						dest += Q3Str( "\tdeform wave %s 0 %s %s %s 0\n", table,
+							Q3Float( outBase ).c_str(), Q3Float( outAmp ).c_str(), Q3Float( phase ).c_str() ).c_str();
+					} else {
+						// Quake 3 divides the vertex position sum by the spread
+						const float spread = ( div != 0.0f ) ? ( 1.0f / div ) : 100.0f;
+						dest += Q3Str( "\tdeform wave %s %s %s %s %s ( time * %s )\n", table,
+							Q3Float( spread ).c_str(), Q3Float( outBase ).c_str(), Q3Float( outAmp ).c_str(),
+							Q3Float( phase ).c_str(), Q3Float( freq ).c_str() ).c_str();
+					}
+				}
+				return;
+			}
+			if ( !deformTok.Icmp( "bulge" ) ) {
+				// deformVertexes bulge <width> <height> <speed>
+				const float width = src.ParseFloat();
+				const float height = src.ParseFloat();
+				const float speed = src.ParseFloat();
+				// the Doom 3 bulge counts texture coordinate cycles while
+				// Quake 3 counts radians, and the sin table covers one cycle
+				const float twoPi = idMath::PI * 2.0f;
+				q3NeedWaveTables = true;
+				dest += Q3Str( "\tdeform bulge q3waveSin %s %s ( time * %s )\n",
+					Q3Float( width / twoPi ).c_str(), Q3Float( height ).c_str(),
+					Q3Float( speed / twoPi ).c_str() ).c_str();
+				return;
+			}
+			if ( !deformTok.Icmp( "normal" ) ) {
+				// deformVertexes normal <amplitude> <frequency>
+				const float amplitude = src.ParseFloat();
+				const float freq = src.ParseFloat();
+				dest += Q3Str( "\tdeform normal %s ( time * %s )\n",
+					Q3Float( amplitude ).c_str(), Q3Float( freq ).c_str() ).c_str();
+				return;
+			}
 			Q3UnknownDirective( src, token.c_str(), "\t", dest, conv );
 		}
 		return;
@@ -787,10 +881,18 @@ static void Q3WriteWaveTables( const char *outputDir ) {
 	// the expression multiplies by 2 and subtracts 1
 	out += "table q3waveSquare\n{\n\tsnap\n\t{\n\t\t1,\n\t\t0\n\t}\n}\n\n";
 
+	// Q3 triangle runs 0 -> 1 -> 0 -> -1 -> 0 over one full cycle
 	out += "table q3waveTriangle\n{\n\t{\n";
 	for ( int i = 0; i < numValues; i++ ) {
 		float u = i / (float)numValues;
-		float v = 1.0f - idMath::Fabs( 1.0f - u * 2.0f );
+		float v;
+		if ( u < 0.25f ) {
+			v = u * 4.0f;
+		} else if ( u < 0.75f ) {
+			v = 2.0f - u * 4.0f;
+		} else {
+			v = u * 4.0f - 4.0f;
+		}
 		out += Q3Str( "\t\t%s%s\n", Q3Float( v ).c_str(), i == numValues - 1 ? "" : "," ).c_str();
 	}
 	out += "\t}\n}\n\n";
