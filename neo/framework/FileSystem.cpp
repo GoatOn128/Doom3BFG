@@ -31,6 +31,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "Unzip.h"
 #include "Zip.h"
+#include "File_Pak.h"
 
 #ifdef WIN32
 	#include <io.h>	// for _read
@@ -120,6 +121,7 @@ struct searchpath_t {
 	idStr	gamedir;	// base
 	idList< idResourceContainer *> resourceFiles; // c:\doom\base\maps\test_box.resource
 	idList< idZipContainer *> zipFiles;	// c:\doom\base\maps\test_box.pk4
+	idList< idPackContainer *> pakFiles;	// c:\doom\base\maps\test.pak
 };
 
 // search flags when opening a file
@@ -171,6 +173,7 @@ public:
 	virtual bool			InProductionMode();
 	virtual bool			UsingResourceFiles() { return resourceFilesFound; }
 	virtual bool			UsingZipFiles() { return zipFilesFound; }
+	virtual bool			UsingPakFiles() { return pakFilesFound; }
 	virtual void			UnloadMapResources( const char *name );
 	virtual void			UnloadResourceContainer( const char *name );
 
@@ -237,6 +240,7 @@ private:
 
 	bool	resourceFilesFound;
 	bool	zipFilesFound;
+	bool	pakFilesFound;
 	byte 	*resourceBufferPtr;
 	int		resourceBufferSize;
 	int		resourceBufferAvailable;
@@ -276,6 +280,9 @@ private:
 
 	idFile *				GetZipFile( const char * fileName, bool memFile );
 	bool					GetZipCacheEntry( const char * fileName, idZipCacheEntry &rc );
+
+	idFile *				GetPakFile( const char * fileName, bool memFile );
+	bool					GetPakCacheEntry( const char * fileName, idPackCacheEntry &rc );
 };
 
 idCVar	idFileSystemLocal::fs_debug( "fs_debug", "0", CVAR_SYSTEM | CVAR_INTEGER, "", 0, 2, idCmdSystem::ArgCompletion_Integer<0,2> );
@@ -333,6 +340,7 @@ idFileSystemLocal::idFileSystemLocal() {
 	loadStack = 0;
 	resourceFilesFound = false;
 	zipFilesFound = false;
+	pakFilesFound = false;
 	resourceBufferPtr = NULL;
 	resourceBufferSize = 0;
 	resourceBufferAvailable = 0;
@@ -396,6 +404,13 @@ int idFileSystemLocal::GetFileLength( const char * relativePath ) {
 	if ( UsingZipFiles() ) {
 		idZipCacheEntry rc;
 		if ( GetZipCacheEntry( relativePath, rc ) ) {
+			return rc.length;
+		}
+	}
+
+	if ( UsingPakFiles() ) {
+		idPackCacheEntry rc;
+		if ( GetPakCacheEntry( relativePath, rc ) ) {
 			return rc.length;
 		}
 	}
@@ -1987,6 +2002,68 @@ int idFileSystemLocal::GetFileList( const char *relativePath, const idStrList &e
 		}
 	}
 
+	if ( UsingPakFiles() ) {
+		for ( int sp = fileSystemLocal.searchPaths.Num() - 1; sp >= 0; sp-- ) {
+			const searchpath_t &searchpath = fileSystemLocal.searchPaths[sp];
+			int idx = searchpath.pakFiles.Num() - 1;
+			while( idx >= 0 ) {
+				for ( int i = 0; i < searchpath.pakFiles[ idx ]->cacheTable.Num(); i++ ) {
+					idPackCacheEntry & rt = searchpath.pakFiles[ idx ]->cacheTable[ i ];
+					// if the name is not long anough to at least contain the path
+
+					if ( rt.filename.Length() <= pathLength ) {
+						continue;
+					}
+
+					// check for a path match without the trailing '/'
+					if ( pathLength && idStr::Icmpn( rt.filename, relativePath, pathLength - 1 ) != 0 ) {
+						continue;
+					}
+
+					// ensure we have a path, and not just a filename containing the path
+					if ( rt.filename[ pathLength ] == '\0' || ( pathLength && rt.filename[pathLength - 1] != '/' ) ) {
+						continue;
+					}
+
+					// make sure the file is not in a subdirectory
+					int j = pathLength;
+					for ( ; rt.filename[j + 1] != '\0'; j++ ) {
+						if ( rt.filename[ j ] == '/' ) {
+							break;
+						}
+					}
+					if ( rt.filename[ j + 1 ] ) {
+						continue;
+					}
+
+					// check for extension match
+					for ( j = 0; j < extensions.Num(); j++ ) {
+						if ( rt.filename.Length() >= extensions[j].Length() && extensions[j].Icmp( rt.filename.c_str() +   rt.filename.Length() - extensions[j].Length() ) == 0 ) {
+							break;
+						}
+					}
+					if ( j >= extensions.Num() ) {
+						continue;
+					}
+
+					// unique the match
+					if ( fullRelativePath ) {
+						idStr work = relativePath;
+						work += "/";
+						work += rt.filename.c_str() + pathLength;
+						work.StripTrailing( '/' );
+						AddUnique( work, list, hashIndex );
+					} else {
+						idStr work = rt.filename.c_str() + pathLength;
+						work.StripTrailing( '/' );
+						AddUnique( work, list, hashIndex );
+					}
+				}
+				idx--;
+			}
+		}
+	}
+
 	// search through the path, one element at a time, adding to list
 	for ( int sp = searchPaths.Num() - 1; sp >= 0; sp-- ) {
 		if ( gamedir != NULL && gamedir[0] != 0 ) {
@@ -2333,6 +2410,12 @@ void idFileSystemLocal::Path_f( const idCmdArgs &args ) {
 			idx--;
 		}
 
+		idx = search.pakFiles.Num() - 1;
+		while( idx >= 0 ) {
+			common->Printf( S_COLOR_GRAY"  ...pak" S_COLOR_WHITE "'%s' (%i files)\n", search.pakFiles[idx]->GetFileName(), search.pakFiles[idx]->GetNumFileResources() );
+			idx--;
+		}
+
 		idx = search.resourceFiles.Num() - 1;
 		while( idx >= 0 ) {
 			common->Printf( S_COLOR_GRAY"  ...resource " S_COLOR_WHITE "'%s/%s' (%i files)\n", search.gamedir.c_str(), search.resourceFiles[idx]->GetFileName(), search.resourceFiles[idx]->GetNumFileResources() );
@@ -2668,6 +2751,27 @@ void idFileSystemLocal::AddGameDirectory( const char *path, const char *dir ) {
 					}
 				}
 			}
+
+			// Quake and Quake II both use the classic .pak container
+			pakfile = BuildOSPath( path, dir, "" );
+			pakfile[ pakfile.Length() - 1 ] = 0;	// strip the trailing slash
+
+			idStrList pakPaks;
+			ListOSFiles( pakfile, ".pak", pakPaks );
+			pakPaks.SortWithTemplate( idSort_PathStr() );
+			for ( int j = 0; j < pakPaks.Num(); j++ ) {
+				pakfile = BuildOSPath( path, dir, pakPaks[j] );
+
+				idPackContainer *pak = new idPackContainer();
+				if ( pak->Init( pakfile ) ) {
+					search.pakFiles.Append( pak );
+					common->Printf( S_COLOR_GRAY"  ...Loaded pak file " S_COLOR_WHITE "'%s' (checksum 0x%x)\n", pakfile.c_str(), pak->GetChecksum() );
+
+					pakFilesFound = true;
+				} else {
+					delete pak;
+				}
+			}
 		}
 	}
 }
@@ -2833,6 +2937,7 @@ void idFileSystemLocal::Shutdown( bool reloading ) {
 		searchpath_t &search = fileSystemLocal.searchPaths[sp];
 		search.resourceFiles.DeleteContents();
 		search.zipFiles.DeleteContents();
+		search.pakFiles.DeleteContents();
 	}
 
 	cmdSystem->RemoveCommand( "path" );
@@ -2994,6 +3099,89 @@ idFile *idFileSystemLocal::GetZipFile( const char *fileName, bool memFile ) {
 
 /*
 ========================
+idFileSystemLocal::GetPakCacheEntry
+
+Returns false if the entry isn't found
+========================
+*/
+bool idFileSystemLocal::GetPakCacheEntry( const char *fileName, idPackCacheEntry &rc ) {
+	idStrStatic< MAX_OSPATH > canonical;
+	if ( strstr( fileName, ":" ) != NULL ) {
+		// os path, convert to relative? scripts can pass in an OS path
+		return false;
+	} else {
+		canonical = fileName;
+	}
+
+	canonical.BackSlashesToSlashes();
+	canonical.ToLower();
+
+	for ( int sp = fileSystemLocal.searchPaths.Num() - 1; sp >= 0; sp-- ) {
+		const searchpath_t &search = fileSystemLocal.searchPaths[sp];
+
+		int idx = search.pakFiles.Num() - 1;
+		while( idx >= 0 ) {
+			const int key = search.pakFiles[ idx ]->cacheHash.GenerateKey( canonical, false );
+			for ( int index = search.pakFiles[ idx ]->cacheHash.GetFirst( key ); index != idHashIndex::NULL_INDEX; index = search.pakFiles[ idx ]->cacheHash.GetNext( index ) ) {
+				idPackCacheEntry &rt = search.pakFiles[ idx ]->cacheTable[ index ];
+				if ( idStr::Icmp( rt.filename, canonical ) == 0 ) {
+					rc.filename = rt.filename;
+					rc.length = rt.length;
+					rc.offset = rt.offset;
+					rc.owner = search.pakFiles[idx];
+
+					return true;
+				}
+			}
+			idx--;
+		}
+	}
+
+	return false;
+}
+
+/*
+========================
+idFileSystemLocal::GetPakFile
+
+Returns NULL
+========================
+*/
+idFile *idFileSystemLocal::GetPakFile( const char *fileName, bool memFile ) {
+	if ( !UsingPakFiles() ) {
+		return NULL;
+	}
+
+	static idPackCacheEntry rc;
+	if ( GetPakCacheEntry( fileName, rc ) ) {
+		if ( fs_debugResources.GetBool() ) {
+			idLib::Printf( "RES: loading file %s\n", rc.filename.c_str() );
+		}
+
+		idFile_InPak *file = rc.owner->OpenFile( rc, fileName );
+
+		if ( file != NULL && memFile ) {
+			idFile_Memory *mfile = NULL;
+			if ( rc.length > 0 ) {
+				byte *buf = ( byte * )Mem_Alloc( rc.length, TAG_TEMP );
+				file->Read( ( void * )buf, rc.length );
+				mfile = new idFile_Memory( rc.filename, ( const char * )buf, rc.length );
+				mfile->TakeDataOwnership();
+			} else {
+				mfile = new idFile_Memory( rc.filename, "", 0 );
+			}
+			delete file;
+			return mfile;
+		}
+
+		return file;
+	}
+
+	return NULL;
+}
+
+/*
+========================
 idFileSystemLocal::GetResourceFile
 
 Returns NULL
@@ -3089,6 +3277,13 @@ idFile *idFileSystemLocal::OpenFileReadFlags( const char *relativePath, int sear
 
 	if ( UsingZipFiles() && fs_resourceLoadPriority.GetInteger() == 1 ) {
 		idFile *rf = GetZipFile( relativePath, ( searchFlags &FSFLAG_RETURN_FILE_MEM ) != 0 );
+		if ( rf != NULL ) {
+			return rf;
+		}
+	}
+
+	if ( UsingPakFiles() && fs_resourceLoadPriority.GetInteger() == 1 ) {
+		idFile *rf = GetPakFile( relativePath, ( searchFlags &FSFLAG_RETURN_FILE_MEM ) != 0 );
 		if ( rf != NULL ) {
 			return rf;
 		}
@@ -3209,6 +3404,13 @@ idFile *idFileSystemLocal::OpenFileReadFlags( const char *relativePath, int sear
 
 	if ( UsingZipFiles() && fs_resourceLoadPriority.GetInteger() == 0 ) {
 		idFile *rf = GetZipFile( relativePath, ( searchFlags &FSFLAG_RETURN_FILE_MEM ) != 0 );
+		if ( rf != NULL ) {
+			return rf;
+		}
+	}
+
+	if ( UsingPakFiles() && fs_resourceLoadPriority.GetInteger() == 0 ) {
+		idFile *rf = GetPakFile( relativePath, ( searchFlags & FSFLAG_RETURN_FILE_MEM ) != 0 );
 		if ( rf != NULL ) {
 			return rf;
 		}
