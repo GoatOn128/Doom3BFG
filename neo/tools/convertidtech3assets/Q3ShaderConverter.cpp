@@ -260,6 +260,7 @@ struct q3Stage_t {
 	idStr		mapName;		// texture of a plain map directive
 	idStr		deformText;	// material level deform line collected from a stage
 	idStr		promoteNote;	// comment emitted above the diffusemap promotion
+	bool		wantSpecular;	// alphaGen lightingSpecular promotes the stage to the specularmap
 	bool		plainMap;		// the stage is nothing but a single map line
 };
 
@@ -278,6 +279,7 @@ static void Q3ParseStage( idLexer &src, const char *shaderName, q3Stage_t &stage
 	idToken token;
 
 	stage.plainMap = true;
+	stage.wantSpecular = false;
 	bool dropped = false;
 
 	while ( src.ExpectAnyToken( &token ) ) {
@@ -503,6 +505,14 @@ static void Q3ParseStage( idLexer &src, const char *shaderName, q3Stage_t &stage
 			}
 			if ( !genTok.Icmp( "oneMinusVertex" ) ) {
 				stage.text += "\t\tinverseVertexColor\n";
+				continue;
+			}
+			if ( !genTok.Icmp( "lightingSpecular" ) ) {
+				// Quake 3 gates the stage on a fake shine from a hardcoded
+				// light origin; Doom 3 lights the promoted map through the
+				// interaction pass with the real lights instead, so the
+				// stage asks for a promotion once its map is known
+				stage.wantSpecular = true;
 				continue;
 			}
 			stage.text += Q3Str( "\t\t//alphaGen %s\n", genTok.c_str() ).c_str();
@@ -861,6 +871,7 @@ static idStr Q3ParseShader( idLexer &src, const char *shaderName, Q3ShaderConver
 	idStr stages;
 	idStr deformLine;
 	idStr lightImage;
+	idStr specularLine;
 	q3Stage_t pending;
 	bool havePending = false;
 
@@ -885,6 +896,26 @@ static idStr Q3ParseShader( idLexer &src, const char *shaderName, Q3ShaderConver
 				stages += stage.dropComment.c_str();
 				stages += "\n";
 				continue;
+			}
+			if ( stage.wantSpecular && stage.mapName.Length() > 0 ) {
+				// the fake shine is replaced by the interaction specular
+				// pass lighting the promoted map
+				if ( specularLine.Length() > 0 ) {
+					stages += "\t//alphaGen lightingSpecular dropped, the material already has a specularmap\n";
+					conv->numWarnings++;
+				} else {
+					specularLine = "\t//alphaGen lightingSpecular is lit by the interaction specular pass\n";
+					specularLine += "\tspecularmap ";
+					specularLine += stage.mapName.c_str();
+					specularLine += "\n";
+					conv->numStages++;
+				}
+				continue;
+			}
+			if ( stage.wantSpecular ) {
+				// nothing to promote, keep the stage with a comment
+				stage.text += "\t\t//alphaGen lightingSpecular (no map to promote)\n";
+				conv->numWarnings++;
 			}
 			if ( havePending ) {
 				// a second real stage: the held map stage stays a stage, unless
@@ -955,6 +986,11 @@ static idStr Q3ParseShader( idLexer &src, const char *shaderName, Q3ShaderConver
 		stages += lightImage.c_str();
 		stages += "\n\t}\n";
 		conv->numStages++;
+	}
+
+	// the promoted shine rides on the interaction specular pass
+	if ( specularLine.Length() > 0 ) {
+		body += specularLine.c_str();
 	}
 
 	idStr out = "material ";
