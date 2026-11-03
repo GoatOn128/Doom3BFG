@@ -28,10 +28,15 @@ In addition, the Doom 3 BFG Edition Source Code is also subject to certain addit
 #include "../sys/sys_local.h"
 #pragma hdrstop
 
+#include <cstdlib>		// styler.hpp uses std::getenv without including it
+#include <memory>		// styler.hpp uses std::make_unique without including it
+
 #ifdef _WIN32
 #include <io.h>
 #include <direct.h>
 #endif
+
+#include "styler.hpp"
 
 idSession *			session = NULL;
 idDeclManager *		declManager = NULL;
@@ -48,13 +53,50 @@ idSysPlatform *		platform = NULL;
 ==============================================================
 */
 
-#define STDIO_PRINT( pre, post )	\
-	va_list argptr;					\
-	va_start( argptr, fmt );		\
-	printf( pre );					\
-	vprintf( fmt, argptr );			\
-	printf( post );					\
-	va_end( argptr )
+#define TOOL_PRINT_MSG_SIZE	32048
+
+// Writes text to a stream, translating Quake 3 color codes to terminal
+// colors: ^0 black, ^1 red, ^2 green, ^3 yellow, ^4 blue, ^5 cyan,
+// ^6 magenta, ^7 white (mapped to a reset, which is the terminal's
+// default look). Unknown codes after '^' print literally so shader
+// text stays readable. NOTE: this is the Q3 table; idStr.h on this
+// branch defines the Doom 3 table instead (^6 orange, ^8 gray, ^9 black).
+void Tool_PrintQ3( std::ostream &os, const char *text ) {
+	for ( const char *p = text; *p != '\0'; p++ ) {
+		if ( p[0] == '^' && p[1] >= '0' && p[1] <= '7' ) {
+			switch ( p[1] ) {
+				case '0':	os << styler::Foreground::Black;	break;
+				case '1':	os << styler::Foreground::Red;		break;
+				case '2':	os << styler::Foreground::Green;	break;
+				case '3':	os << styler::Foreground::Yellow;	break;
+				case '4':	os << styler::Foreground::Blue;		break;
+				case '5':	os << styler::Foreground::Cyan;		break;
+				case '6':	os << styler::Foreground::Magenta;	break;
+				case '7':	os << styler::Style::Reset;		break;
+			}
+			p++;
+		} else {
+			os << *p;
+		}
+	}
+	// never let a color bleed into later output
+	os << styler::Style::Reset;
+}
+
+// Formats one message and writes it to the stream; newline is optional
+// so Printf behaves like printf. The stream is flushed so piped output
+// stays in sync.
+static void Tool_VPrintf( std::ostream &os, const char *prefix, const char *fmt, va_list argptr, bool newline ) {
+	char buffer[TOOL_PRINT_MSG_SIZE];
+	buffer[0] = '\0';
+	idStr::vsnPrintf( buffer, sizeof( buffer ), fmt, argptr );
+	os << prefix;
+	Tool_PrintQ3( os, buffer );
+	if ( newline ) {
+		os << '\n';
+	}
+	os.flush();
+}
 
 class idCommonLocal : public idCommon {
 public:
@@ -75,15 +117,40 @@ public:
 	virtual void			BeginRedirect( char *buffer, int buffersize, void (*flush)( const char * ) ) {}
 	virtual void			EndRedirect( void ) {}
 	virtual void			SetRefreshOnPrint( bool set ) {}
-	virtual void			Printf( VERIFY_FORMAT_STRING const char *fmt, ... ) { STDIO_PRINT( "", "" ); }
-	virtual void			VPrintf( const char *fmt, va_list arg ) { vprintf( fmt, arg ); }
+	virtual void			Printf( VERIFY_FORMAT_STRING const char *fmt, ... ) {
+		va_list argptr;
+		va_start( argptr, fmt );
+		Tool_VPrintf( std::cout, "", fmt, argptr, false );
+		va_end( argptr );
+	}
+	virtual void			VPrintf( const char *fmt, va_list arg ) { Tool_VPrintf( std::cout, "", fmt, arg, false ); }
 	virtual void			DPrintf( VERIFY_FORMAT_STRING const char *fmt, ... ) {}
-	virtual void			Warning( VERIFY_FORMAT_STRING const char *fmt, ... ) { STDIO_PRINT( "WARNING: ", "\n" ); }
+	virtual void			Warning( VERIFY_FORMAT_STRING const char *fmt, ... ) {
+		va_list argptr;
+		va_start( argptr, fmt );
+		std::cout << styler::Foreground::Yellow;
+		Tool_VPrintf( std::cout, "WARNING: ", fmt, argptr, true );
+		va_end( argptr );
+	}
 	virtual void			DWarning( VERIFY_FORMAT_STRING const char *fmt, ... ) {}
 	virtual void			PrintWarnings( void ) {}
 	virtual void			ClearWarnings( const char *reason ) {}
-	virtual void			Error( VERIFY_FORMAT_STRING const char *fmt, ... ) { STDIO_PRINT( "ERROR: ", "\n" ); exit( 0 ); }
-	virtual void			FatalError( VERIFY_FORMAT_STRING const char *fmt, ... ) { STDIO_PRINT( "FATAL ERROR: ", "\n" ); exit( 0 ); }
+	virtual void			Error( VERIFY_FORMAT_STRING const char *fmt, ... ) {
+		va_list argptr;
+		va_start( argptr, fmt );
+		std::cout << styler::Foreground::Red;
+		Tool_VPrintf( std::cout, "ERROR: ", fmt, argptr, true );
+		va_end( argptr );
+		exit( 0 );
+	}
+	virtual void			FatalError( VERIFY_FORMAT_STRING const char *fmt, ... ) {
+		va_list argptr;
+		va_start( argptr, fmt );
+		std::cout << styler::Foreground::Red;
+		Tool_VPrintf( std::cout, "FATAL ERROR: ", fmt, argptr, true );
+		va_end( argptr );
+		exit( 0 );
+	}
 	virtual const char *	KeysFromBinding( const char *bind ) { return NULL; }
 	virtual const char *	BindingFromKey( const char *key ) { return NULL; }
 	virtual int				ButtonState( int key ) { return 0; }
