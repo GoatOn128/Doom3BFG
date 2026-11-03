@@ -1,6 +1,6 @@
 # Quake 3 / Wolfenstein: Enemy Territory content support inventory
 
-Audited at commit `0c79836747bc850e93e3bfda8f5a4213d36924e5` (master) on 2026-11-02. Updated 2026-11-02: the MD3 parity work landed (`81dc731`) and MDC/MDS/MDM/MDX/MD4 loaders were added, see sections 2.1-2.3.
+Audited at commit `0c79836747bc850e93e3bfda8f5a4213d36924e5` (master) on 2026-11-02. Updated 2026-11-02: the MD3 parity work landed (`81dc731`) and MDC/MDS/MDM/MDX/MD4 loaders were added, see sections 2.1-2.3. Updated 2026-11-03: PK3 archive mounting and the Team Arena/ET menu (.menu) GUI format audited, see sections 4-5 and steps 8-9.
 
 Purpose: gap analysis before implementing Q3/ET content support. Two areas as requested: shader (material) syntax and model formats. The engine side was read directly from this repo (`neo/renderer/Material.cpp`, `neo/renderer/Model_md3.cpp`, `neo/renderer/ModelManager.cpp`, `neo/framework/DeclManager.cpp`, `neo/renderer/Image_files.cpp`). The Q3/ET requirement side is taken from the ET: Legacy renderer sources (GPLv3, `src/renderer/tr_shader.c` and `src/renderer/tr_model.c`) and published format references.
 
@@ -175,9 +175,86 @@ Licensing note: reference implementations for MD3/MDC/MDS/MDM/MDX live in the ET
 5. Lighting provider decision for `$lightmap`/lightgrid keywords (coupled to the map format decision).
 6. Global fog system, `skyparms` sky stage, sun flare.
 7. ~~MDS/MDM/MDX~~ Done (plus MD4 for completion).
+8. PK3 mounting. In practice a prerequisite for 4-6: ET content (skins included) ships inside pk3 archives, and everything registered so far only reads loose files. The change itself is one enumeration line in `AddSearchPath`, details in section 4.
+9. Legacy .menu GUI parser (Team Arena/RTCW/ET menu format onto the Doom 3 window system). Start with the static keyword subset and a warn-and-skip pass, phase ownerdraw/feeder support until a UI/game module exists, details in section 5.
+
+## 4. Package archives (pk3)
+
+### 4.1 What the engine has today
+
+- Full zip container support already exists in this fork: `idZipContainer`/`idZipCacheEntry` (`neo/framework/File_Zip.h/.cpp`, built on the vendored minizip, explicitly based off `idResourceContainer` and dhewm3). Each `searchpath_t` (`neo/framework/FileSystem.cpp`) carries both `.resources` containers and a list of zip containers (`zipFiles`).
+- Mounting happens in `idFileSystemLocal::AddSearchPath` (FileSystem.cpp, the `.resources`/`.pk4` scan): each game dir root is enumerated, the pak lists are sorted alphabetically and every archive becomes a container in that search path.
+- Lookup (`GetZipCacheEntry`) lowercases the requested relative path and compares case-insensitively through a per-container hash, walking search paths and containers last-to-first, so the alphabetically-last pak wins - the same override rule Q3 uses.
+- Open and enumerate both work from containers: `OpenFileReadFlags` resolves through zip containers, and `GetFileList` (behind `ListFiles`/`ListFilesTree`) iterates zip cache tables, so decl folder registration, image loading and model loading already see files inside mounted paks with no extra work.
+- Loose file vs pak priority is the `fs_resourceLoadPriority` cvar (0 = loose dirs win, 1 = paks win before dirs).
+- Search path set: `fs_game`, `fs_game_base`, then `BASE_GAMEDIR` ("base"). ET's `etmain` would simply be an `fs_game` directory.
+
+### 4.2 What pk3 files are
+
+- Plain zip archives. Byte-identical in format to pk4 as far as the container code is concerned; entries are lowercase relative paths (`scripts/`, `textures/`, `models/`, `sound/`, `ui/`, `maps/`).
+- Q3 semantics: paks live in the game dir (`etmain` or a mod dir), later-alphabetical paks override earlier ones, checksums exist for pure/server verification (not needed for local content support).
+
+### 4.3 The gap (small)
+
+- Exactly one enumeration short: `AddSearchPath` scans only `.pk4` (`ListOSFiles( pakfile, ".pk4", pakfiles )`). Adding a `.pk3` pass and merging both lists before the alphabetical sort mounts Q3/ET paks with no new container, lookup or listing code; update the `...Loaded pk4 file` log line to cover both.
+- Keep pk3 and pk4 in one sorted list so the override order stays well defined across both extensions.
+- Mixed-case entries inside old paks still resolve (the lookup lowercases the query and compares with `Icmp`). The container checksum is only used for logging; no pure checks.
+- If `.resources` files exist in the same game dir they load as well; `fs_resourceLoadPriority` decides which wins per file.
+
+## 5. Legacy menu GUIs (Team Arena / RTCW / ET .menu to Doom 3 windows)
+
+### 5.1 What the engine has today
+
+- The full idTech4 UI system in `neo/ui`: `idUserInterfaceManagerLocal` (`UserInterface.cpp`, `FindGui` loads .gui sources, plus optional binary gui caching through `binaryLoadGuis`), the `idWindow` hierarchy (`Window.cpp`), dict-backed window variables (`Winvar.h`, "gui::" state), gui scripting (`GuiScript.cpp`) and typed windows: `EditWindow`, `ChoiceWindow`, `SliderWindow`, `ListWindow` (+`ListGUI`), `BindWindow`, `FieldWindow`, `RenderWindow`, `SimpleWindow`. Text draws through `idFont` (`renderSystem->RegisterFont`); images draw through material decls.
+- Window register vars (`idWindow::RegisterVars`, Window.cpp): `rect`, `forecolor`, `hovercolor`, `backcolor`, `bordercolor`, `matcolor`, `text`, `textscale`, `visible`, `background` (material decl name), `cvar`, `choices`/`choiceVar`, `bind`, `rotate`, `translate`, `scale`, `noevents`, `hideCursor`, ...
+- Window event scripts (`idWindow::ScriptNames`): `onMouseEnter`, `onMouseExit`, `onAction`, `onActivate`, `onDeactivate`, `onESC`, `onEvent`, `onTrigger`, `onActionRelease`, `onEnter`, `onEnterRelease`.
+- Gui script commands (`GuiScript.cpp` `commandList`): `set`, `setFocus`, `endGame`, `resetTime`, `showCursor`, `resetCinematics`, `transition`, `localSound`, `runScript`, `evalRegs`, plus if/else blocks. `set` with destination name `cmd` queues console commands; `set` can address any window's variables by name.
+- Coordinate space: windows default to a 640x480 forced aspect (`forceAspectWidth`/`forceAspectHeight`), the same virtual resolution TA/ET menus are authored against (ET `AdjustFrom640`).
+- Game-side menu flow (`neo/framework/Common_menu.cpp`, `Session.cpp`) drives named guis; cvars and console commands are first-class through the gui dict and the `cmd` path.
+
+### 5.2 What the .menu format is
+
+The Team Arena menu script format, carried unchanged through RTCW and W:ET. Reference sources are vendored in this repo under `references/etwolf` (GPLv3, license-compatible).
+
+- Layout: `ui/menus.txt` (cvar `ui_menuFiles`) lists .menu files; `UI_LoadMenus` (ui_main.c) parses each through the engine script preprocessor; `Menu_Parse`/`Item_Parse` (ui_shared.c) fill `menuDef_t`/`itemDef_t` (structs in ui_shared.h, constants in etmain/ui/menudef.h).
+- menuDef keywords (ui_shared.c `menuParseKeywords`): name, fullscreen, rect, style, visible, onOpen, onClose, onTimeout, onESC, onEnter, border, borderSize, backcolor, forecolor, bordercolor, focuscolor, disablecolor, outlinecolor, background, ownerdraw, ownerdrawFlag, outOfBoundsClick, soundLoop, cinematic, fadeClamp, fadeCycle, fadeAmount, execKey, execKeyInt, alwaysontop, modal, itemHotkeyMode.
+- itemDef keywords (ui_shared.c `itemParseKeywords`, ~75): accept, action, addColorRange, addColorRangeRel, align, asset_model, asset_shader, autowrapped, backcolor, background, border, bordercolor, bordersize, cinematic, columns, contextmenu, cvar, cvarFloat, cvarFloatList, cvarStrList, cvarListUndefined, cvarTest, decoration, textasint, textasfloat, disableCvar, doubleclick, onEsc, onEnter, elementheight, elementtype, elementwidth, enableCvar, execKey, feeder, focusSound, forecolor, group, hideCvar, horizontalscroll, leaveFocus, maxChars, maxPaintChars, model_angle, model_animplay, model_fovx, model_fovy, model_origin, model_rotation, mouseEnter, mouseEnterText, mouseExit, mouseExitText, name, noToggle, notselectable, onFocus, origin, outlinecolor, ownerdraw, ownerdrawFlag, rect, settingDisabled, settingEnabled, showCvar, special, style, text, textalign, textalignx, textaligny, textfile, textfont, textscale, textstyle, tooltip, tooltipalignx, tooltipaligny, type, visible, voteFlag, wrapped.
+- Item types (menudef.h `ITEM_TYPE_*`): text, button, radiobutton, checkbox, editfield, combo, listbox, model, ownerdraw, numericfield, slider, yesno, multi, bind, menumodel, timeout_counter, tricheckbox.
+- Item/menu scripts run through `Item_RunScript` (ui_shared.c `commandList`): fadein, fadeout, show, hide, setcolor, open, fadeinmenu, fadeoutmenu, conditionalscript, conditionalsopen, close, closeall, closeallothermenus, clipboard, showpage, setasset, setbackground, setitemcolor, setmenuitemcolor, setteamcolor, setfocus, clearfocus, setplayermodel, setplayerhead, transition, setcvar, clearcvar, copycvar, exec, execnow, play, playlooped, orbit, addlistitem, checkautoupdate, getautoupdate, setmenufocus, execwolfconfig, setEditFocus, abort.
+- The menu engine is not data-driven all the way down: `displayContextDef_t` (ui_shared.h) is a callback table the menu code calls into for ownerdraw painting, feeders (maps/servers/demos/profiles), keybind queries, cinematics and model previews. A large share of ET menu behavior is ui-module C code (`ui_main.c` alone is ~280KB), not .menu data.
+
+### 5.3 Mapping strategy (redirect onto the D3 window system, same approach as the shader parser)
+
+- menuDef -> one `idUserInterfaceLocal` per menu (or one gui with per-menu child windows); itemDef -> an `idWindow` child.
+- Direct redirects: rect -> rect; forecolor/backcolor/bordercolor (rgba 0-1) -> same vars; border/bordersize -> border/borderSize; visible; background (ET shader path) -> background material decl (the Q3 shader work already turns ui texture paths into materials; look up by texture name); text/textalign/textalignx/textaligny -> same vars; textscale -> textscale (needs calibration, ET bitmap-font scale vs idFont scale); cvar/cvarTest -> cvar; onOpen/onClose/onESC -> onActivate/onDeactivate/onESC; mouseEnter/mouseExit -> onMouseEnter/onMouseExit; action -> onAction.
+- ITEM_TYPE mapping: text/button -> plain windowDef; editfield/numericfield -> `EditWindow`; slider -> `SliderWindow`; checkbox/radio/yesno/multi/combo -> `ChoiceWindow` or a cvar-driven window; listbox -> `ListWindow` (feeder data through `ListGUI`); bind -> `BindWindow`; model/menumodel -> `RenderWindow` (needs a render-to-texture bridge); ownerdraw -> warn-and-skip initially.
+- Command translation: show/hide -> `set <window>::visible`; setcvar/clearcvar -> set on cvar vars; setfocus -> `setFocus`; transition -> `transition`; play -> `localSound` (ET plays raw wav paths, D3 needs a sound decl - synthesize one from the path or warn-and-skip); exec/execnow -> `set cmd <console command>` (Script_Set's cmd special case); conditionalscript/conditionalsopen -> if/else on a cvar test.
+- open/close/closeall/fadeinmenu/fadeoutmenu -> a legacy menu stack manager on top of named guis. D3 has no menu stack; TA semantics (modal stack, alwaysontop, outOfBoundsClick, ESC) have to be reproduced around `idUserInterfaceLocal` activate/deactivate.
+- Parse-and-ignore initially: fades (fadeClamp/fadeCycle/fadeAmount), orbit, blink/pulse/gradient text styles and borders.
+- Warn-and-skip group: all ownerdraw items, feeders, setplayermodel/setplayerhead/execwolfconfig/checkautoupdate/getautoupdate, campaign/vote flags. These need a UI/game module behind them; a data-only parser can at most render a placeholder, exactly like unknown shader keywords warn and continue.
+
+### 5.4 Why this one is genuinely tricky (unlike pk3)
+
+- Ownerdraw and feeder behavior lives in ui-module C code, not in .menu data. menudef.h defines ~100 CG_* and ~30 UI_* ownerdraw types plus a dozen feeder types (maps, servers, demos, campaigns, profiles); without a UI module there is nothing to draw. Early menus will be partially functional: main menu, options/controls/system are feasible first targets; server browser and limbo screens are the deep end.
+- Menu stack and focus semantics are engine-side in ET (Menus_ActivateByName, Menus_CloseAll, modal stack, per-item hotkeys through execKey/onKey tables, focus colors and fade cycles). D3 windows have hover/focus events but no per-item key tables or menu stack; an adapter layer must reproduce them.
+- Sound: ET menu sounds are raw wav paths through the sfx system; D3 needs sound decls. Either synthesize decls from paths or map a small fixed set of standard menu sounds.
+- Fonts: ET uses embedded bitmap fonts; text extents and therefore layouts depend on their metrics. idFont metrics differ, so layouts need recalibration (a textscale fudge cvar is a pragmatic lever).
+- Model previews and cinematics in menus need bridges (render-to-texture for ITEM_TYPE_MODEL, roq/bik wiring for menu cinematics).
+- The binary gui caching (`binaryLoadGuis`) only covers .gui files; a runtime .menu parser must build the window tree directly and stay out of that path.
+
+Phasing:
+
+1. Parser skeleton: menus.txt + .menu loading, menuDef/itemDef accepted, unknown keywords warn-and-skip (the shader-parser approach).
+2. Static menus: rects, colors, borders, background images, text, decoration items; open/close stack plus exec/cvar wiring.
+3. Interactive items: action/hover/focus events, sounds, checkbox/slider/editfield/bind through the typed windows.
+4. Ownerdraw/feeder items only once a UI/game module exists.
 
 ## Sources
 
 - ET: Legacy shader parser (`src/renderer/tr_shader.c`, GPLv3): https://github.com/etlegacy/etlegacy/blob/master/src/renderer/tr_shader.c
 - ET: Legacy model loaders (`src/renderer/tr_model.c`, GPLv3): https://github.com/etlegacy/etlegacy/blob/master/src/renderer/tr_model.c
 - RtCW/ET model format family overview: https://github.com/mino-git/rtcw-wet-blender-model-tools
+- ET: Legacy menu parser (`src/ui/ui_shared.c`, GPLv3): https://github.com/etlegacy/etlegacy/blob/master/src/ui/ui_shared.c
+- ET: Legacy UI module (`src/ui/ui_main.c`, GPLv3): https://github.com/etlegacy/etlegacy/blob/master/src/ui/ui_main.c
+- TA/ET menu constants (`etmain/ui/menudef.h`, GPLv3): https://github.com/etlegacy/etlegacy/blob/master/etmain/ui/menudef.h
+- Vendored copies of all three live in this repo under `references/etwolf` (src/ui/ and etmain/ui/).
