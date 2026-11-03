@@ -23,6 +23,9 @@ tool_sources = require_sources(
 )
 
 tool_env = env.Clone()
+# idLib's win32 assert dialog, crash handler and shell helpers need
+# these import libraries; the engine links them in neo/SConscript
+tool_env.Append(LIBS=['user32', 'ole32', 'shell32', 'dbghelp'])
 # the base environment builds console-subsystem executables; the tool
 # needs no GUI link flags or game libraries
 tool_objects = build_objects(tool_env, 'ConvertIdTech3Assets', tool_sources)
