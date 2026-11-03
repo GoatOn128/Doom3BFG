@@ -167,6 +167,11 @@ void idMaterial::FreeData() {
 				delete stages[i].texture.cinematic;
 				stages[i].texture.cinematic = NULL;
 			}
+
+			if ( stages[i].texture.animImages != NULL ) {
+				R_StaticFree( stages[i].texture.animImages );
+				stages[i].texture.animImages = NULL;
+			}
 			if ( stages[i].newStage != NULL ) {
 				Mem_Free( stages[i].newStage );
 				stages[i].newStage = NULL;
@@ -1120,6 +1125,8 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 	int					a, b;
 	int					matrix[2][3];
 	newShaderStage_t	newStage;
+	float				animFps;
+	idList<idStr>		animImageNames;
 
 	if ( numStages >= MAX_SHADER_STAGES ) {
 		SetMaterialFlag( MF_DEFAULTED );
@@ -1132,6 +1139,7 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 	cubeMap = CF_2D;
 
 	imageName[0] = 0;
+	animFps = 0.0f;
 
 	memset( &newStage, 0, sizeof( newStage ) );
 	newStage.glslProgram = -1;
@@ -1140,6 +1148,11 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 	ts = &ss->texture;
 
 	ClearStage( ss );
+
+	// ClearStage does not know about the animMap state
+	ts->animImages = NULL;
+	ts->numAnimImages = 0;
+	ts->animFps = 0.0f;
 
 	while ( 1 ) {
 		if ( TestMaterialFlag( MF_DEFAULTED ) ) {	// we have a parse error
@@ -1170,6 +1183,20 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 		if (  !token.Icmp( "map" ) ) {
 			str = R_ParsePastImageProgram( src );
 			idStr::Copynz( imageName, str, sizeof( imageName ) );
+			continue;
+		}
+
+		// animMap <fps> <frame0> <frame1> ... : frame sequence played
+		// back at <fps>; the frames cycle for as long as the stage is drawn
+		if ( !token.Icmp( "animMap" ) ) {
+			animFps = src.ParseFloat();
+			animImageNames.Clear();
+			while ( src.ReadTokenOnLine( &token ) ) {
+				animImageNames.Append( token );
+			}
+			if ( animImageNames.Num() == 0 ) {
+				common->Warning( "material '%s' has an animMap stage with no frames", GetName() );
+			}
 			continue;
 		}
 
@@ -1617,9 +1644,20 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 		if ( !ts->image ) {
 			ts->image = globalImages->defaultImage;
 		}
-	} else if ( !ts->cinematic && !ts->dynamic && !ss->newStage ) {
-		common->Warning( "material '%s' had stage with no image", GetName() );
-		ts->image = globalImages->defaultImage;
+
+	// load the animMap frame sequence if the stage had one; the first
+	// frame doubles as the regular stage image
+	if ( animImageNames.Num() > 0 ) {
+		ts->numAnimImages = animImageNames.Num();
+		ts->animFps = animFps;
+		ts->animImages = (idImage **)R_StaticAlloc( ts->numAnimImages * sizeof( idImage * ), TAG_MATERIAL );
+		for ( int i = 0; i < ts->numAnimImages; i++ ) {
+			ts->animImages[i] = globalImages->ImageFromFile( animImageNames[i], tf, trp, td, cubeMap );
+			if ( ts->animImages[i] == NULL ) {
+				ts->animImages[i] = globalImages->defaultImage;
+			}
+		}
+		ts->image = ts->animImages[0];
 	}
 }
 

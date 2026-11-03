@@ -154,6 +154,9 @@ typedef enum {
 typedef struct {
 	idCinematic *		cinematic;
 	idImage *			image;
+	idImage **			animImages;		// animMap frame sequence, NULL if the stage is not animated
+	int					numAnimImages;
+	float				animFps;		// animMap playback speed in frames per second
 	texgen_t			texgen;
 	bool				hasMatrix;
 	int					matrix[2][3];	// we only allow a subset of the full projection matrix

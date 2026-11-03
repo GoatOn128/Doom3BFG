@@ -356,6 +356,17 @@ static void RB_BindVariableStageImage( const textureStage_t *texture, const floa
 			// SWF GUI case is handled better, too
 			renderProgManager.BindShader_TextureVertexColor();
 		}
+	} else if ( texture->animImages != NULL ) {
+		// animMap: pick the frame from the shader time register
+		int frame = 0;
+		if ( texture->animFps > 0.0f ) {
+			frame = idMath::Ftoi( shaderRegisters[EXP_REG_TIME] * texture->animFps );
+			frame %= texture->numAnimImages;
+			if ( frame < 0 ) {
+				frame += texture->numAnimImages;
+			}
+		}
+		texture->animImages[frame]->Bind();
 	} else {
 		// FIXME: see why image is invalid
 		if ( texture->image != NULL ) {
