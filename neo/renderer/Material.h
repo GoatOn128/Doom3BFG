@@ -72,7 +72,10 @@ typedef enum {
 	DFRM_EYEBALL,
 	DFRM_PARTICLE,
 	DFRM_PARTICLE2,
-	DFRM_TURB
+	DFRM_TURB,
+	DFRM_WAVE,
+	DFRM_BULGE,
+	DFRM_NORMAL
 } deform_t;
 
 typedef enum {
@@ -661,7 +664,7 @@ private:
 
 	mutable	float		sort;				// lower numbered shaders draw before higher numbered
 	deform_t			deform;
-	int					deformRegisters[4];		// numeric parameter for deforms
+	int					deformRegisters[8];		// numeric parameter for deforms
 	const idDecl		*deformDecl;			// for surface emitted particle deforms and tables
 
 	int					texGenRegisters[MAX_TEXGEN_REGISTERS];	// for wobbleSky
