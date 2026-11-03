@@ -4,7 +4,8 @@
 # and links the framework files it needs on top of idLib.
 import os
 
-Import('env', 'build_objects', 'collect_sources', 'require_sources', 'BIN_DIR', 'external_lib', 'idlib_lib', '_track_progress')
+Import('env', 'build_objects', 'collect_sources', 'require_sources', 'BIN_DIR',
+       'external_lib', 'idlib_lib', '_track_progress', 'TOOLCHAIN', 'CONFIG')
 
 tool_sources = require_sources(
     'ConvertIdTech3Assets',
@@ -23,6 +24,23 @@ tool_sources = require_sources(
 )
 
 tool_env = env.Clone()
+# The debug engine build writes /Zi debug info through one shared compiler
+# PDB (a single /Fd path; see SConstruct). This tool recompiles framework
+# files that the engine compiles in the same build, and those duplicate
+# parallel compile sessions racing on the shared PDB fail with fatal error
+# C1041. Embed the tool's debug info directly in its object files with /Z7
+# instead, which keeps the tool out of the shared PDB entirely. The linker
+# still produces bin/convertidtech3assets.pdb from the embedded info, so
+# debugging the tool from Visual Studio keeps working.
+if TOOLCHAIN == 'msvc' and CONFIG == 'debug':
+    def _embed_debug_info(flags):
+        if isinstance(flags, str):
+            flags = flags.split()
+        kept = [flag for flag in flags if flag != '/Zi' and not flag.startswith('/Fd')]
+        return kept + ['/Z7']
+    tool_env.Replace(CCFLAGS=_embed_debug_info(tool_env['CCFLAGS']))
+    tool_env.Replace(CXXFLAGS=_embed_debug_info(tool_env['CXXFLAGS']))
+
 # idLib's win32 assert dialog, crash handler and shell helpers need
 # these import libraries; the engine links them in neo/SConscript
 tool_env.Append(LIBS=['user32', 'ole32', 'shell32', 'dbghelp'])
