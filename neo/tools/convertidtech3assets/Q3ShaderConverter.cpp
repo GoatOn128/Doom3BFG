@@ -171,16 +171,16 @@ static void Q3SurfaceParm( const char *parm, idStr &dest, Q3ShaderConverter *con
 			return;
 		}
 	}
-	dest += Q3Str( "\t// q3: surfaceparm %s\n", parm ).c_str();
+	dest += Q3Str( "\t//surfaceparm %s\n", parm ).c_str();
 	conv->numWarnings++;
 }
 
-// Keeps an unsupported directive as a // q3: comment together with its arguments.
+// Keeps an unsupported directive as a //comment together with its arguments.
 static void Q3UnknownDirective( idLexer &src, const char *token, const char *indent, idStr &dest, Q3ShaderConverter *conv ) {
 	idStr rest;
 	src.ReadRestOfLine( rest );
 	dest += indent;
-	dest += "// q3: ";
+	dest += "//";
 	dest += token;
 	idStr trimmed = Q3Trim( rest.c_str() );
 	if ( trimmed.Length() > 0 ) {
@@ -234,7 +234,7 @@ static void Q3ParseStage( idLexer &src, const char *shaderName, q3Stage_t &stage
 			if ( !mapTok.Icmp( "$lightmap" ) || !mapTok.Icmp( "$lightimage" ) ) {
 				dropped = true;
 				stage.plainMap = false;
-				stage.dropComment = Q3Str( "// q3: dropped stage with map %s (the Doom 3 lighting model has no lightmaps)", mapTok.c_str() ).c_str();
+				stage.dropComment = Q3Str( "//dropped stage with map %s (the Doom 3 lighting model has no lightmaps)", mapTok.c_str() ).c_str();
 				continue;
 			}
 			if ( !mapTok.Icmp( "$whiteimage" ) ) {
@@ -335,7 +335,7 @@ static void Q3ParseStage( idLexer &src, const char *shaderName, q3Stage_t &stage
 				continue;
 			}
 			if ( !genTok.Icmp( "entity" ) || !genTok.Icmp( "oneMinusEntity" ) || !genTok.Icmp( "lightingDiffuse" ) ) {
-				stage.text += Q3Str( "\t\tvertexColor // q3: rgbGen %s approximated\n", genTok.c_str() ).c_str();
+				stage.text += Q3Str( "\t\tvertexColor //rgbGen %s approximated\n", genTok.c_str() ).c_str();
 				continue;
 			}
 			if ( !genTok.Icmp( "wave" ) ) {
@@ -350,7 +350,7 @@ static void Q3ParseStage( idLexer &src, const char *shaderName, q3Stage_t &stage
 				if ( valid ) {
 					stage.text += Q3Str( "\t\trgb %s\n", expr.c_str() ).c_str();
 				} else {
-					stage.text += Q3Str( "\t\t// q3: rgbGen wave %s (no Doom 3 equivalent)\n", funcTok.c_str() ).c_str();
+					stage.text += Q3Str( "\t\t//rgbGen wave %s (no Doom 3 equivalent)\n", funcTok.c_str() ).c_str();
 					conv->numWarnings++;
 				}
 				continue;
@@ -370,12 +370,12 @@ static void Q3ParseStage( idLexer &src, const char *shaderName, q3Stage_t &stage
 					stage.text += Q3Str( "\t\tred %s\n\t\tgreen %s\n\t\tblue %s\n",
 						Q3Float( vals[0] ).c_str(), Q3Float( vals[1] ).c_str(), Q3Float( vals[2] ).c_str() ).c_str();
 				} else {
-					stage.text += "\t\t// q3: rgbGen const\n";
+					stage.text += "\t\t//rgbGen const\n";
 					conv->numWarnings++;
 				}
 				continue;
 			}
-			stage.text += Q3Str( "\t\t// q3: rgbGen %s\n", genTok.c_str() ).c_str();
+			stage.text += Q3Str( "\t\t//rgbGen %s\n", genTok.c_str() ).c_str();
 			conv->numWarnings++;
 			continue;
 		}
@@ -401,7 +401,7 @@ static void Q3ParseStage( idLexer &src, const char *shaderName, q3Stage_t &stage
 				if ( valid ) {
 					stage.text += Q3Str( "\t\talpha %s\n", expr.c_str() ).c_str();
 				} else {
-					stage.text += Q3Str( "\t\t// q3: alphaGen wave %s (no Doom 3 equivalent)\n", funcTok.c_str() ).c_str();
+					stage.text += Q3Str( "\t\t//alphaGen wave %s (no Doom 3 equivalent)\n", funcTok.c_str() ).c_str();
 					conv->numWarnings++;
 				}
 				continue;
@@ -411,7 +411,7 @@ static void Q3ParseStage( idLexer &src, const char *shaderName, q3Stage_t &stage
 				stage.text += Q3Str( "\t\talpha %s\n", Q3Float( v ).c_str() ).c_str();
 				continue;
 			}
-			stage.text += Q3Str( "\t\t// q3: alphaGen %s\n", genTok.c_str() ).c_str();
+			stage.text += Q3Str( "\t\t//alphaGen %s\n", genTok.c_str() ).c_str();
 			conv->numWarnings++;
 			continue;
 		}
@@ -427,10 +427,10 @@ static void Q3ParseStage( idLexer &src, const char *shaderName, q3Stage_t &stage
 			} else if ( !funcTok.Icmp( "GT0" ) ) {
 				stage.text += "\t\talphaTest 0.01\n";
 			} else if ( !funcTok.Icmp( "LT128" ) ) {
-				stage.text += "\t\t// q3: alphaFunc LT128\n";
+				stage.text += "\t\t//alphaFunc LT128\n";
 				conv->numWarnings++;
 			} else {
-				stage.text += Q3Str( "\t\t// q3: alphaFunc %s\n", funcTok.c_str() ).c_str();
+				stage.text += Q3Str( "\t\t//alphaFunc %s\n", funcTok.c_str() ).c_str();
 				conv->numWarnings++;
 			}
 			continue;
@@ -448,7 +448,7 @@ static void Q3ParseStage( idLexer &src, const char *shaderName, q3Stage_t &stage
 			}
 			// vector and base have no direct equivalent; eat their arguments
 			src.SkipRestOfLine();
-			stage.text += Q3Str( "\t\t// q3: tcGen %s\n", genTok.c_str() ).c_str();
+			stage.text += Q3Str( "\t\t//tcGen %s\n", genTok.c_str() ).c_str();
 			conv->numWarnings++;
 			continue;
 		}
@@ -494,7 +494,7 @@ static void Q3ParseStage( idLexer &src, const char *shaderName, q3Stage_t &stage
 		if ( !token.Icmp( "depthFunc" ) ) {
 			idStr rest;
 			src.ReadRestOfLine( rest );
-			stage.text += Q3Str( "\t\t// q3: depthFunc %s\n", Q3Trim( rest.c_str() ).c_str() ).c_str();
+			stage.text += Q3Str( "\t\t//depthFunc %s\n", Q3Trim( rest.c_str() ).c_str() ).c_str();
 			continue;
 		}
 
@@ -591,10 +591,8 @@ static void Q3ParseShaderDirective( idLexer &src, const idToken &token, idStr &d
 =================
 Q3ParseShader
 
-Parses one Quake 3 shader (the open brace has just been consumed) into a
-complete Doom 3 material. A shader whose only kept stage is a single
-plain map is promoted to a material level diffusemap; as soon as a second
-stage arrives the held map stage is flushed as a real stage.
+Parses one Quake 3 shader into a
+complete Doom 3 material.
 =================
 */
 static idStr Q3ParseShader( idLexer &src, const char *shaderName, Q3ShaderConverter *conv ) {
@@ -654,10 +652,6 @@ static idStr Q3ParseShader( idLexer &src, const char *shaderName, Q3ShaderConver
 /*
 =================
 Q3WriteWaveTables
-
-Writes the shared wave tables backing the converted wave expressions.
-Each table covers one full cycle; the Doom 3 table lookup interpolates
-and wraps the cycle index on its own.
 =================
 */
 static void Q3WriteWaveTables( const char *outputDir ) {
@@ -697,7 +691,7 @@ static void Q3WriteWaveTables( const char *outputDir ) {
 	}
 	out += "\t}\n}\n\n";
 
-	idStr path = Q3Str( "%s/_q3waves.mtr", outputDir );
+	idStr path = Q3Str( "%s/_waves.mtr", outputDir );
 	fileSystem->WriteFile( path.c_str(), out.c_str(), out.Length() );
 }
 
@@ -712,7 +706,7 @@ static void Q3ConvertShaderFile( const char *relativePath, const char *outputDir
 	void *buffer = NULL;
 	int length = fileSystem->ReadFile( relativePath, &buffer );
 	if ( length <= 0 || buffer == NULL ) {
-		common->Printf( "^1could not read %s^7\n", relativePath );
+		common->Printf( S_COLOR_RED "could not read %s" S_COLOR_WHITE "\n", relativePath );
 		return;
 	}
 
@@ -746,7 +740,7 @@ static void Q3ConvertShaderFile( const char *relativePath, const char *outputDir
 		return;
 	}
 
-	// scripts/base_floor.shader -> materials/q3/base_floor.mtr
+	// scripts/base_floor.shader -> materials/base_floor.mtr
 	const char *base = relativePath;
 	for ( const char *p = relativePath; *p != '\0'; p++ ) {
 		if ( *p == '/' || *p == '\\' ) {
@@ -760,7 +754,7 @@ static void Q3ConvertShaderFile( const char *relativePath, const char *outputDir
 
 	idStr outPath = Q3Str( "%s/%.*s.mtr", outputDir, baseLen, base );
 	fileSystem->WriteFile( outPath.c_str(), out.c_str(), out.Length() );
-	common->Printf( "^2converted %d shader%s from %s to %s^7\n",
+	common->Printf( S_COLOR_GREEN "converted %d shader%s from %s to %s" S_COLOR_WHITE "\n",
 		numConverted, numConverted == 1 ? "" : "s", relativePath, outPath.c_str() );
 }
 
