@@ -2306,6 +2306,15 @@ void idFileSystemLocal::ExtractResourceFile_f( const idCmdArgs &args ) {
 	idResourceContainer::ExtractResourceFile( filename, outPath, copyWaves );
 }
 
+// returns "pk3" or "pk4" depending on the pak file extension
+static const char *PakTypeForName( const char *pakName ) {
+	const int len = idStr::Length( pakName );
+	if ( len >= 4 && idStr::Icmpn( pakName + len - 4, ".pk3", 4 ) == 0 ) {
+		return "pk3";
+	}
+	return "pk4";
+}
+
 /*
 ============
 idFileSystemLocal::Path_f
@@ -2320,7 +2329,7 @@ void idFileSystemLocal::Path_f( const idCmdArgs &args ) {
 
 		int idx = search.zipFiles.Num() - 1;
 		while( idx >= 0 ) {
-			common->Printf( S_COLOR_GRAY"  ...pk4" S_COLOR_WHITE "'%s' (%i files)\n", search.zipFiles[idx]->GetFileName(), search.zipFiles[idx]->GetNumFileResources() );
+			common->Printf( S_COLOR_GRAY"  ...%s" S_COLOR_WHITE "'%s' (%i files)\n", PakTypeForName( search.zipFiles[idx]->GetFileName() ), search.zipFiles[idx]->GetFileName(), search.zipFiles[idx]->GetNumFileResources() );
 			idx--;
 		}
 
@@ -2637,6 +2646,12 @@ void idFileSystemLocal::AddGameDirectory( const char *path, const char *dir ) {
 
 			idStrList pakfiles;
 			ListOSFiles( pakfile, ".pk4", pakfiles );
+
+			// Quake 3 / ET pk3 archives use the same zip format as pk4
+			idStrList pk3files;
+			ListOSFiles( pakfile, ".pk3", pk3files );
+			pakfiles.Append( pk3files );
+
 			pakfiles.SortWithTemplate( idSort_PathStr() );
 			if ( pakfiles.Num() > 0 ) {
 				for ( int j = 0; j < pakfiles.Num(); j++ ) {
@@ -2646,7 +2661,7 @@ void idFileSystemLocal::AddGameDirectory( const char *path, const char *dir ) {
 					idZipContainer *zip = new idZipContainer();
 					if ( zip->Init( pakfile ) ) {
 						search.zipFiles.Append( zip );
-						common->Printf( S_COLOR_GRAY"  ...Loaded pk4 file " S_COLOR_WHITE "'%s' (checksum 0x%x)\n", pakfile.c_str(), zip->GetChecksum() );
+						common->Printf( S_COLOR_GRAY"  ...Loaded %s file " S_COLOR_WHITE "'%s' (checksum 0x%x)\n", PakTypeForName( pakfiles[j].c_str() ), pakfile.c_str(), zip->GetChecksum() );
 						//com_productionMode.SetInteger( 2 );
 
 						zipFilesFound = true;
