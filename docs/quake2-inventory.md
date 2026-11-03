@@ -8,6 +8,8 @@ Out of scope: game logic, networking, demos (`.dm2`), savegames, CD audio. The m
 
 ## 1. Package archives (.pak)
 
+Status: implemented. `idPackContainer` (`neo/framework/File_Pak.h/.cpp`) landed in commit `3df000b` (2026-11-03). `.pak` files mount alongside `.pk4`/`.pk3` in the game folders, opens, `GetFileLength` and directory listings resolve entries inside paks, and the `path` command prints mounted paks. Known limitation, shared with the stock zip container: `ListFilesTree` cannot recurse into pak subdirectories.
+
 ### 1.1 What the engine has today
 
 - `idFileSystemLocal::AddSearchPath` (`neo/framework/FileSystem.cpp`, the `.resources` / `.pk4` / `.pk3` scan around lines 2621-2667) enumerates `.resources`, `.pk4` and `.pk3` and mounts all three through `idZipContainer` (built on the vendored minizip). `PakTypeForName` (lines 2309-2315) only knows `pk3` and `pk4`. There is no other container type.
@@ -22,7 +24,11 @@ Out of scope: game logic, networking, demos (`.dm2`), savegames, CD audio. The m
 - Entry lookup is case-insensitive (`Q_strcasecmp`).
 - The directory checksum (`Com_BlockChecksum`, `PAK0_CHECKSUM` 0x40e614e0 retail) is only used in `NO_ADDONS` builds; stock Q2 3.21 has no pure system.
 
-### 1.3 The gap
+### 1.3 The gap (closed in `3df000b`)
+
+Implemented as planned: the sorted-glob mounting was adopted, entry names are lowercased to match the case-insensitive lookup, no checksum verification runs, and mixed-case entries resolve through the hash. Implementation notes: entries pointing outside the pak are skipped with a warning, every opened file gets its own OS handle into the pak (concurrent readers cannot race the seek position), and the entry count is sanity-capped at 65536 instead of Q2's 4096.
+
+Original analysis, kept for reference:
 
 - The container format itself. Everything else already fits: the engine's container interface (cache table + hash, lowercased lookup, enumerate) matches Q2 semantics, and its case-insensitive compare matches `Q_strcasecmp` behavior.
 - Implementation: an `idPackContainer` sibling of `idZipContainer` that reads the PACK header/directory and produces the same cache entries, plus a `.pak` line in `AddSearchPath`. All downstream code (decl folders, images, models) then sees pak contents unchanged.
@@ -124,6 +130,7 @@ Q2 uses plain RIFF `.wav` (`references/quake2/client/snd_mem.c`; 8/16-bit, mono/
 
 ## 8. What already works
 
+- `.pak` archives (since `3df000b`: `idPackContainer` mounts them alongside `.pk4`/`.pk3`).
 - TGA images (stb), including Q2 replacement tgas.
 - WAV sound.
 - Loose-directory content: `baseq2` as an `fs_game` directory needs no filesystem change (same as `etmain` in the Q3 work).
@@ -132,7 +139,7 @@ Q2 uses plain RIFF `.wav` (`references/quake2/client/snd_mem.c`; 8/16-bit, mono/
 
 ## 9. Recommended implementation order
 
-1. `.pak` container (blocks everything - all base Q2 data lives in `pak0.pak`).
+1. `.pak` container - DONE in `3df000b` (`idPackContainer`). All base Q2 data in `pak0.pak` is now reachable.
 2. PCX + WAL loaders + `colormap.pcx` palette (section 2).
 3. Implicit materials from WAL flags/animname + Q2 flag tables (section 3).
 4. MD2 (+SP2) through the MD3 path machinery (section 4).

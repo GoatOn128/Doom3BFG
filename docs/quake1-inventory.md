@@ -8,6 +8,8 @@ Out of scope: QuakeC game logic (flagged in section 7), networking, demos (`.dem
 
 ## 1. Package archives (.pak)
 
+Status: implemented (shared work item with the Q2 inventory). `idPackContainer` (`neo/framework/File_Pak.h/.cpp`) landed in commit `3df000b` (2026-11-03); one container serves both games, so `id1/pak0.pak` contents are reachable through normal opens and listings.
+
 ### 1.1 What Q1 .pak files are (`references/quake/WinQuake/common.c`, `COM_LoadPackFile` / `COM_AddGameDirectory` / `COM_FindFile`)
 
 - Byte-identical container to Q2: 12-byte header at the file start (`dpackheader_t { char id[4] = "PACK"; int dirofs; int dirlen; }`), directory of 64-byte entries (`dpackfile_t { char name[56]; int filepos, filelen; }`), `MAX_FILES_IN_PACK` 2048 (Q2 uses 4096).
@@ -15,7 +17,11 @@ Out of scope: QuakeC game logic (flagged in section 7), networking, demos (`.dem
 - Q1 entry lookup is case-SENSITIVE (`strcmp`); all stock pak entries are lowercase, so the engine's case-insensitive lookup is a superset and finds everything Q1 finds.
 - The registered check (`gfx/pop.lmp`, `PAK0_COUNT` 339, `PAK0_CRC` 32981) is a 1996 licensing artifact; ignorable.
 
-### 1.2 The gap
+### 1.2 The gap (closed in `3df000b`)
+
+Implemented as described: the engine's sorted-glob mounting replaced Q1's pak0..pakN loop with no behavior change on stock content, entry names are lowercased (the case-insensitive lookup superset), and the max-files validation became a 65536-entry sanity cap covering both games' stock paks.
+
+Original analysis, kept for reference:
 
 - Same as the Q2 inventory section 1.3: the container format is missing, everything downstream fits. One `idPackContainer` serves both games - only the max-files validation constant differs (2048 vs 4096; take the larger). The engine's sorted-glob mounting can replace Q1's pak0..pakN loop without behavior change on stock content.
 
@@ -100,6 +106,7 @@ Q1's entire game ships as `progs.dat`, QuakeC bytecode executed by the engine's 
 
 ## 8. What already works
 
+- `.pak` archives (since `3df000b`: `idPackContainer` mounts `id1` paks).
 - WAV sound.
 - Loose-directory content: `id1` as an `fs_game` directory needs no filesystem change (same as `baseq2`/`etmain`).
 - Case-insensitive path lookups are a superset of Q1's case-sensitive semantics.
@@ -108,7 +115,7 @@ Q1's entire game ships as `progs.dat`, QuakeC bytecode executed by the engine's 
 
 ## 9. Recommended implementation order
 
-1. `.pak` container - shared work item with the Q2 inventory (section 1.2); all stock Q1 data lives in `id1/pak0.pak`.
+1. `.pak` container - DONE in `3df000b` (shared `idPackContainer`); stock Q1 data in `id1/pak0.pak` is now reachable.
 2. `palette.lmp` + lmp + WAD2 loaders (section 2.2).
 3. Implicit materials from the name-prefix/TEX_SPECIAL conventions (section 3).
 4. MDL (+SPR) through the MD3 path machinery (section 4).
