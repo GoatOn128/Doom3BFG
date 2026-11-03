@@ -21,7 +21,7 @@ along with Doom 3 BFG Edition Source Code.  If not, see <http://www.gnu.org/lice
 
 In addition, the Doom 3 BFG Edition Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 BFG Edition Source Code.  If not, please request a copy in writing to id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
 
-If you have questions concerning this license or the applicable additional terms, you may contact in writing to id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+If you have questions concerning the license or the applicable additional terms, you may contact in writing to id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
 
 ===========================================================================
 */
@@ -36,30 +36,35 @@ If you have questions concerning this license or the applicable additional terms
 =================
 main
 
-convertidtech3assets <path to the Quake 3 install> [gameDir]
+convertidtech3assets [gameDir]
 
 Converts the id Tech 3 .shader scripts of the given game directory into
-Doom 3 BFG .mtr materials under materials/q3. The file system is pointed
-at the install with fs_basepath / fs_savepath / fs_game before the tool
-framework initializes, so the shader files are read straight out of the
-Quake 3 pk3 files.
+Doom 3 BFG .mtr materials under materials/q3. The game directory is
+searched relative to the executable, so the tool can simply be dropped
+next to baseq3 and run; the converted materials are written back beside
+the game data.
 =================
 */
 int main( int argc, char *argv[] ) {
-	if ( argc != 2 && argc != 3 ) {
-		common->Printf( "^1usage: convertidtech3assets <path to the Quake 3 install> [gameDir e.g. baseq3]^7\n" );
+	if ( argc > 2 ) {
+		common->Printf( "^1usage: convertidtech3assets [gameDir e.g. baseq3]^7\n" );
 		return 0;
 	}
 
 	idStr gameDir = "baseq3";
-	if ( argc == 3 ) {
-		gameDir = argv[2];
+	if ( argc == 2 ) {
+		gameDir = argv[1];
 	}
 
 	// The file system mounts its search paths during Tool_InitFramework;
 	// setting the path cvars before RegisterStaticVars keeps them in place.
-	cvarSystem->SetCVarString( "fs_basepath", argv[1] );
-	cvarSystem->SetCVarString( "fs_savepath", argv[1] );
+	// The base and save paths both point at the executable's folder so the
+	// pk3 files are found next to the tool and the materials are written
+	// back beside them.
+	idStr basePath = Sys_EXEPath();
+	basePath.StripFilename();
+	cvarSystem->SetCVarString( "fs_basepath", basePath.c_str() );
+	cvarSystem->SetCVarString( "fs_savepath", basePath.c_str() );
 	cvarSystem->SetCVarString( "fs_game", gameDir.c_str() );
 
 	Tool_InitFramework();
