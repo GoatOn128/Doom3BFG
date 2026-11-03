@@ -175,7 +175,7 @@ Licensing note: reference implementations for MD3/MDC/MDS/MDM/MDX live in the ET
 5. Lighting provider decision for `$lightmap`/lightgrid keywords (coupled to the map format decision).
 6. Global fog system, `skyparms` sky stage, sun flare.
 7. ~~MDS/MDM/MDX~~ Done (plus MD4 for completion).
-8. PK3 mounting. In practice a prerequisite for 4-6: ET content (skins included) ships inside pk3 archives, and everything registered so far only reads loose files. The change itself is one enumeration line in `AddSearchPath`, details in section 4.
+8. ~~PK3 mounting~~ Done: `AddSearchPath` enumerates `.pk3` alongside `.pk4` into one alphabetically sorted list (`FileSystem.cpp`), so Q3/ET paks mount through the existing `idZipContainer` machinery and everything below reads from them. Details in section 4.
 9. Legacy .menu GUI parser (Team Arena/RTCW/ET menu format onto the Doom 3 window system). Start with the static keyword subset and a warn-and-skip pass, phase ownerdraw/feeder support until a UI/game module exists, details in section 5.
 
 ## 4. Package archives (pk3)
@@ -194,10 +194,10 @@ Licensing note: reference implementations for MD3/MDC/MDS/MDM/MDX live in the ET
 - Plain zip archives. Byte-identical in format to pk4 as far as the container code is concerned; entries are lowercase relative paths (`scripts/`, `textures/`, `models/`, `sound/`, `ui/`, `maps/`).
 - Q3 semantics: paks live in the game dir (`etmain` or a mod dir), later-alphabetical paks override earlier ones, checksums exist for pure/server verification (not needed for local content support).
 
-### 4.3 The gap (small)
+### 4.3 The gap (filled)
 
-- Exactly one enumeration short: `AddSearchPath` scans only `.pk4` (`ListOSFiles( pakfile, ".pk4", pakfiles )`). Adding a `.pk3` pass and merging both lists before the alphabetical sort mounts Q3/ET paks with no new container, lookup or listing code; update the `...Loaded pk4 file` log line to cover both.
-- Keep pk3 and pk4 in one sorted list so the override order stays well defined across both extensions.
+- Done: `AddSearchPath` enumerates `.pk3` alongside `.pk4` into one alphabetically sorted list and mounts both through `idZipContainer`; the startup load and `path` log lines print the real archive type.
+- pk3 and pk4 share one sorted list, so the override order stays well defined across both extensions.
 - Mixed-case entries inside old paks still resolve (the lookup lowercases the query and compares with `Icmp`). The container checksum is only used for logging; no pure checks.
 - If `.resources` files exist in the same game dir they load as well; `fs_resourceLoadPriority` decides which wins per file.
 
