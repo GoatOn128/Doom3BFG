@@ -548,9 +548,19 @@ static void Q3ParseStage( idLexer &src, const char *shaderName, q3Stage_t &stage
 		}
 
 		if ( !token.Icmp( "depthFunc" ) ) {
-			idStr rest;
-			src.ReadRestOfLine( rest );
-			stage.text += Q3Str( "\t\t//depthFunc %s\n", Q3Trim( rest.c_str() ).c_str() ).c_str();
+			idToken funcTok;
+			if ( !src.ReadToken( &funcTok ) ) {
+				continue;
+			}
+			if ( !funcTok.Icmp( "lequal" ) || !funcTok.Icmp( "equal" ) || !funcTok.Icmp( "always" ) || !funcTok.Icmp( "disable" ) ) {
+				// the depth function is written out as is, the engine keyword
+				// keeps the automatic depth mask of the surface type
+				stage.plainMap = false;
+				stage.text += Q3Str( "\t\tdepthFunc %s\n", funcTok.c_str() ).c_str();
+			} else {
+				stage.text += Q3Str( "\t\t//depthFunc %s\n", funcTok.c_str() ).c_str();
+				conv->numWarnings++;
+			}
 			continue;
 		}
 
