@@ -319,7 +319,9 @@ static infoParm_t legacySurfaceParms[] = {
 	{"sky",				0, 0, 0},		// sky handling is material based in this engine
 	{"lightfilter",		0, 0, 0},		// light grid features need a lightmap system
 	{"alphashadow",		0, 0, 0},
-	{"hint",			0, 0, 0},		// BSP splitter hint
+		{"hint",			1, 0, 0},		// BSP splitter hint, editor utility so never solid
+	{"skip",			1, 0, 0},		// editor utility face, never solid
+	{"botclip",		1, 0, 0},		// bot routing volume, not solid in this engine
 	{"slick",			0, SURF_SLICK, 0},
 	{"noimpact",		0, SURF_NOIMPACT, 0},
 	{"ladder",			0, SURF_LADDER, 0},

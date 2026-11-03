@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "Game_local.h"
+#include "../renderer/Q3Bsp.h"
 
 #ifdef GAME_DLL
 
@@ -897,15 +898,17 @@ void idGameLocal::LoadMap( const char * mapName, int randseed ) {
 	InitAsyncNetwork();
 
 	if ( !sameMap || ( mapFile && mapFile->NeedsReload() ) ) {
-		// load the .map file
+		// load the .map file, Q3/RtCW/ET binary BSPs convert when no .map exists
 		if ( mapFile ) {
 			delete mapFile;
 		}
 		mapFile = new (TAG_GAME) idMapFile;
 		if ( !mapFile->Parse( idStr( mapName ) + ".map" ) ) {
 			delete mapFile;
-			mapFile = NULL;
-			Error( "Couldn't load %s", mapName );
+			mapFile = Q3Bsp_ConvertToMapFile( mapName );
+			if ( mapFile == NULL ) {
+				Error( "Couldn't load %s", mapName );
+			}
 		}
 	}
 	mapFileName = mapFile->GetName();

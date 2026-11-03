@@ -214,6 +214,10 @@ public:
 	void					RemovePrimitiveData();
 	bool					HasPrimitiveData() { return hasPrimitiveData; }
 
+							// sets name, time stamp and geometry CRC for programmatically built
+							// maps, the name follows the idMapFile::Parse naming convention
+	void						SetMapInfo( const char *mapName, ID_TIME_T timeStamp );
+
 protected:
 	float					version;
 	ID_TIME_T					fileTime;

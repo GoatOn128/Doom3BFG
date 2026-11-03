@@ -1,10 +1,10 @@
 # Quake 3 / Wolfenstein: Enemy Territory content support inventory
 
-Audited at commit `0c79836747bc850e93e3bfda8f5a4213d36924e5` (master) on 2026-11-02. Updated 2026-11-02: the MD3 parity work landed (`81dc731`) and MDC/MDS/MDM/MDX/MD4 loaders were added, see sections 2.1-2.3. Updated 2026-11-03: PK3 archive mounting and the Team Arena/ET menu (.menu) GUI format audited, see sections 4-5 and steps 8-9.
+Audited at commit `0c79836747bc850e93e3bfda8f5a4213d36924e5` (master) on 2026-11-02. Updated 2026-11-02: the MD3 parity work landed (`81dc731`) and MDC/MDS/MDM/MDX/MD4 loaders were added, see sections 2.1-2.3. Updated 2026-11-03: PK3 archive mounting and the Team Arena/ET menu (.menu) GUI format audited, see sections 4-5 and steps 8-9. Updated 2026-11-03: the Q3/RtCW/ET BSP map loader landed (render world, collision conversion with `.cm` caching, lightmap lights), see section 6 and step 10.
 
 Purpose: gap analysis before implementing Q3/ET content support. Two areas as requested: shader (material) syntax and model formats. The engine side was read directly from this repo (`neo/renderer/Material.cpp`, `neo/renderer/Model_md3.cpp`, `neo/renderer/ModelManager.cpp`, `neo/framework/DeclManager.cpp`, `neo/renderer/Image_files.cpp`). The Q3/ET requirement side is taken from the ET: Legacy renderer sources (GPLv3, `src/renderer/tr_shader.c` and `src/renderer/tr_model.c`) and published format references.
 
-Out of scope: Q3 BSP map format, game logic, sound, networking. Some shader features are coupled to map data (lightmaps, lightgrid, fog); those couplings are flagged.
+Out of scope: game logic, sound, networking. Q3 BSP maps load through a dedicated world loader (section 6); what is still missing is listed there. Some shader features are coupled to map data (lightmaps, lightgrid, fog); those couplings are flagged.
 
 ## 1. Shader syntax
 
@@ -120,7 +120,7 @@ Dispatch in `neo/renderer/ModelManager.cpp` (`GetModel`):
 | `.liquid` | liquid |
 | world `.proc`/`.bmodel` | RenderWorld static geometry |
 
-Nothing else dispatches anywhere. There is no Q3 BSP (`MOD_BRUSH`) path.
+Nothing else dispatches anywhere. Q3 BSP maps do not dispatch through `GetModel` either; they load through the dedicated world loader in section 6.
 
 ### 2.2 MD3 audit (`neo/renderer/Model_md3.cpp/.h`)
 
@@ -173,11 +173,12 @@ Licensing note: reference implementations for MD3/MDC/MDS/MDM/MDX live in the ET
 2. ~~Q3 shader parsing~~ Done: `scripts/*.shader` registered as a material decl folder (`DeclManager.cpp`), `idMaterial::Parse` dispatches to `ParseLegacyMaterial` for `.shader` sources. Implemented: group A keywords (blend/texgen/tcGen/tcMod/rgbGen/alphaGen/alphaFunc/depthFunc/depthWrite/animMap/clamp/cull/sort/polygonOffset/nopicmip-per-shader/deformVertexes autosprite/surfaceparm/implicit*), waveform ops (`sin/square/triangle/sawtooth/inverse_sawtooth/noise` as register ops), `$lightmap`→`_white`, `$dlight`→`_black`. Parsed and ignored: editor/compile keywords (`qer_*`, `q3map_*`, `tesssize`, `light <n>`, `entityMergable`, `nomipmaps`, `allowcompress`/`nocompress`, `clampTime`, `distancecull`). Warn and skip line on everything else (no `MF_DEFAULTED`).
 3. ~~MDC loader~~ Done (shares the fixed MD3 path through the `LoadHeader`/`LodFileExtension` hooks).
 4. ~~Q3 skin parser + remap hook~~ Done: `idDeclSkin` parses both the D3 brace syntax and the Q3 `surface,shader` list, loads Q3 skin files lazily by name, and `R_RemapShaderBySkin` remaps by surface name from the MD3/MDC and MDS/MDM/MD4 instantiate paths, including the ET `_b` blink key convention. Details in section 2.4.
-5. Lighting provider decision for `$lightmap`/lightgrid keywords (coupled to the map format decision).
+5. ~~Lighting provider decision for `$lightmap`/lightgrid keywords~~ Partially done: BSP lightmaps convert to point lights at load (section 6); `$lightmap` stages still render as `_white` and the lightgrid has no provider yet.
 6. Global fog system, `skyparms` sky stage, sun flare.
 7. ~~MDS/MDM/MDX~~ Done (plus MD4 for completion).
 8. ~~PK3 mounting~~ Done: `AddSearchPath` enumerates `.pk3` alongside `.pk4` into one alphabetically sorted list (`FileSystem.cpp`), so Q3/ET paks mount through the existing `idZipContainer` machinery and everything below reads from them. Details in section 4.
 9. Legacy .menu GUI parser (Team Arena/RTCW/ET menu format onto the Doom 3 window system). Start with the static keyword subset and a warn-and-skip pass, phase ownerdraw/feeder support until a UI/game module exists, details in section 5.
+10. ~~Q3 BSP map loader~~ Done: world render model, `idMapFile` conversion feeding the stock collision model with automatic `maps/<name>.cm` + `generated/<name>.bcm` caching, and lightmap-to-point-light conversion (section 6).
 
 ## 4. Package archives (pk3)
 
@@ -249,6 +250,23 @@ Phasing:
 2. Static menus: rects, colors, borders, background images, text, decoration items; open/close stack plus exec/cvar wiring.
 3. Interactive items: action/hover/focus events, sounds, checkbox/slider/editfield/bind through the typed windows.
 4. Ownerdraw/feeder items only once a UI/game module exists.
+
+## 6. Q3/RtCW/ET BSP maps
+
+### 6.1 What it does
+
+- `neo/renderer/Q3Bsp.h/.cpp` load binary IBSP maps (version 46 = Q3, 47 = RtCW/ET; the lump table is identical for both). The file reads through `fileSystem->ReadFile` with byte composition helpers, so it is endian safe and uses no packed structs. The on disk layout follows the vendored ET SDK `qfiles.h`/`surfaceflags.h` references (GPLv3, license compatible).
+- Render: `idRenderWorldLocal::InitFromMap` falls back on `Q3Bsp_BuildWorldRenderModel` when no `.proc`/`.bproc` exists. The faces of all BSP models build one static world model named `_area0`, grouped per shader: planar and triangle soup faces come straight from the drawvert/drawindex lumps with per triangle validation, patches tessellate as level 4 biquadratic bezier grids with the winding decided by the control grid, flare/foliage faces and shaders with no render stages (clip, caul, hint, skip, botclip) are skipped, and texture coordinates recenter per surface like the `.proc` loader does. The world is a single portal area (no PVS/vis), matching the trivial-map path.
+- Collision: `idGameLocal::LoadMap` tries `Q3Bsp_ConvertToMapFile` only after the `.map` parse fails. The entities lump parses through the stock `idMapEntity::Parse`, world model brushes convert to `idMapBrush`/`idMapBrushSide` with the BSP planes (outward normals, brush interior on the negative side, the same convention the Q3 map parser produces), and bmodel N brushes attach to the entity that references it as `*N`. From there the stock collision model manager runs unchanged: contents come from the Q3 shader surfaceparms already parsed by the material system, and `WriteCollisionModelsToFile` caches `maps/<name>.cm` plus `generated/<name>.bcm` with the geometry CRC stamp, exactly like a Doom 3 map. Editor utility surfaceparms (`hint`, `skip`, `botclip`) clear solid so those brushes do not collide.
+- Lighting: `Q3Bsp_AddLightmapLights` samples the lightmap blocks of every lit face on a luxel grid, merges the samples into world grid cells and adds the brightest cells as point lights (no shadows by default). `r_q3bspMaxLights` (256), `r_q3bspLightScale` (1) and `r_q3bspLightSpacing` (8 luxels) control the conversion. Q3 `light` entities also spawn as Doom 3 lights through the normal entity pass.
+
+### 6.2 Limitations
+
+- Single portal area: no PVS/vis and no per-area culling beyond frustum bounds.
+- Bmodels render frozen inside the static world model; `func_*` entities are unknown to the Doom 3 game module, so doors/platforms neither move nor get clip models. Their brush geometry is attached to the converted map entities for a future game module to adopt.
+- Lightmap lighting is a grid-sampled approximation (point lights), not per-pixel lightmap rendering; `$lightmap` stages still render as `_white` and the lightgrid (model lighting) has no provider.
+- Patch tessellation is a fixed level-4 bezier grid; Q3's adaptive subdivision may differ slightly.
+- Sky, fog and portal effects referenced by BSP entities need the systems from step 6.
 
 ## Sources
 

@@ -32,6 +32,7 @@ If you have questions concerning this license or the applicable additional terms
 #include <new>
 
 #include "tr_local.h"
+#include "Q3Bsp.h"
 
 
 /*
@@ -807,6 +808,35 @@ bool idRenderWorldLocal::InitFromMap( const char *name ) {
 		src = new (TAG_RENDER) idLexer( filename, LEXFL_NOSTRINGCONCAT | LEXFL_NODOLLARPRECOMPILE );
 		if ( !src->IsLoaded() ) {
 			common->Printf( "idRenderWorldLocal::InitFromMap: %s not found\n", filename.c_str() );
+			delete src;
+
+			// no .proc, so try a Q3/RtCW/ET binary BSP before giving up
+			ID_TIME_T bspTimeStamp = FILE_NOT_FOUND_TIMESTAMP;
+			idRenderModel *bspWorldModel = Q3Bsp_BuildWorldRenderModel( name, &bspTimeStamp );
+			if ( bspWorldModel != NULL ) {
+				mapName = name;
+				mapTimeStamp = bspTimeStamp;
+
+				// if we are writing a demo, archive the load command
+				if ( common->WriteDemo() ) {
+					WriteLoadMap();
+				}
+
+				renderModelManager->AddModel( bspWorldModel );
+				localModels.Append( bspWorldModel );
+
+				// a Q3 world is a single portal area like a trivial map
+				ClearWorld();
+				CommonChildrenArea_r( &areaNodes[0] );
+				AddWorldModelEntities();
+				ClearPortalStates();
+
+				Q3Bsp_AddLightmapLights( this, name );
+
+				common->Printf( "idRenderWorldLocal::InitFromMap: using Q3 BSP %s\n", mapName.c_str() );
+				return true;
+			}
+
 			ClearWorld();
 			return false;
 		}

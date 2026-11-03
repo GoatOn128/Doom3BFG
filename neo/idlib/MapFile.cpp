@@ -970,3 +970,16 @@ bool idMapFile::NeedsReload() {
 	}
 	return true;
 }
+
+/*
+===============
+idMapFile::SetMapInfo
+===============
+*/
+void idMapFile::SetMapInfo( const char *mapName, ID_TIME_T timeStamp ) {
+	name = mapName;
+	name.StripFileExtension();
+	fileTime = timeStamp;
+	SetGeometryCRC();
+	hasPrimitiveData = true;
+}
