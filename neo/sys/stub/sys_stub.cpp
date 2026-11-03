@@ -55,12 +55,6 @@ idSysPlatform *		platform = NULL;
 
 #define TOOL_PRINT_MSG_SIZE	32048
 
-// Writes text to a stream, translating Quake 3 color codes to terminal
-// colors: ^0 black, ^1 red, ^2 green, ^3 yellow, ^4 blue, ^5 cyan,
-// ^6 magenta, ^7 white (mapped to a reset, which is the terminal's
-// default look). Unknown codes after '^' print literally so shader
-// text stays readable. NOTE: this is the Q3 table; idStr.h on this
-// branch defines the Doom 3 table instead (^6 orange, ^8 gray, ^9 black).
 void Tool_PrintQ3( std::ostream &os, const char *text ) {
 	for ( const char *p = text; *p != '\0'; p++ ) {
 		if ( p[0] == '^' && p[1] >= '0' && p[1] <= '7' ) {
@@ -83,9 +77,6 @@ void Tool_PrintQ3( std::ostream &os, const char *text ) {
 	os << styler::Style::Reset;
 }
 
-// Formats one message and writes it to the stream; newline is optional
-// so Printf behaves like printf. The stream is flushed so piped output
-// stays in sync.
 static void Tool_VPrintf( std::ostream &os, const char *prefix, const char *fmt, va_list argptr, bool newline ) {
 	char buffer[TOOL_PRINT_MSG_SIZE];
 	buffer[0] = '\0';
@@ -202,9 +193,25 @@ private:
 };
 
 idCVar com_developer( "developer", "0", CVAR_BOOL | CVAR_SYSTEM, "developer mode" );
+idCVar com_version( "si_version", "convertidtech3assets", CVAR_SYSTEM | CVAR_ROM | CVAR_SERVERINFO, "engine version" );
+idCVar com_productionMode( "com_productionMode", "0", CVAR_SYSTEM | CVAR_BOOL, "0 - no special behavior, 1 - building a production build, 2 - running a production build" );
 
 idCommonLocal		commonLocal;
 idCommon *			common = &commonLocal;
+
+/*
+==============================================================
+
+	idSys
+
+==============================================================
+*/
+
+int Sys_Milliseconds() { return GetTickCount(); }
+int Sys_NumLangs() { return 1; }
+const char * Sys_Lang( int idx ) { return ( idx == 0 ) ? ID_LANG_ENGLISH : ""; }
+
+int idEventLoop::JournalLevel() const { return 0; }
 
 /*
 ==============================================================

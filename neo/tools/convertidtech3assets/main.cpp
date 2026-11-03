@@ -56,13 +56,9 @@ int main( int argc, char *argv[] ) {
 		gameDir = argv[1];
 	}
 
-	// The file system mounts its search paths during Tool_InitFramework;
-	// setting the path cvars before RegisterStaticVars keeps them in place.
-	// The base and save paths both point at the executable's folder so the
-	// pk3 files are found next to the tool and the materials are written
-	// back beside them.
 	idStr basePath = Sys_EXEPath();
 	basePath.StripFilename();
+
 	cvarSystem->SetCVarString( "fs_basepath", basePath.c_str() );
 	cvarSystem->SetCVarString( "fs_savepath", basePath.c_str() );
 	cvarSystem->SetCVarString( "fs_game", gameDir.c_str() );
@@ -70,19 +66,19 @@ int main( int argc, char *argv[] ) {
 	Tool_InitFramework();
 
 	Q3ShaderConverter converter;
-	if ( !converter.ConvertShaders( "scripts", ".shader", "materials/q3" ) ) {
-		common->Printf( "^1no shaders converted^7\n" );
+	if ( !converter.ConvertShaders( "scripts", ".shader", "materials" ) ) {
+		common->Printf( S_COLOR_RED "no shaders converted^7\n" );
 	} else {
-		common->Printf( "^2converted %d shader%s: %d stage%s kept, %d stage%s dropped^7\n",
+		common->Printf( S_COLOR_GREEN "converted %d shader%s: %d stage%s kept, %d stage%s dropped^7\n",
 			converter.numShaders, converter.numShaders == 1 ? "" : "s",
 			converter.numStages, converter.numStages == 1 ? "" : "s",
 			converter.numStagesDropped, converter.numStagesDropped == 1 ? "" : "s" );
 		if ( converter.numWarnings > 0 ) {
-			common->Printf( "^3%d directive%s had no Doom 3 equivalent and were kept as comments^7\n",
+			common->Printf( S_COLOR_YELLOW "%d directive%s had no Doom 3 equivalent and were kept as comments^7\n",
 				converter.numWarnings, converter.numWarnings == 1 ? "" : "s" );
 		}
 		if ( converter.needWaveTables ) {
-			common->Printf( "^5wrote the wave tables to materials/q3/_q3waves.mtr^7\n" );
+			common->Printf( S_COLOR_CYAN "wrote the wave tables to materials/_waves.mtr^7\n" );
 		}
 	}
 
