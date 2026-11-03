@@ -1,6 +1,6 @@
 # Build digest
 
-commit: ce944215bb5b
+commit: f211d8d3da10
 
 - windows-x64-debug: success
 - windows-x64-release: success
@@ -25,9 +25,9 @@ warnings: 21 in 6 kinds
 - [5x] C4389
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(170): warning C4389: '!=': signed/unsigned mismatch
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(175): warning C4389: '!=': signed/unsigned mismatch
-  - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1496): warning C4389: '!=': signed/unsigned mismatch
-  - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1514): warning C4389: '!=': signed/unsigned mismatch
-  - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1534): warning C4389: '!=': signed/unsigned mismatch
+  - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1488): warning C4389: '!=': signed/unsigned mismatch
+  - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1506): warning C4389: '!=': signed/unsigned mismatch
+  - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1526): warning C4389: '!=': signed/unsigned mismatch
 - [4x] C4312
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\BufferObject.cpp(188): warning C4312: 'reinterpret_cast': conversion from 'GLuint' to 'void *' of greater size
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\BufferObject.cpp(433): warning C4312: 'reinterpret_cast': conversion from 'GLuint' to 'void *' of greater size
@@ -75,9 +75,9 @@ warnings: 27 in 7 kinds
 - [5x] C4389
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(170): warning C4389: '!=': signed/unsigned mismatch
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(175): warning C4389: '!=': signed/unsigned mismatch
-  - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1496): warning C4389: '!=': signed/unsigned mismatch
-  - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1514): warning C4389: '!=': signed/unsigned mismatch
-  - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1534): warning C4389: '!=': signed/unsigned mismatch
+  - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1488): warning C4389: '!=': signed/unsigned mismatch
+  - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1506): warning C4389: '!=': signed/unsigned mismatch
+  - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1526): warning C4389: '!=': signed/unsigned mismatch
 - [4x] C4312
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\BufferObject.cpp(188): warning C4312: 'reinterpret_cast': conversion from 'GLuint' to 'void *' of greater size
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\BufferObject.cpp(433): warning C4312: 'reinterpret_cast': conversion from 'GLuint' to 'void *' of greater size
@@ -122,9 +122,9 @@ warnings: 15 in 3 kinds
   - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\gamesys\Event.cpp(943): warning C4389: '!=': signed/unsigned mismatch
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(170): warning C4389: '!=': signed/unsigned mismatch
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(175): warning C4389: '!=': signed/unsigned mismatch
-  - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1496): warning C4389: '!=': signed/unsigned mismatch
-  - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1514): warning C4389: '!=': signed/unsigned mismatch
-  - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1534): warning C4389: '!=': signed/unsigned mismatch
+  - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1488): warning C4389: '!=': signed/unsigned mismatch
+  - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1506): warning C4389: '!=': signed/unsigned mismatch
+  - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1526): warning C4389: '!=': signed/unsigned mismatch
 - [3x] C4245
   - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\Game_local.cpp(249): warning C4245: '=': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
   - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\Game_local.cpp(250): warning C4245: '=': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
@@ -154,9 +154,9 @@ warnings: 19 in 4 kinds
   - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\gamesys\Event.cpp(943): warning C4389: '!=': signed/unsigned mismatch
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(170): warning C4389: '!=': signed/unsigned mismatch
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(175): warning C4389: '!=': signed/unsigned mismatch
-  - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1496): warning C4389: '!=': signed/unsigned mismatch
-  - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1514): warning C4389: '!=': signed/unsigned mismatch
-  - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1534): warning C4389: '!=': signed/unsigned mismatch
+  - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1488): warning C4389: '!=': signed/unsigned mismatch
+  - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1506): warning C4389: '!=': signed/unsigned mismatch
+  - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1526): warning C4389: '!=': signed/unsigned mismatch
 - [6x] C4702
   - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(368) : warning C4702: unreachable code
   - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(1048) : warning C4702: unreachable code
