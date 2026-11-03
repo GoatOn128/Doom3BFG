@@ -1238,6 +1238,23 @@ def _generate_msvc_projects():
             'tools/convertidtech3assets/*',
         ],
     )
+    # The convertidtech3assets tool hosts the engine framework through
+    # sys/stub and builds from its own SConscript target.
+    tool_sources, tool_headers, tool_resources, tool_misc = _collect_msvs_files(
+        ('sys/stub', 'tools/convertidtech3assets'),
+    )
+    # The tool compiles these framework files through its own SConscript;
+    # listing them keeps the project in sync with what it actually builds.
+    tool_sources = list(tool_sources) + [
+        'framework/CmdSystem.cpp',
+        'framework/CVarSystem.cpp',
+        'framework/File.cpp',
+        'framework/File_Manifest.cpp',
+        'framework/File_Pak.cpp',
+        'framework/File_Resource.cpp',
+        'framework/File_Zip.cpp',
+        'framework/FileSystem.cpp',
+    ]
     idlib_sources, idlib_headers, idlib_resources, idlib_misc = _collect_msvs_files(('idlib',))
     game_sources, game_headers, game_resources, game_misc = _collect_msvs_files(
         ('d3xp',),
@@ -1281,6 +1298,7 @@ def _generate_msvc_projects():
 
     project_definitions = {
         'DoomEXE': [],
+        'ConvertIdTech3Assets': [],
         'external': [],
         'idLib': ['__IDLIB__'],
         'Game-D3XP': ['_D3XP', 'CTF'] + (['GAME_DLL'] if DLL_BUILD else []),
@@ -1295,6 +1313,8 @@ def _generate_msvc_projects():
         )
         if project_name == 'DoomEXE':
             return os.path.join(BIN_DIR, 'Doom3BFG.exe')
+        if project_name == 'ConvertIdTech3Assets':
+            return os.path.join(BIN_DIR, 'convertidtech3assets.exe')
         if project_name == 'external':
             return os.path.join(config_dir, 'lib', 'external.lib')
         if project_name == 'idLib':
@@ -1310,6 +1330,7 @@ def _generate_msvc_projects():
         ('external', external_source_files, external_header_files, [], []),
         ('idLib', idlib_sources, idlib_headers, idlib_resources, idlib_misc),
         ('Game-D3XP', game_sources, game_headers, game_resources, game_misc),
+        ('ConvertIdTech3Assets', tool_sources, tool_headers, tool_resources, tool_misc),
     ]
 
     # Assign deterministic GUIDs to generated VC++ projects and reuse them
@@ -1356,6 +1377,8 @@ def _generate_msvc_projects():
         }
         if project_name == 'DoomEXE':
             kwargs['runfile'] = os.path.join(BIN_DIR, 'Doom3BFG.exe')
+        if project_name == 'ConvertIdTech3Assets':
+            kwargs['runfile'] = os.path.join(BIN_DIR, 'convertidtech3assets.exe')
 
         # MSVS_PROJECT_GUID is the supported SCons construction variable for
         # the GUID written into each .vcxproj. Use a per-project clone so each
@@ -1440,10 +1463,12 @@ def _generate_msvc_projects():
             raise RuntimeError('Unresolved SCons variable found in Visual Studio project path: %r' % project_paths)
         dependencies = {
             'DoomEXE': ['external', 'idLib'] + ([] if DLL_BUILD else ['Game-D3XP']),
+            'ConvertIdTech3Assets': ['external', 'idLib'],
             'Game-D3XP': ['idLib'] if DLL_BUILD else [],
         }
         folder_for_project = {
             'DoomEXE': 'exes',
+            'ConvertIdTech3Assets': 'exes',
             'external': 'libs',
             'idLib': 'libs',
             'Game-D3XP': 'dll' if DLL_BUILD else 'libs',
