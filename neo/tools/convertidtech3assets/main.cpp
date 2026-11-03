@@ -29,8 +29,19 @@ If you have questions concerning the license or the applicable additional terms,
 #include "precompiled.h"
 #pragma hdrstop
 
+#include <sys/stat.h>
+
 #include "sys/stub/sys_stub.h"
 #include "Q3ShaderConverter.h"
+
+// checks an OS folder exists
+static bool Tool_FolderExists( const char *path ) {
+	struct stat info;
+	if ( stat( path, &info ) != 0 ) {
+		return false;
+	}
+	return ( info.st_mode & S_IFDIR ) != 0;
+}
 
 /*
 =================
@@ -59,6 +70,16 @@ int main( int argc, char *argv[] ) {
 	idStr basePath = Sys_EXEPath();
 	basePath.StripFilename();
 
+	// the game folder is expected next to the executable
+	idStr gamePath = basePath;
+	gamePath += "/";
+	gamePath += gameDir;
+	if ( !Tool_FolderExists( gamePath ) ) {
+		common->Printf( S_COLOR_RED "game directory '%s' not found in '%s'^7\n", gameDir.c_str(), basePath.c_str() );
+		common->Printf( "place the game folder with its .pk3 archives next to the executable and run again\n" );
+		return 0;
+	}
+
 	cvarSystem->SetCVarString( "fs_basepath", basePath.c_str() );
 	cvarSystem->SetCVarString( "fs_savepath", basePath.c_str() );
 	cvarSystem->SetCVarString( "fs_game", gameDir.c_str() );
@@ -67,7 +88,8 @@ int main( int argc, char *argv[] ) {
 
 	Q3ShaderConverter converter;
 	if ( !converter.ConvertShaders( "scripts", ".shader", "materials" ) ) {
-		common->Printf( S_COLOR_RED "no shaders converted^7\n" );
+		common->Printf( S_COLOR_RED "no shaders converted: no .shader files found under scripts/ in '%s'^7\n", gamePath.c_str() );
+		common->Printf( "the shaders must be loose .shader files in a scripts folder of '%s' or inside its .pk3 archives\n", gameDir.c_str() );
 	} else {
 		common->Printf( S_COLOR_GREEN "converted %d shader%s: %d stage%s kept, %d stage%s dropped^7\n",
 			converter.numShaders, converter.numShaders == 1 ? "" : "s",

@@ -55,18 +55,22 @@ idSysPlatform *		platform = NULL;
 
 #define TOOL_PRINT_MSG_SIZE	32048
 
+// idlib color codes (Str.h): ^0 default, ^1 red, ^2 green, ^3 yellow,
+// ^4 blue, ^5 cyan, ^6 orange, ^7 white, ^8 gray, ^9 black
 void Tool_PrintQ3( std::ostream &os, const char *text ) {
 	for ( const char *p = text; *p != '\0'; p++ ) {
-		if ( p[0] == '^' && p[1] >= '0' && p[1] <= '7' ) {
+		if ( p[0] == '^' && p[1] >= '0' && p[1] <= '9' ) {
 			switch ( p[1] ) {
-				case '0':	os << styler::Foreground::Black;	break;
+				case '0':	os << styler::Style::Reset;			break;
 				case '1':	os << styler::Foreground::Red;		break;
 				case '2':	os << styler::Foreground::Green;	break;
 				case '3':	os << styler::Foreground::Yellow;	break;
 				case '4':	os << styler::Foreground::Blue;		break;
 				case '5':	os << styler::Foreground::Cyan;		break;
-				case '6':	os << styler::Foreground::Magenta;	break;
-				case '7':	os << styler::Style::Reset;		break;
+				case '6':	os << styler::ForegroundHI::Yellow;	break;
+				case '7':	os << styler::Foreground::White;		break;
+				case '8':	os << styler::ForegroundHI::Black;	break;
+				case '9':	os << styler::Foreground::Black;		break;
 			}
 			p++;
 		} else {
