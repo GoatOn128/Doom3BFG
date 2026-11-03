@@ -1,6 +1,6 @@
 # Build digest
 
-commit: 3228b0e97a81
+commit: c72c2e4d88c2
 
 - windows-x64-debug: success
 - windows-x64-release: success
@@ -12,7 +12,7 @@ commit: 3228b0e97a81
 status: success
 
 errors: 0
-warnings: 22 in 6 kinds
+warnings: 24 in 7 kinds
 
 ### errors
 
@@ -33,11 +33,10 @@ warnings: 22 in 6 kinds
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\BufferObject.cpp(433): warning C4312: 'reinterpret_cast': conversion from 'GLuint' to 'void *' of greater size
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\BufferObject.cpp(671): warning C4312: 'reinterpret_cast': conversion from 'GLuint' to 'void *' of greater size
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_rendertools.cpp(727): warning C4312: 'type cast': conversion from 'int' to 'void *' of greater size
-- [4x] C4701
-  - D:\a\Doom3BFG\Doom3BFG\neo\external\stb\stb_vorbis.h(4849) : warning C4701: potentially uninitialized local variable 'mid' used
-  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\aas\AASReach.cpp(267) : warning C4701: potentially uninitialized local variable 'edge1Num' used
-  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\amplitude\amplitude.cpp(177) : warning C4701: potentially uninitialized local variable 'format' used
-  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\renderbump\renderbump.cpp(1318) : warning C4701: potentially uninitialized local variable 'opt' used
+- [3x] C4005
+  - C:\Program Files (x86)\Windows Kits\10\include\10.0.26100.0\um\shlwapi.h(392): warning C4005: 'StrCmpN': macro redefinition
+  - C:\Program Files (x86)\Windows Kits\10\include\10.0.26100.0\um\shlwapi.h(393): warning C4005: 'StrCmpNI': macro redefinition
+  - C:\Program Files (x86)\Windows Kits\10\include\10.0.26100.0\um\shlwapi.h(499): warning C4005: 'StrCmpI': macro redefinition
 - [3x] C4245
   - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\Game_local.cpp(249): warning C4245: '=': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
   - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\Game_local.cpp(250): warning C4245: '=': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
@@ -50,13 +49,17 @@ warnings: 22 in 6 kinds
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_rendertools.cpp(724): warning C4302: 'type cast': truncation from 'void *' to 'GLuint'
   - D:\a\Doom3BFG\Doom3BFG\neo\sys\win32\win_syscon.cpp(119): warning C4302: 'type cast': truncation from 'HBRUSH' to 'long'
   - D:\a\Doom3BFG\Doom3BFG\neo\sys\win32\win_syscon.cpp(128): warning C4302: 'type cast': truncation from 'HBRUSH' to 'long'
+- [3x] C4701
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\aas\AASReach.cpp(267) : warning C4701: potentially uninitialized local variable 'edge1Num' used
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\amplitude\amplitude.cpp(177) : warning C4701: potentially uninitialized local variable 'format' used
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\renderbump\renderbump.cpp(1318) : warning C4701: potentially uninitialized local variable 'opt' used
 
 ## windows-x64-release
 
 status: success
 
 errors: 0
-warnings: 28 in 7 kinds
+warnings: 30 in 8 kinds
 
 ### errors
 
@@ -84,11 +87,10 @@ warnings: 28 in 7 kinds
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\BufferObject.cpp(433): warning C4312: 'reinterpret_cast': conversion from 'GLuint' to 'void *' of greater size
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\BufferObject.cpp(671): warning C4312: 'reinterpret_cast': conversion from 'GLuint' to 'void *' of greater size
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_rendertools.cpp(727): warning C4312: 'type cast': conversion from 'int' to 'void *' of greater size
-- [4x] C4701
-  - D:\a\Doom3BFG\Doom3BFG\neo\external\stb\stb_vorbis.h(4849) : warning C4701: potentially uninitialized local variable 'mid' used
-  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\aas\AASReach.cpp(267) : warning C4701: potentially uninitialized local variable 'edge1Num' used
-  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\amplitude\amplitude.cpp(177) : warning C4701: potentially uninitialized local variable 'format' used
-  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\renderbump\renderbump.cpp(1318) : warning C4701: potentially uninitialized local variable 'opt' used
+- [3x] C4005
+  - C:\Program Files (x86)\Windows Kits\10\include\10.0.26100.0\um\shlwapi.h(392): warning C4005: 'StrCmpN': macro redefinition
+  - C:\Program Files (x86)\Windows Kits\10\include\10.0.26100.0\um\shlwapi.h(393): warning C4005: 'StrCmpNI': macro redefinition
+  - C:\Program Files (x86)\Windows Kits\10\include\10.0.26100.0\um\shlwapi.h(499): warning C4005: 'StrCmpI': macro redefinition
 - [3x] C4245
   - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\Game_local.cpp(249): warning C4245: '=': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
   - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\Game_local.cpp(250): warning C4245: '=': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
@@ -101,13 +103,17 @@ warnings: 28 in 7 kinds
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_rendertools.cpp(724): warning C4302: 'type cast': truncation from 'void *' to 'GLuint'
   - D:\a\Doom3BFG\Doom3BFG\neo\sys\win32\win_syscon.cpp(119): warning C4302: 'type cast': truncation from 'HBRUSH' to 'long'
   - D:\a\Doom3BFG\Doom3BFG\neo\sys\win32\win_syscon.cpp(128): warning C4302: 'type cast': truncation from 'HBRUSH' to 'long'
+- [3x] C4701
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\aas\AASReach.cpp(267) : warning C4701: potentially uninitialized local variable 'edge1Num' used
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\amplitude\amplitude.cpp(177) : warning C4701: potentially uninitialized local variable 'format' used
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\renderbump\renderbump.cpp(1318) : warning C4701: potentially uninitialized local variable 'opt' used
 
 ## windows-x86-debug
 
 status: success
 
 errors: 0
-warnings: 16 in 3 kinds
+warnings: 18 in 4 kinds
 
 ### errors
 
@@ -127,22 +133,25 @@ warnings: 16 in 3 kinds
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1488): warning C4389: '!=': signed/unsigned mismatch
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1506): warning C4389: '!=': signed/unsigned mismatch
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\tr_backend_draw.cpp(1526): warning C4389: '!=': signed/unsigned mismatch
-- [4x] C4701
-  - D:\a\Doom3BFG\Doom3BFG\neo\external\stb\stb_vorbis.h(4849) : warning C4701: potentially uninitialized local variable 'mid' used
-  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\aas\AASReach.cpp(267) : warning C4701: potentially uninitialized local variable 'edge1Num' used
-  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\amplitude\amplitude.cpp(177) : warning C4701: potentially uninitialized local variable 'format' used
-  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\renderbump\renderbump.cpp(1318) : warning C4701: potentially uninitialized local variable 'opt' used
+- [3x] C4005
+  - C:\Program Files (x86)\Windows Kits\10\include\10.0.26100.0\um\shlwapi.h(392): warning C4005: 'StrCmpN': macro redefinition
+  - C:\Program Files (x86)\Windows Kits\10\include\10.0.26100.0\um\shlwapi.h(393): warning C4005: 'StrCmpNI': macro redefinition
+  - C:\Program Files (x86)\Windows Kits\10\include\10.0.26100.0\um\shlwapi.h(499): warning C4005: 'StrCmpI': macro redefinition
 - [3x] C4245
   - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\Game_local.cpp(249): warning C4245: '=': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
   - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\Game_local.cpp(250): warning C4245: '=': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\CinematicBink.cpp(59): warning C4245: '=': conversion from 'int' to 'uint32', signed/unsigned mismatch
+- [3x] C4701
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\aas\AASReach.cpp(267) : warning C4701: potentially uninitialized local variable 'edge1Num' used
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\amplitude\amplitude.cpp(177) : warning C4701: potentially uninitialized local variable 'format' used
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\renderbump\renderbump.cpp(1318) : warning C4701: potentially uninitialized local variable 'opt' used
 
 ## windows-x86-release
 
 status: success
 
 errors: 0
-warnings: 20 in 4 kinds
+warnings: 22 in 5 kinds
 
 ### errors
 
@@ -167,13 +176,16 @@ warnings: 20 in 4 kinds
   - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(1379) : warning C4702: unreachable code
   - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(1390) : warning C4702: unreachable code
   - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\script\Script_Compiler.cpp(1422) : warning C4702: unreachable code
-- [4x] C4701
-  - D:\a\Doom3BFG\Doom3BFG\neo\external\stb\stb_vorbis.h(4849) : warning C4701: potentially uninitialized local variable 'mid' used
-  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\aas\AASReach.cpp(267) : warning C4701: potentially uninitialized local variable 'edge1Num' used
-  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\amplitude\amplitude.cpp(177) : warning C4701: potentially uninitialized local variable 'format' used
-  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\renderbump\renderbump.cpp(1318) : warning C4701: potentially uninitialized local variable 'opt' used
+- [3x] C4005
+  - C:\Program Files (x86)\Windows Kits\10\include\10.0.26100.0\um\shlwapi.h(392): warning C4005: 'StrCmpN': macro redefinition
+  - C:\Program Files (x86)\Windows Kits\10\include\10.0.26100.0\um\shlwapi.h(393): warning C4005: 'StrCmpNI': macro redefinition
+  - C:\Program Files (x86)\Windows Kits\10\include\10.0.26100.0\um\shlwapi.h(499): warning C4005: 'StrCmpI': macro redefinition
 - [3x] C4245
   - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\Game_local.cpp(249): warning C4245: '=': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
   - D:\a\Doom3BFG\Doom3BFG\neo\d3xp\Game_local.cpp(250): warning C4245: '=': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
   - D:\a\Doom3BFG\Doom3BFG\neo\renderer\CinematicBink.cpp(59): warning C4245: '=': conversion from 'int' to 'uint32', signed/unsigned mismatch
+- [3x] C4701
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\aas\AASReach.cpp(267) : warning C4701: potentially uninitialized local variable 'edge1Num' used
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\amplitude\amplitude.cpp(177) : warning C4701: potentially uninitialized local variable 'format' used
+  - D:\a\Doom3BFG\Doom3BFG\neo\tools\compilers\renderbump\renderbump.cpp(1318) : warning C4701: potentially uninitialized local variable 'opt' used
 
