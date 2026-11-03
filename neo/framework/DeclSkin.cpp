@@ -46,6 +46,7 @@ idDeclSkin::FreeData
 */
 void idDeclSkin::FreeData() {
 	mappings.Clear();
+	surfaceMappings.Clear();
 }
 
 /*
@@ -59,9 +60,52 @@ bool idDeclSkin::Parse( const char *text, const int textLength, bool allowBinary
 
 	src.LoadMemory( text, textLength, GetFileName(), GetLineNum() );
 	src.SetFlags( DECL_LEXER_FLAGS );
-	src.SkipUntilString( "{" );
 
 	associatedModels.Clear();
+	mappings.Clear();
+	surfaceMappings.Clear();
+
+	// Doom 3 skins are brace bodies, Q3 / ET skin files start with a surface name
+	if ( !src.ReadToken( &token ) ) {
+		src.Warning( "Empty skin" );
+		MakeDefault();
+		return false;
+	}
+
+	if ( token.Icmp( "{" ) != 0 ) {
+		// Q3 / ET skin file, a plain list of surface,shader pairs
+		while (1) {
+			// token holds the surface name, expect the comma next
+			if ( !src.ReadToken( &token2 ) ) {
+				src.Warning( "Surface '%s' without a shader", token.c_str() );
+				break;
+			}
+			if ( token2.Cmp( "," ) != 0 ) {
+				// malformed line, warn and keep scanning from this token
+				src.Warning( "Expected ',' after surface '%s'", token.c_str() );
+				token = token2;
+				continue;
+			}
+			if ( !src.ReadToken( &token2 ) ) {
+				src.Warning( "Surface '%s' without a shader", token.c_str() );
+				break;
+			}
+
+			// tag entries are not remapped, md3 surfaces never match them anyway
+			if ( token.Icmpn( "tag_", 4 ) != 0 ) {
+				q3SkinMapping_t map;
+				map.surfaceName = token;
+				map.surfaceName.ToLower();
+				map.to = declManager->FindMaterial( token2 );
+				surfaceMappings.Append( map );
+			}
+
+			if ( !src.ReadToken( &token ) ) {
+				break;
+			}
+		}
+		return false;
+	}
 
 	while (1) {
 		if ( !src.ReadToken( &token ) ) {
@@ -105,15 +149,28 @@ idDeclSkin::SetDefaultText
 ================
 */
 bool idDeclSkin::SetDefaultText() {
+	// Q3 / ET skins are plain surface,shader files, load them by skin name
+	idStr q3FileName = GetName();
+	q3FileName.Append( ".skin" );
+	idFile *q3File = fileSystem->OpenFileRead( q3FileName );
+	if ( q3File != NULL ) {
+		const int q3Len = q3File->Length();
+		char * const q3Buf = (char *) _alloca( q3Len + 1 );
+		q3File->Read( q3Buf, q3Len );
+		q3Buf[q3Len] = '\0';
+		fileSystem->CloseFile( q3File );
+		SetText( q3Buf );
+		return true;
+	}
+
 	// if there exists a material with the same name
 	if ( declManager->FindType( DECL_MATERIAL, GetName(), false ) ) {
 		char generated[2048];
 
 		idStr::snPrintf( generated, sizeof( generated ),
-						"skin %s // IMPLICITLY GENERATED\n"
-						"{\n"
+						"{ // IMPLICITLY GENERATED\n"
 						"_default %s\n"
-						"}\n", GetName(), GetName() );
+						"}\n", GetName() );
 		SetText( generated );
 		return true;
 	} else {
@@ -182,4 +239,24 @@ const idMaterial *idDeclSkin::RemapShaderBySkin( const idMaterial *shader ) cons
 
 	// didn't find a match or wildcard, so stay the same
 	return shader;
+}
+
+/*
+===============
+RemapShaderBySurfaceName
+===============
+
+Q3 / ET skin files key on model surface names, not on source
+materials. Falls back to the material keyed path when the skin
+has no Q3 surface mappings.
+*/
+const idMaterial *idDeclSkin::RemapShaderBySurfaceName( const char *surfaceName, const idMaterial *shader ) const {
+	for ( int i = 0; i < surfaceMappings.Num(); i++ ) {
+		if ( surfaceMappings[i].surfaceName.Icmp( surfaceName ) == 0 ) {
+			return surfaceMappings[i].to;
+		}
+	}
+
+	// not a Q3 skin or no matching surface, keep the material keyed path
+	return RemapShaderBySkin( shader );
 }

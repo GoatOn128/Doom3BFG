@@ -42,6 +42,12 @@ typedef struct {
 	const idMaterial *		to;
 } skinMapping_t;
 
+// one surface,shader pair from a Q3 / ET .skin file
+typedef struct {
+	idStr					surfaceName;	// lowercased model surface name
+	const idMaterial *	to;
+} q3SkinMapping_t;
+
 class idDeclSkin : public idDecl {
 public:
 	virtual size_t			Size() const;
@@ -51,6 +57,8 @@ public:
 	virtual void			FreeData();
 
 	const idMaterial *		RemapShaderBySkin( const idMaterial *shader ) const;
+	// Q3 / ET skin files key on model surface names instead of source materials
+	const idMaterial *		RemapShaderBySurfaceName( const char *surfaceName, const idMaterial *shader ) const;
 
 							// model associations are just for the preview dialog in the editor
 	const int				GetNumModelAssociations() const;
@@ -58,6 +66,7 @@ public:
 
 private:
 	idList<skinMapping_t, TAG_IDLIB_LIST_DECL>	mappings;
+	idList<q3SkinMapping_t, TAG_IDLIB_LIST_DECL>	surfaceMappings;
 	idStrList				associatedModels;
 };
 

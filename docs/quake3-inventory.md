@@ -137,7 +137,7 @@ Fixed with the Q3 parity work (commit `81dc731`), all items below now work:
 
 Still missing for Q3/ET use:
 
-1. No Q3 skin remap (see 2.4).
+1. ~~No Q3 skin remap~~ Done (see 2.4).
 
 ### 2.3 Model formats
 
@@ -159,7 +159,8 @@ Licensing note: reference implementations for MD3/MDC/MDS/MDM/MDX live in the ET
 
 - Q3/ET: `scripts/*.skin` text files. One skin is a list of `surface,texture` lines (player-model surface to replacement texture/shader), used for team skins and model variants.
 - D3: `idDeclSkin` decls in `skins/*.skin` with syntax `skin <name> { <model> : <old> = <new> }`, keyed by material name rather than surface name.
-- Gap: a Q3 skin parser plus a remap hook in the MD3/MDC instantiate path, keyed on md3 surface names (which the loader already lowercases for exactly this purpose). The current `idRenderModelMD3` ignores skins entirely.
+- Done: the parser and the hook are in. `idDeclSkin::Parse` dispatches on the first token: a brace body parses as a D3 skin, anything else parses as a Q3 `surface,shader` list (lowercased surface keys, `tag_` entries skipped, malformed lines warn and skip). Q3 skins are not pre-registered through a decl folder scan; `idDeclSkin::SetDefaultText` reads `<name>.skin` on demand (loose or from a mounted pk3), so `FindSkin("models/players/temperate/skin1_blue")` works the way Q3's `RegisterSkin` did. The remap hook: `R_RemapShaderBySkin` takes an optional surface name and the MD3/MDC instantiate path passes the md3 surface name (already lowercased by the loader), so Q3 skins remap by surface name while D3 skins fall back to the material-keyed path. A skin that maps a surface to a nodraw material hides the surface, like ET.
+- Remaining: the skeletal MOD loaders (MDS/MDM/MD4) do not keep surface names past load, so Q3 skins currently remap MD3/MDC models only; keeping surface names in the shared skeletal base is a follow-up.
 
 ### 2.5 Animation/game glue (out of renderer, listed for completeness)
 
@@ -171,7 +172,7 @@ Licensing note: reference implementations for MD3/MDC/MDS/MDM/MDX live in the ET
 1. ~~MD3 loader fixes~~ Done (`81dc731`): normal decode + tangent derivation, per-frame bounds, tag exposure with a lerped tag query API, LOD chain.
 2. ~~Q3 shader parsing~~ Done: `scripts/*.shader` registered as a material decl folder (`DeclManager.cpp`), `idMaterial::Parse` dispatches to `ParseLegacyMaterial` for `.shader` sources. Implemented: group A keywords (blend/texgen/tcGen/tcMod/rgbGen/alphaGen/alphaFunc/depthFunc/depthWrite/animMap/clamp/cull/sort/polygonOffset/nopicmip-per-shader/deformVertexes autosprite/surfaceparm/implicit*), waveform ops (`sin/square/triangle/sawtooth/inverse_sawtooth/noise` as register ops), `$lightmap`→`_white`, `$dlight`→`_black`. Parsed and ignored: editor/compile keywords (`qer_*`, `q3map_*`, `tesssize`, `light <n>`, `entityMergable`, `nomipmaps`, `allowcompress`/`nocompress`, `clampTime`, `distancecull`). Warn and skip line on everything else (no `MF_DEFAULTED`).
 3. ~~MDC loader~~ Done (shares the fixed MD3 path through the `LoadHeader`/`LodFileExtension` hooks).
-4. Q3 skin parser + remap hook.
+4. ~~Q3 skin parser + remap hook~~ Done: `idDeclSkin` parses both the D3 brace syntax and the Q3 `surface,shader` list, loads Q3 skin files lazily by name, and `R_RemapShaderBySkin` remaps by md3 surface name from the MD3/MDC instantiate path. MDS/MDM/MD4 surface names remain a follow-up. Details in section 2.4.
 5. Lighting provider decision for `$lightmap`/lightgrid keywords (coupled to the map format decision).
 6. Global fog system, `skyparms` sky stage, sun flare.
 7. ~~MDS/MDM/MDX~~ Done (plus MD4 for completion).
