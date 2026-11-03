@@ -1,0 +1,35 @@
+# Standalone CLI tool: converts id Tech 3 .shader scripts into Doom 3 BFG
+# .mtr materials. The tool hosts the engine framework through sys/stub
+# (Tool_InitFramework provides the common/sys/cvar/cmd/file system stubs)
+# and links the framework files it needs on top of idLib.
+import os
+
+Import('env', 'build_objects', 'collect_sources', 'require_sources', 'BIN_DIR', 'external_lib', 'idlib_lib', '_track_progress')
+
+tool_sources = require_sources(
+    'ConvertIdTech3Assets',
+    collect_sources(('sys/stub', 'tools/convertidtech3assets'))
+    + [
+        # minimal framework closure behind the stub API
+        'framework/CmdSystem.cpp',
+        'framework/CVarSystem.cpp',
+        'framework/File.cpp',
+        'framework/File_Manifest.cpp',
+        'framework/File_Pak.cpp',
+        'framework/File_Resource.cpp',
+        'framework/File_Zip.cpp',
+        'framework/FileSystem.cpp',
+    ]
+)
+
+tool_env = env.Clone()
+# the base environment builds console-subsystem executables; the tool
+# needs no GUI link flags or game libraries
+tool_objects = build_objects(tool_env, 'ConvertIdTech3Assets', tool_sources)
+tool_target_nodes = tool_env.Program(
+    os.path.join(BIN_DIR, 'convertidtech3assets.exe'),
+    tool_objects + [external_lib, idlib_lib],
+)
+_track_progress(tool_env, tool_target_nodes)
+tool_target = tool_target_nodes[0]
+Return('tool_target')
