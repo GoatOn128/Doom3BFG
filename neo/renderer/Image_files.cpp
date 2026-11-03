@@ -38,19 +38,15 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "stb/stb_image_write.h"
 
-typedef struct {
-	const char*	ext;
-	void	( *ImageLoader )( const char *filename, unsigned char **pic, int *width, int *height, ID_TIME_T *timestamp );
-} imageExtToLoader_t;
-
-static imageExtToLoader_t imageLoaders[] = {
-	{"tga", RB_LoadImage},
-	{"bmp", RB_LoadImage},
-	{"png", RB_LoadImage},
-	{"jpg", RB_LoadImage},
+static const char *cameraSides[6] = {
+	"_forward", "_back", "_left", "_right",
+	"_up", "_down"
 };
 
-static const int numImageLoaders = sizeof(imageLoaders) / sizeof(imageLoaders[0]);
+static const char *axisSides[6] = {
+	"_px", "_nx", "_py", "_ny",
+	"_pz", "_nz"
+};
 
 /*
 ================
@@ -277,11 +273,7 @@ Loads six files with proper extensions
 */
 bool R_LoadCubeImages( const char *imgName, cubeFiles_t extensions, byte *pics[6], int *outSize, ID_TIME_T *timestamp ) {
 	int		i, j;
-	char	*cameraSides[6] =  { "_forward.tga", "_back.tga", "_left.tga", "_right.tga",
-		"_up.tga", "_down.tga" };
-	char	*axisSides[6] =  { "_px.tga", "_nx.tga", "_py.tga", "_ny.tga",
-		"_pz.tga", "_nz.tga" };
-	char	**sides;
+	const char **sides;
 	char	fullName[MAX_IMAGE_NAME];
 	int		width, height, size = 0;
 
@@ -303,11 +295,11 @@ bool R_LoadCubeImages( const char *imgName, cubeFiles_t extensions, byte *pics[6
 		idStr::snPrintf( fullName, sizeof( fullName ), "%s%s", imgName, sides[i] );
 
 		ID_TIME_T thisTime;
-		if ( !pics ) {
-			// just checking timestamps
-			R_LoadImageProgram( fullName, NULL, &width, &height, &thisTime );
+		if ( pics ) {
+			R_LoadImage( fullName, &pics[i], &width, &height, &thisTime, false );
 		} else {
-			R_LoadImageProgram( fullName, &pics[i], &width, &height, &thisTime );
+			// Just checking timestamps.
+			R_LoadImage( fullName, NULL, &width, &height, &thisTime, false );
 		}
 		if ( thisTime == FILE_NOT_FOUND_TIMESTAMP ) {
 			break;
@@ -354,8 +346,11 @@ bool R_LoadCubeImages( const char *imgName, cubeFiles_t extensions, byte *pics[6
 	if ( i != 6 ) {
 		// we had an error, so free everything
 		if ( pics ) {
-			for ( j = 0 ; j < i ; j++ ) {
-				R_StaticFree( pics[j] );
+			for ( j = 0 ; j < 6 ; j++ ) {
+				if ( pics[j] ) {
+					R_StaticFree( pics[j] );
+					pics[j] = NULL;
+				}
 			}
 		}
 
