@@ -860,6 +860,7 @@ static idStr Q3ParseShader( idLexer &src, const char *shaderName, Q3ShaderConver
 	idStr body;
 	idStr stages;
 	idStr deformLine;
+	idStr lightImage;
 	q3Stage_t pending;
 	bool havePending = false;
 
@@ -911,6 +912,15 @@ static idStr Q3ParseShader( idLexer &src, const char *shaderName, Q3ShaderConver
 			conv->numStages++;
 			continue;
 		}
+		if ( !token.Icmp( "q3map_lightimage" ) ) {
+			// the light image only drives the q3map compile in Quake 3; it
+			// is collected here so the shader can fake the emitting surface
+			idToken image;
+			if ( src.ReadTokenOnLine( &image ) ) {
+				lightImage = Q3ImageName( image.c_str() ).c_str();
+			}
+			continue;
+		}
 		Q3ParseShaderDirective( src, token, body, conv );
 	}
 
@@ -935,6 +945,16 @@ static idStr Q3ParseShader( idLexer &src, const char *shaderName, Q3ShaderConver
 		} else {
 			body += deformLine.c_str();
 		}
+	}
+
+	// the Doom 3 lighting model has no surface lights, so the light image
+	// is faked as an additive fullbright stage: emitting surfaces still glow
+	if ( lightImage.Length() > 0 ) {
+		stages += "\t//q3map_lightimage faked as an additive fullbright stage\n";
+		stages += "\t{\n\t\tblend add\n\t\tmap ";
+		stages += lightImage.c_str();
+		stages += "\n\t}\n";
+		conv->numStages++;
 	}
 
 	idStr out = "material ";
