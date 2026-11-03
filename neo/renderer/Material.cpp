@@ -1644,6 +1644,7 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 		if ( !ts->image ) {
 			ts->image = globalImages->defaultImage;
 		}
+	}
 
 	// load the animMap frame sequence if the stage had one; the first
 	// frame doubles as the regular stage image
