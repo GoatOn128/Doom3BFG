@@ -10,9 +10,9 @@ Out of scope: Q3 BSP map format, game logic, sound, networking. Some shader feat
 
 ### 1.1 What the engine has today
 
-- Materials load only from decls in `materials/*.mtr` (`neo/framework/DeclManager.cpp`: `RegisterDeclFolder("materials", ".mtr", DECL_MATERIAL)`). There is no folder/extension registration for `scripts/*.shader`.
-- `idMaterial::Parse` (`neo/renderer/Material.cpp`) parses Doom 3 syntax only. Any unknown token sets `MF_DEFAULTED` and kills the whole material.
-- The only Q3-family keyword currently parsed is `qer_editorimage`.
+- Materials load from decls in `materials/*.mtr` (`neo/framework/DeclManager.cpp`: `RegisterDeclFolder("materials", ".mtr", DECL_MATERIAL)`) and from `scripts/*.shader` through the legacy Q3 parser (`RegisterDeclFolder("scripts", ".shader", DECL_MATERIAL)`, dispatched by file extension in `idMaterial::Parse`).
+- `idMaterial::Parse` (`neo/renderer/Material.cpp`) parses Doom 3 syntax for `.mtr` sources and legacy Q3 syntax for `.shader` sources (`ParseLegacyMaterial`). Doom 3 unknown tokens still set `MF_DEFAULTED`; the legacy parser warns and skips the line instead.
+- `qer_editorimage` is honored by both parsers (`editorImageName`).
 - The `infoParms` table maps Doom 3 content/surface flags (`solid`, `water`, `slick`, `ladder`, `metal`, ...). The Q3/ET `SURF_*` / `CONTENTS_*` flag set is different.
 - Stage machinery that exists and is useful: `blend` with the same `GL_*` enum names as Q3, `alphaTest`, `texGen reflect/skybox/wobbleSky/normal`, `translate/scale/centerScale/shear/rotate`, `vertexColor/inverseVertexColor`, color registers (`color/red/green/blue/alpha/rgb/rgba`), `maskDepth`, `videomap`, `nopicmip`, `clamp` variants, `if` conditionals, float expressions with `time`, `parm0-11`, `global0-7` and tables (`sinTable`, `cosTable`).
 - Images load through stb_image: tga, bmp, png, jpg (`neo/renderer/Image_files.cpp`). Q3-era textures (.tga/.jpg) already load fine. No PCX/WAL (not needed for ET).
@@ -33,7 +33,7 @@ textures/common/caulk
 }
 ```
 
-Loader note: `idDeclFile::LoadAndParse` already supports typeless decls through a folder's default decl type (it falls back to `defaultType` when the first token is not a registered type name), so `scripts/*.shader` can be registered with `RegisterDeclFolder("scripts", ".shader", DECL_MATERIAL)` and the scanner will pick up every `textures/... { ... }` block as a material decl. The missing part is the parser: `idMaterial::Parse` must gain a Q3 syntax mode (or a separate decl subclass), otherwise every Q3 token defaults the material.
+Loader note: `idDeclFile::LoadAndParse` supports typeless decls through a folder's default decl type (it falls back to `defaultType` when the first token is not a registered type name), so `scripts/*.shader` is registered with `RegisterDeclFolder("scripts", ".shader", DECL_MATERIAL)` and the scanner picks up every `textures/... { ... }` block as a material decl. `idMaterial::Parse` detects the `.shader` source file and runs the legacy Q3 parser (`ParseLegacyMaterial`) instead of the Doom 3 one.
 
 Verified runtime keyword set from ET: Legacy `tr_shader.c` (these are the runtime-relevant ones; `qer_*`, most `q3map_*`, `tesssize` and `light <value>` are parsed and ignored):
 
@@ -169,7 +169,7 @@ Licensing note: reference implementations for MD3/MDC/MDS/MDM/MDX live in the ET
 ## 3. Recommended implementation order
 
 1. ~~MD3 loader fixes~~ Done (`81dc731`): normal decode + tangent derivation, per-frame bounds, tag exposure with a lerped tag query API, LOD chain.
-2. Q3 shader parsing: register `scripts/*.shader` as a material decl folder (the typeless-decl scanner path already exists), add the Q3 syntax mode to the parser, implement the group A keywords, parse-and-ignore the editor/compile keywords, warn on the rest.
+2. ~~Q3 shader parsing~~ Done: `scripts/*.shader` registered as a material decl folder (`DeclManager.cpp`), `idMaterial::Parse` dispatches to `ParseLegacyMaterial` for `.shader` sources. Implemented: group A keywords (blend/texgen/tcGen/tcMod/rgbGen/alphaGen/alphaFunc/depthFunc/depthWrite/animMap/clamp/cull/sort/polygonOffset/nopicmip-per-shader/deformVertexes autosprite/surfaceparm/implicit*), waveform ops (`sin/square/triangle/sawtooth/inverse_sawtooth/noise` as register ops), `$lightmap`→`_white`, `$dlight`→`_black`. Parsed and ignored: editor/compile keywords (`qer_*`, `q3map_*`, `tesssize`, `light <n>`, `entityMergable`, `nomipmaps`, `allowcompress`/`nocompress`, `clampTime`, `distancecull`). Warn and skip line on everything else (no `MF_DEFAULTED`).
 3. ~~MDC loader~~ Done (shares the fixed MD3 path through the `LoadHeader`/`LodFileExtension` hooks).
 4. Q3 skin parser + remap hook.
 5. Lighting provider decision for `$lightmap`/lightgrid keywords (coupled to the map format decision).

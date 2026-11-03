@@ -171,6 +171,10 @@ void idMaterial::FreeData() {
 				Mem_Free( stages[i].newStage );
 				stages[i].newStage = NULL;
 			}
+			if ( stages[i].texture.animMapFrames != NULL ) {
+				Mem_Free( stages[i].texture.animMapFrames );
+				stages[i].texture.animMapFrames = NULL;
+			}
 		}
 		R_StaticFree( stages );
 		stages = NULL;
@@ -289,6 +293,60 @@ static infoParm_t	infoParms[] = {
 };
 
 static const int numInfoParms = sizeof(infoParms) / sizeof (infoParms[0]);
+
+// Q3 / ET surface parms for the legacy shader syntax. Entries with all flag
+// fields zero are gameplay or BSP compile flags consumed by the game module
+// or a map compiler; they are accepted so legacy shader files load cleanly.
+// nodraw, nomarks and noshadows are handled separately in ParseLegacyMaterial.
+static infoParm_t legacySurfaceParms[] = {
+	{"clipmissile",		1, 0, 0},		// impact only specific weapons (game side)
+	{"water",			0, 0, CONTENTS_WATER},
+	{"slag",			1, 0, 0},		// no slime / lava contents in this engine
+	{"lava",			1, 0, 0},
+	{"playerclip",		0, 0, CONTENTS_PLAYERCLIP},
+	{"monsterclip",		0, 0, CONTENTS_MONSTERCLIP},
+	{"nodrop",			1, 0, 0},		// don't drop items or leave bodies (game side)
+	{"nonsolid",		1, 0, 0},		// clears the solid flag
+	{"origin",			1, 0, 0},		// center of rotating brushes (map compiler)
+	{"trans",			0, 0, 0},		// translucency is derived from the stage blending here
+	{"detail",			0, 0, 0},		// structural detail hint (map compiler)
+	{"structural",		0, 0, 0},
+	{"areaportal",		0, 0, CONTENTS_AREAPORTAL},
+	{"clusterportal",	1, 0, 0},		// bot hint (game side)
+	{"donotenter",		1, 0, 0},
+	{"donotenterlarge",	1, 0, 0},
+	{"fog",				1, 0, 0},		// global fog would need a fog system
+	{"sky",				0, 0, 0},		// sky handling is material based in this engine
+	{"lightfilter",		0, 0, 0},		// light grid features need a lightmap system
+	{"alphashadow",		0, 0, 0},
+	{"hint",			0, 0, 0},		// BSP splitter hint
+	{"slick",			0, SURF_SLICK, 0},
+	{"noimpact",		0, SURF_NOIMPACT, 0},
+	{"ladder",			0, SURF_LADDER, 0},
+	{"nodamage",		0, SURF_NODAMAGE, 0},
+	{"monsterslick",	0, 0, 0},		// monster only slick (game side)
+	{"monsterslicknorth",	0, 0, 0},
+	{"monsterslickeast",	0, 0, 0},
+	{"monsterslicksouth",	0, 0, 0},
+	{"monsterslickwest",	0, 0, 0},
+	{"glass",			0, SURFTYPE_GLASS, 0},
+	{"splash",			0, 0, 0},		// water splash mark (game side)
+	{"metal",			0, SURFTYPE_METAL, 0},
+	{"metalsteps",		0, SURFTYPE_METAL, 0},
+	{"nosteps",			0, SURF_NOSTEPS, 0},
+	{"woodsteps",		0, SURFTYPE_WOOD, 0},
+	{"grasssteps",		0, 0, 0},		// footstep types without a Doom 3 surface type
+	{"gravelsteps",		0, 0, 0},
+	{"carpetsteps",		0, 0, 0},
+	{"snowsteps",		0, 0, 0},
+	{"roofsteps",		0, 0, 0},
+	{"rubble",			0, 0, 0},
+	{"pointlight",		0, 0, 0},		// light grid sampling (lightmap system)
+	{"nolightmap",		0, 0, 0},		// no lightmap channel exists here
+	{"nodlight",		0, 0, 0},		// dynamic lights are per-light interactions here
+};
+
+static const int numLegacySurfaceParms = sizeof(legacySurfaceParms) / sizeof (legacySurfaceParms[0]);
 
 
 /*
@@ -750,6 +808,10 @@ void idMaterial::ClearStage( shaderStage_t *ss ) {
 	ss->color.registers[1] =
 	ss->color.registers[2] =
 	ss->color.registers[3] = GetExpressionConstant( 1 );
+	ss->depthWrite = false;
+	ss->texture.animMapFrames = NULL;
+	ss->texture.numAnimMapFrames = 0;
+	ss->texture.animMapFps = 0.0f;
 }
 
 /*
@@ -1558,11 +1620,27 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 	}
 
 
+	FinishStage( ss, newStage, imageName, tf, trp, td, cubeMap );
+}
+
+/*
+=================
+idMaterial::FinishStage
+
+Shared stage finalization for the Doom 3 and the legacy Q3 stage
+parsers: the program stage copy, the stage count, the texture usage
+selection, the alpha test coverage stage, and the image load.
+=================
+*/
+void idMaterial::FinishStage( shaderStage_t *ss, const newShaderStage_t &newStage, const char *imageName, textureFilter_t tf, textureRepeat_t trp, int td, int cubeMap ) {
+	textureStage_t *ts = &ss->texture;
+
 	// if we are using newStage, allocate a copy of it
 	if ( newStage.fragmentProgram || newStage.vertexProgram ) {
-		newStage.glslProgram = renderProgManager.FindGLSLProgram( GetName(), newStage.vertexProgram, newStage.fragmentProgram );
-		ss->newStage = (newShaderStage_t *)Mem_Alloc( sizeof( newStage ), TAG_MATERIAL );
-		*(ss->newStage) = newStage;
+		newShaderStage_t	programStage = newStage;
+		programStage.glslProgram = renderProgManager.FindGLSLProgram( GetName(), programStage.vertexProgram, programStage.fragmentProgram );
+		ss->newStage = (newShaderStage_t *)Mem_Alloc( sizeof( programStage ), TAG_MATERIAL );
+		*(ss->newStage) = programStage;
 	}
 
 	// successfully parsed a stage
@@ -1601,7 +1679,7 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 
 		// now load the image with all the parms we parsed for the coverage stage
 		if ( imageName[0] ) {
-			coverageTS->image = globalImages->ImageFromFile( imageName, tf, trp, TD_COVERAGE, cubeMap );
+			coverageTS->image = globalImages->ImageFromFile( imageName, tf, trp, TD_COVERAGE, (cubeFiles_t)cubeMap );
 			if ( !coverageTS->image ) {
 				coverageTS->image = globalImages->defaultImage;
 			}
@@ -1613,7 +1691,7 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 
 	// now load the image with all the parms we parsed
 	if ( imageName[0] ) {
-		ts->image = globalImages->ImageFromFile( imageName, tf, trp, td, cubeMap );
+		ts->image = globalImages->ImageFromFile( imageName, tf, trp, (textureUsage_t)td, (cubeFiles_t)cubeMap );
 		if ( !ts->image ) {
 			ts->image = globalImages->defaultImage;
 		}
@@ -1836,6 +1914,14 @@ void idMaterial::ParseMaterial( idLexer &src ) {
 	int			i;
 
 	s = 0;
+
+	// Q3 / ET legacy shaders: scripts/*.shader files use the old syntax
+	const char *sourceFileName = GetFileName();
+	if ( sourceFileName != NULL && idStr::Length( sourceFileName ) > 7 &&
+		!idStr::Icmp( sourceFileName + idStr::Length( sourceFileName ) - 7, ".shader" ) ) {
+		ParseLegacyMaterial( src );
+		return;
+	}
 
 	numOps = 0;
 	numRegisters = EXP_REG_NUM_PREDEFINED;	// leave space for the parms to be copied in
@@ -2151,6 +2237,782 @@ void idMaterial::ParseMaterial( idLexer &src ) {
 }
 
 /*
+=================
+LegacyImageName
+
+Maps the Q3 built-in image tokens onto the Doom 3 intrinsic images.
+$lightmap and $dlight are approximations: this engine has no BSP
+lightmap or merged dynamic light texture, so the lightmap modulates
+with white and the dynamic light adds nothing.
+=================
+*/
+static const char *LegacyImageName( idLexer &src, const char *name ) {
+	if ( !idStr::Icmp( name, "$lightmap" ) ) {
+		src.Warning( "'$lightmap' approximated with '_white' (no lightmap system)" );
+		return "_white";
+	}
+	if ( !idStr::Icmp( name, "$whiteimage" ) || !idStr::Icmp( name, "*white" ) ) {
+		return "_white";
+	}
+	if ( !idStr::Icmp( name, "$dlight" ) ) {
+		src.Warning( "'$dlight' approximated with '_black' (no merged dynamic light texture)" );
+		return "_black";
+	}
+	return name;
+}
+
+enum legacyImplicit_t {
+	LEGACY_IMPLICIT_NONE,
+	LEGACY_IMPLICIT_MAP,
+	LEGACY_IMPLICIT_BLEND,
+	LEGACY_IMPLICIT_MASK
+};
+
+/*
+=================
+idMaterial::ParseLegacyWaveform
+
+Parses the legacy Q3 waveform syntax
+"<func> <base> <amplitude> <phase> <frequency>" and emits an
+expression register evaluating to
+base + amplitude * func( phase + time * frequency ).
+The wave functions use cycles like the Q3 function tables.
+=================
+*/
+int idMaterial::ParseLegacyWaveform( idLexer &src ) {
+	idToken		token;
+	expOpType_t	opType;
+
+	if ( !src.ExpectAnyToken( &token ) ) {
+		SetMaterialFlag( MF_DEFAULTED );
+		return GetExpressionConstant( 0 );
+	}
+
+	if ( !token.Icmp( "sin" ) ) {
+		opType = OP_TYPE_WAVE_SIN;
+	} else if ( !token.Icmp( "square" ) ) {
+		opType = OP_TYPE_WAVE_SQUARE;
+	} else if ( !token.Icmp( "triangle" ) ) {
+		opType = OP_TYPE_WAVE_TRIANGLE;
+	} else if ( !token.Icmp( "sawtooth" ) ) {
+		opType = OP_TYPE_WAVE_SAWTOOTH;
+	} else if ( !token.Icmp( "inversesawtooth" ) ) {
+		opType = OP_TYPE_WAVE_INVERSE_SAWTOOTH;
+	} else if ( !token.Icmp( "noise" ) ) {
+		opType = OP_TYPE_WAVE_NOISE;
+	} else {
+		src.Warning( "unknown wave function '%s'", token.c_str() );
+		SetMaterialFlag( MF_DEFAULTED );
+		return GetExpressionConstant( 0 );
+	}
+
+	const float base = src.ParseFloat();
+	const float amplitude = src.ParseFloat();
+	const float phase = src.ParseFloat();
+	const float frequency = src.ParseFloat();
+
+	// the wave function operand is phase + frequency * time, in cycles
+	pd->registersAreConstant = false;
+	const int operand = EmitOp( GetExpressionConstant( phase ),
+		EmitOp( GetExpressionConstant( frequency ), EXP_REG_TIME, OP_TYPE_MULTIPLY ), OP_TYPE_ADD );
+	const int wave = EmitOp( operand, 0, opType );
+	const int scaled = EmitOp( GetExpressionConstant( amplitude ), wave, OP_TYPE_MULTIPLY );
+	return EmitOp( GetExpressionConstant( base ), scaled, OP_TYPE_ADD );
+}
+
+/*
+=================
+idMaterial::ParseLegacyStage
+
+Parses a single legacy Q3 / ET shader stage and redirects the keywords
+onto the Doom 3 stage state: blendfunc onto the blend state bits,
+rgbGen and alphaGen onto the color registers, tcGen and tcMod onto the
+texgen and the 2x3 texture matrix, alphaFunc onto the alpha test.
+Unsupported keywords warn and are ignored, they do not kill the stage.
+=================
+*/
+void idMaterial::ParseLegacyStage( idLexer &src, const textureRepeat_t trpDefault ) {
+	idToken				token;
+	shaderStage_t *		ss;
+	textureStage_t *	ts;
+	textureFilter_t		tf = TF_DEFAULT;
+	textureRepeat_t		trp = trpDefault;
+	textureUsage_t		td = TD_DEFAULT;
+	char				imageName[MAX_IMAGE_NAME];
+	idStr				animMapNames[MAX_LEGACY_ANIM_FRAMES];
+	int					numAnimMapFrames = 0;
+	float				animMapFps = 0.0f;
+	int					a, b;
+	int					matrix[2][3];
+	newShaderStage_t	newStage;
+
+	if ( numStages >= MAX_SHADER_STAGES ) {
+		SetMaterialFlag( MF_DEFAULTED );
+		common->Warning( "legacy shader '%s' exceeded %i stages", GetName(), MAX_SHADER_STAGES );
+	}
+
+	imageName[0] = 0;
+
+	memset( &newStage, 0, sizeof( newStage ) );
+	newStage.glslProgram = -1;
+
+	ss = &pd->parseStages[numStages];
+	ts = &ss->texture;
+
+	ClearStage( ss );
+
+	while ( 1 ) {
+		if ( TestMaterialFlag( MF_DEFAULTED ) ) {
+			return;
+		}
+		if ( !src.ExpectAnyToken( &token ) ) {
+			SetMaterialFlag( MF_DEFAULTED );
+			return;
+		}
+
+		if ( token == "}" ) {
+			break;
+		}
+
+		// image options
+		if ( !token.Icmp( "map" ) || !token.Icmp( "map16" ) || !token.Icmp( "map32" ) ||
+			!token.Icmp( "mapcomp" ) || !token.Icmp( "mapnocomp" ) ) {
+			// the 16/32 bit and compression variants are obsolete, they all select the plain image
+			if ( !src.ReadTokenOnLine( &token ) ) {
+				src.Warning( "missing image name" );
+				continue;
+			}
+			idStr::Copynz( imageName, LegacyImageName( src, token.c_str() ), sizeof( imageName ) );
+			continue;
+		}
+		if ( !token.Icmp( "clampmap" ) ) {
+			trp = TR_CLAMP;
+			if ( !src.ReadTokenOnLine( &token ) ) {
+				src.Warning( "missing image name" );
+				continue;
+			}
+			idStr::Copynz( imageName, LegacyImageName( src, token.c_str() ), sizeof( imageName ) );
+			continue;
+		}
+		if ( !token.Icmp( "animMap" ) || !token.Icmp( "animmapcomp" ) || !token.Icmp( "animmapnocomp" ) ) {
+			animMapFps = src.ParseFloat();
+			while ( src.ReadTokenOnLine( &token ) ) {
+				if ( numAnimMapFrames == MAX_LEGACY_ANIM_FRAMES ) {
+					src.Warning( "too many animMap frames, only %i used", MAX_LEGACY_ANIM_FRAMES );
+					break;
+				}
+				animMapNames[numAnimMapFrames++] = token;
+			}
+			if ( numAnimMapFrames == 0 ) {
+				src.Warning( "animMap without frames" );
+				continue;
+			}
+			// the first frame doubles as the static image for the paths that do not animate
+			idStr::Copynz( imageName, animMapNames[0].c_str(), sizeof( imageName ) );
+			continue;
+		}
+		if ( !token.Icmp( "videoMap" ) ) {
+			// Q3 video maps always loop
+			if ( !src.ReadTokenOnLine( &token ) ) {
+				src.Warning( "missing parameter for 'videoMap'" );
+				continue;
+			}
+			idStr fileName = token.c_str();
+			ts->cinematic = idCinematic::Alloc( fileName );
+			ts->cinematic->InitFromFile( fileName.c_str(), true );
+			continue;
+		}
+
+		// blending
+		if ( !token.Icmp( "blendfunc" ) ) {
+			if ( !src.ReadTokenOnLine( &token ) ) {
+				src.Warning( "missing parameter for 'blendfunc'" );
+				continue;
+			}
+			if ( !token.Icmp( "add" ) ) {
+				ss->drawStateBits = GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE;
+			} else if ( !token.Icmp( "filter" ) ) {
+				ss->drawStateBits = GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
+			} else if ( !token.Icmp( "blend" ) ) {
+				ss->drawStateBits = GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
+			} else {
+				// a pair of GL blend modes, the comma is optional
+				const int srcBlend = NameToSrcBlendMode( token );
+				if ( !src.ReadTokenOnLine( &token ) ) {
+					src.Warning( "missing destination blend mode for 'blendfunc'" );
+					SetMaterialFlag( MF_DEFAULTED );
+					continue;
+				}
+				if ( token == "," ) {
+					if ( !src.ReadTokenOnLine( &token ) ) {
+						src.Warning( "missing destination blend mode for 'blendfunc'" );
+						SetMaterialFlag( MF_DEFAULTED );
+						continue;
+					}
+				}
+				ss->drawStateBits = srcBlend | NameToDstBlendMode( token );
+			}
+			continue;
+		}
+
+		// color generation
+		if ( !token.Icmp( "rgbGen" ) ) {
+			if ( !src.ReadTokenOnLine( &token ) ) {
+				src.Warning( "missing parameter for 'rgbGen'" );
+				continue;
+			}
+			if ( !token.Icmp( "identity" ) || !token.Icmp( "identityLighting" ) ) {
+				// the stage color already defaults to white, identityLighting is
+				// a Q3 overbright convention this engine does not need
+			} else if ( !token.Icmp( "wave" ) ) {
+				a = ParseLegacyWaveform( src );
+				ss->color.registers[0] = ss->color.registers[1] = ss->color.registers[2] = a;
+			} else if ( !token.Icmp( "const" ) ) {
+				const float red = src.ParseFloat();
+				const float green = src.ParseFloat();
+				const float blue = src.ParseFloat();
+				ss->color.registers[0] = GetExpressionConstant( red );
+				ss->color.registers[1] = GetExpressionConstant( green );
+				ss->color.registers[2] = GetExpressionConstant( blue );
+			} else if ( !token.Icmp( "vertex" ) || !token.Icmp( "exactVertex" ) || !token.Icmp( "lightingDiffuse" ) ) {
+				// Q3 feeds precomputed vertex lighting through the vertex colors
+				ss->vertexColor = SVC_MODULATE;
+			} else if ( !token.Icmp( "oneMinusVertex" ) ) {
+				ss->vertexColor = SVC_INVERSE_MODULATE;
+			} else if ( !token.Icmp( "entity" ) ) {
+				// the entity color is routed through the shader parms, the game
+				// module decides which parms carry it
+				pd->registersAreConstant = false;
+				ss->color.registers[0] = EXP_REG_PARM0;
+				ss->color.registers[1] = EXP_REG_PARM1;
+				ss->color.registers[2] = EXP_REG_PARM2;
+			} else if ( !token.Icmp( "oneMinusEntity" ) ) {
+				pd->registersAreConstant = false;
+				const int one = GetExpressionConstant( 1 );
+				ss->color.registers[0] = EmitOp( one, EXP_REG_PARM0, OP_TYPE_SUBTRACT );
+				ss->color.registers[1] = EmitOp( one, EXP_REG_PARM1, OP_TYPE_SUBTRACT );
+				ss->color.registers[2] = EmitOp( one, EXP_REG_PARM2, OP_TYPE_SUBTRACT );
+			} else {
+				src.Warning( "unsupported rgbGen '%s'", token.c_str() );
+				src.SkipRestOfLine();
+			}
+			continue;
+		}
+		if ( !token.Icmp( "alphaGen" ) ) {
+			if ( !src.ReadTokenOnLine( &token ) ) {
+				src.Warning( "missing parameter for 'alphaGen'" );
+				continue;
+			}
+			if ( !token.Icmp( "identity" ) ) {
+				// the stage alpha already defaults to one
+			} else if ( !token.Icmp( "wave" ) ) {
+				ss->color.registers[3] = ParseLegacyWaveform( src );
+			} else if ( !token.Icmp( "const" ) ) {
+				ss->color.registers[3] = GetExpressionConstant( src.ParseFloat() );
+			} else if ( !token.Icmp( "entity" ) ) {
+				pd->registersAreConstant = false;
+				ss->color.registers[3] = EXP_REG_PARM3;
+			} else if ( !token.Icmp( "oneMinusEntity" ) ) {
+				pd->registersAreConstant = false;
+				ss->color.registers[3] = EmitOp( GetExpressionConstant( 1 ), EXP_REG_PARM3, OP_TYPE_SUBTRACT );
+			} else if ( !token.Icmp( "vertex" ) ) {
+				ss->vertexColor = SVC_MODULATE;
+			} else {
+				src.Warning( "unsupported alphaGen '%s'", token.c_str() );
+				src.SkipRestOfLine();
+			}
+			continue;
+		}
+
+		// alpha testing
+		if ( !token.Icmp( "alphaFunc" ) ) {
+			if ( !src.ReadTokenOnLine( &token ) ) {
+				src.Warning( "missing parameter for 'alphaFunc'" );
+				continue;
+			}
+			if ( !token.Icmp( "GT0" ) ) {
+				ss->hasAlphaTest = true;
+				ss->alphaTestRegister = GetExpressionConstant( 0.01f );
+				coverage = MC_PERFORATED;
+			} else if ( !token.Icmp( "GE128" ) ) {
+				ss->hasAlphaTest = true;
+				ss->alphaTestRegister = GetExpressionConstant( 0.5f );
+				coverage = MC_PERFORATED;
+			} else if ( !token.Icmp( "LT128" ) ) {
+				// the alpha test can only cull low alpha texels, an inverted test is not expressible
+				src.Warning( "alphaFunc LT128 is an inverted test and is ignored" );
+			} else {
+				src.Warning( "unknown alphaFunc '%s'", token.c_str() );
+			}
+			continue;
+		}
+
+		// depth handling
+		if ( !token.Icmp( "depthFunc" ) ) {
+			if ( !src.ReadTokenOnLine( &token ) ) {
+				src.Warning( "missing parameter for 'depthFunc'" );
+				continue;
+			}
+			if ( !token.Icmp( "lequal" ) ) {
+				// the depth func is chosen per sort in idMaterial::Parse, lequal is the default
+			} else if ( !token.Icmp( "equal" ) ) {
+				ss->drawStateBits = ( ss->drawStateBits & ~GLS_DEPTHFUNC_BITS ) | GLS_DEPTHFUNC_EQUAL;
+			} else {
+				src.Warning( "unknown depthFunc '%s'", token.c_str() );
+			}
+			continue;
+		}
+		if ( !token.Icmp( "depthWrite" ) ) {
+			// keep depth writes on this stage, idMaterial::Parse honors it for blended stages
+			ss->depthWrite = true;
+			continue;
+		}
+
+		// texture coordinate generation
+		if ( !token.Icmp( "tcGen" ) ) {
+			if ( !src.ReadTokenOnLine( &token ) ) {
+				src.Warning( "missing parameter for 'tcGen'" );
+				continue;
+			}
+			if ( !token.Icmp( "texture" ) || !token.Icmp( "base" ) ) {
+				// explicit texture coordinates, the default
+			} else if ( !token.Icmp( "environment" ) ) {
+				ts->texgen = TG_REFLECT_CUBE;
+			} else if ( !token.Icmp( "lightmap" ) ) {
+				// there is no lightmap channel, the coordinates stay explicit
+				src.Warning( "tcGen lightmap has no lightmap channel" );
+			} else {
+				src.Warning( "unsupported tcGen '%s'", token.c_str() );
+			}
+			continue;
+		}
+
+		// texture coordinate modification
+		if ( !token.Icmp( "tcMod" ) ) {
+			if ( !src.ReadTokenOnLine( &token ) ) {
+				src.Warning( "missing parameter for 'tcMod'" );
+				continue;
+			}
+			if ( !token.Icmp( "rotate" ) ) {
+				// Q3 rotates the texture clockwise by degrees per second around the texture center
+				const float degsPerSecond = src.ParseFloat();
+				pd->registersAreConstant = false;
+				// the rotation angle in cycles, negative for the Q3 rotation direction
+				a = EmitOp( GetExpressionConstant( -degsPerSecond / 360.0f ), EXP_REG_TIME, OP_TYPE_MULTIPLY );
+				const int sinReg = EmitOp( a, 0, OP_TYPE_WAVE_SIN );
+				// cosine is sine a quarter cycle ahead
+				const int cosReg = EmitOp( EmitOp( a, GetExpressionConstant( 0.25f ), OP_TYPE_ADD ), 0, OP_TYPE_WAVE_SIN );
+
+				// this subtracts 0.5, then rotates, then adds 0.5
+				matrix[0][0] = cosReg;
+				matrix[0][1] = EmitOp( GetExpressionConstant( 0 ), sinReg, OP_TYPE_SUBTRACT );
+				matrix[0][2] = EmitOp( EmitOp( EmitOp( GetExpressionConstant( -0.5f ), cosReg, OP_TYPE_MULTIPLY ),
+					EmitOp( GetExpressionConstant( 0.5f ), sinReg, OP_TYPE_MULTIPLY ), OP_TYPE_ADD ),
+					GetExpressionConstant( 0.5f ), OP_TYPE_ADD );
+
+				matrix[1][0] = sinReg;
+				matrix[1][1] = cosReg;
+				matrix[1][2] = EmitOp( EmitOp( EmitOp( GetExpressionConstant( -0.5f ), sinReg, OP_TYPE_MULTIPLY ),
+					EmitOp( GetExpressionConstant( -0.5f ), cosReg, OP_TYPE_MULTIPLY ), OP_TYPE_ADD ),
+					GetExpressionConstant( 0.5f ), OP_TYPE_ADD );
+
+				MultiplyTextureMatrix( ts, matrix );
+			} else if ( !token.Icmp( "scroll" ) ) {
+				// texture units per second
+				pd->registersAreConstant = false;
+				a = EmitOp( GetExpressionConstant( src.ParseFloat() ), EXP_REG_TIME, OP_TYPE_MULTIPLY );
+				b = EmitOp( GetExpressionConstant( src.ParseFloat() ), EXP_REG_TIME, OP_TYPE_MULTIPLY );
+
+				matrix[0][0] = GetExpressionConstant( 1 );
+				matrix[0][1] = GetExpressionConstant( 0 );
+				matrix[0][2] = a;
+				matrix[1][0] = GetExpressionConstant( 0 );
+				matrix[1][1] = GetExpressionConstant( 1 );
+				matrix[1][2] = b;
+
+				MultiplyTextureMatrix( ts, matrix );
+			} else if ( !token.Icmp( "scale" ) ) {
+				a = GetExpressionConstant( src.ParseFloat() );
+				b = GetExpressionConstant( src.ParseFloat() );
+
+				matrix[0][0] = a;
+				matrix[0][1] = GetExpressionConstant( 0 );
+				matrix[0][2] = GetExpressionConstant( 0 );
+				matrix[1][0] = GetExpressionConstant( 0 );
+				matrix[1][1] = b;
+				matrix[1][2] = GetExpressionConstant( 0 );
+
+				MultiplyTextureMatrix( ts, matrix );
+			} else if ( !token.Icmp( "offset" ) ) {
+				a = GetExpressionConstant( src.ParseFloat() );
+				b = GetExpressionConstant( src.ParseFloat() );
+
+				matrix[0][0] = GetExpressionConstant( 1 );
+				matrix[0][1] = GetExpressionConstant( 0 );
+				matrix[0][2] = a;
+				matrix[1][0] = GetExpressionConstant( 0 );
+				matrix[1][1] = GetExpressionConstant( 1 );
+				matrix[1][2] = b;
+
+				MultiplyTextureMatrix( ts, matrix );
+			} else if ( !token.Icmp( "stretch" ) ) {
+				// scales the texture about the center by the reciprocal of the wave value
+				const int wave = ParseLegacyWaveform( src );
+				a = EmitOp( GetExpressionConstant( 1 ), wave, OP_TYPE_DIVIDE );
+				b = a;
+
+				// this subtracts 0.5, then scales, then adds 0.5
+				matrix[0][0] = a;
+				matrix[0][1] = GetExpressionConstant( 0 );
+				matrix[0][2] = EmitOp( GetExpressionConstant( 0.5 ), EmitOp( GetExpressionConstant( 0.5 ), a, OP_TYPE_MULTIPLY ), OP_TYPE_SUBTRACT );
+				matrix[1][0] = GetExpressionConstant( 0 );
+				matrix[1][1] = b;
+				matrix[1][2] = EmitOp( GetExpressionConstant( 0.5 ), EmitOp( GetExpressionConstant( 0.5 ), b, OP_TYPE_MULTIPLY ), OP_TYPE_SUBTRACT );
+
+				MultiplyTextureMatrix( ts, matrix );
+			} else if ( !token.Icmp( "transform" ) ) {
+				// the six values map straight onto the 2x3 texture matrix rows
+				for ( int row = 0; row < 2; row++ ) {
+					for ( int column = 0; column < 3; column++ ) {
+						matrix[row][column] = GetExpressionConstant( src.ParseFloat() );
+					}
+				}
+				MultiplyTextureMatrix( ts, matrix );
+			} else if ( !token.Icmp( "swap" ) ) {
+				// exchanges the s and t coordinates
+				matrix[0][0] = GetExpressionConstant( 0 );
+				matrix[0][1] = GetExpressionConstant( 1 );
+				matrix[0][2] = GetExpressionConstant( 0 );
+				matrix[1][0] = GetExpressionConstant( 1 );
+				matrix[1][1] = GetExpressionConstant( 0 );
+				matrix[1][2] = GetExpressionConstant( 0 );
+
+				MultiplyTextureMatrix( ts, matrix );
+			} else {
+				// turb and entityTranslate need per-vertex or per-entity evaluation
+				src.Warning( "unsupported tcMod '%s'", token.c_str() );
+				src.SkipRestOfLine();
+			}
+			continue;
+		}
+
+		if ( !token.Icmp( "detail" ) ) {
+			// the detail texture feature is obsolete, the stage draws normally
+			continue;
+		}
+		if ( !token.Icmp( "fog" ) ) {
+			// drawing only when fogged would need a global fog system
+			src.Warning( "stage keyword 'fog' is ignored (no global fog system)" );
+			continue;
+		}
+
+		src.Warning( "unknown stage keyword '%s' in legacy shader, ignored", token.c_str() );
+		src.SkipRestOfLine();
+	}
+
+	FinishStage( ss, newStage, imageName, tf, trp, td, CF_2D );
+
+	// load the animMap frame list, the draw code selects the frame by the shader time
+	if ( numAnimMapFrames > 0 ) {
+		ts->animMapFrames = (idImage **)Mem_Alloc( numAnimMapFrames * sizeof( ts->animMapFrames[0] ), TAG_MATERIAL );
+		ts->numAnimMapFrames = numAnimMapFrames;
+		ts->animMapFps = animMapFps;
+		for ( int i = 0; i < numAnimMapFrames; i++ ) {
+			ts->animMapFrames[i] = globalImages->ImageFromFile( animMapNames[i], tf, trp, td, CF_2D );
+			if ( !ts->animMapFrames[i] ) {
+				ts->animMapFrames[i] = globalImages->defaultImage;
+			}
+		}
+		// keep a static image for the paths that do not animate
+		ts->image = ts->animMapFrames[0];
+	}
+}
+
+/*
+=================
+idMaterial::ParseLegacyMaterial
+
+Parses the general (shader level) legacy Q3 / ET keywords. Group A
+keywords are redirected onto the Doom 3 material state, editor and
+compile keywords are consumed, and unsupported keywords warn and are
+ignored instead of defaulting the material.
+=================
+*/
+void idMaterial::ParseLegacyMaterial( idLexer &src ) {
+	idToken		token;
+	idLexer		newSrc;
+	char		buffer[1024];
+	bool		legacyNoDraw = false;
+	legacyImplicit_t implicit = LEGACY_IMPLICIT_NONE;
+	idStr		implicitImageName;
+
+	numOps = 0;
+	numRegisters = EXP_REG_NUM_PREDEFINED;
+	for ( int i = 0; i < numRegisters; i++ ) {
+		pd->registerIsTemporary[i] = true;
+	}
+
+	numStages = 0;
+	pd->registersAreConstant = true;
+
+	while ( 1 ) {
+		if ( TestMaterialFlag( MF_DEFAULTED ) ) {
+			return;
+		}
+		if ( !src.ExpectAnyToken( &token ) ) {
+			SetMaterialFlag( MF_DEFAULTED );
+			return;
+		}
+
+		if ( token == "}" ) {
+			break;
+		}
+		if ( token == "{" ) {
+			// create the new stage
+			ParseLegacyStage( src, TR_REPEAT );
+			continue;
+		}
+
+		// editor images
+		if ( !token.Icmp( "qer_editorimage" ) ) {
+			if ( src.ReadTokenOnLine( &token ) ) {
+				editorImageName = token.c_str();
+			}
+			src.SkipRestOfLine();
+			continue;
+		}
+		// editor and compile tool keywords
+		if ( token.Icmpn( "qer_", 4 ) == 0 || token.Icmpn( "q3map", 5 ) == 0 ||
+			!token.Icmp( "tesssize" ) || !token.Icmp( "light" ) || !token.Icmp( "entityMergable" ) ) {
+			src.SkipRestOfLine();
+			continue;
+		}
+		// image quality keywords, this engine has no picmip sized or bit depth selected images
+		if ( !token.Icmp( "nopicmip" ) || !token.Icmp( "nomipmaps" ) || !token.Icmp( "nomipmap" ) ||
+			!token.Icmp( "allowcompress" ) || !token.Icmp( "nocompress" ) ) {
+			src.SkipRestOfLine();
+			continue;
+		}
+		// time and distance control features of the Q3 runtime
+		if ( !token.Icmp( "clampTime" ) || !token.Icmp( "distancecull" ) ) {
+			src.SkipRestOfLine();
+			continue;
+		}
+
+		// surface parameters
+		if ( !token.Icmp( "surfaceparm" ) ) {
+			while ( src.ReadTokenOnLine( &token ) ) {
+				if ( !token.Icmp( "nodraw" ) ) {
+					legacyNoDraw = true;
+					continue;
+				}
+				if ( !token.Icmp( "nomarks" ) ) {
+					// no impact marks on this surface
+					allowOverlays = false;
+					continue;
+				}
+				if ( !token.Icmp( "noshadows" ) ) {
+					SetMaterialFlag( MF_NOSHADOWS );
+					continue;
+				}
+				int i;
+				for ( i = 0; i < numLegacySurfaceParms; i++ ) {
+					if ( !token.Icmp( legacySurfaceParms[i].name ) ) {
+						surfaceFlags |= legacySurfaceParms[i].surfaceFlags;
+						contentFlags |= legacySurfaceParms[i].contents;
+						if ( legacySurfaceParms[i].clearSolid ) {
+							contentFlags &= ~CONTENTS_SOLID;
+						}
+						break;
+					}
+				}
+				if ( i == numLegacySurfaceParms && !CheckSurfaceParm( &token ) ) {
+					src.Warning( "unknown surface parm '%s'", token.c_str() );
+				}
+			}
+			continue;
+		}
+
+		// cull modes
+		if ( !token.Icmp( "cull" ) ) {
+			if ( !src.ReadTokenOnLine( &token ) ) {
+				src.Warning( "missing cull mode" );
+				continue;
+			}
+			if ( !token.Icmp( "front" ) ) {
+				cullType = CT_FRONT_SIDED;
+			} else if ( !token.Icmp( "back" ) || !token.Icmp( "backside" ) || !token.Icmp( "backsided" ) ) {
+				cullType = CT_BACK_SIDED;
+				// the shadow code doesn't handle this, so just disable shadows
+				SetMaterialFlag( MF_NOSHADOWS );
+			} else if ( !token.Icmp( "none" ) || !token.Icmp( "twosided" ) || !token.Icmp( "disable" ) ) {
+				cullType = CT_TWO_SIDED;
+				// twoSided implies no-shadows, because the shadow
+				// volume would be coplanar with the surface
+				SetMaterialFlag( MF_NOSHADOWS );
+			} else {
+				src.Warning( "unknown cull mode '%s'", token.c_str() );
+			}
+			continue;
+		}
+		if ( !token.Icmp( "polygonOffset" ) ) {
+			SetMaterialFlag( MF_POLYGONOFFSET );
+			polygonOffset = 1;
+			continue;
+		}
+		if ( !token.Icmp( "nofog" ) ) {
+			noFog = true;
+			continue;
+		}
+
+		// sorting
+		if ( !token.Icmp( "sort" ) ) {
+			if ( !src.ReadTokenOnLine( &token ) ) {
+				src.Warning( "missing sort parameter" );
+				continue;
+			}
+			// the Q3 named sorts are mapped onto the Doom 3 sort scale, the
+			// relative order is kept as close as the scale allows
+			if ( !token.Icmp( "portal" ) ) {
+				sort = SS_FAR;
+			} else if ( !token.Icmp( "sky" ) ) {
+				sort = SS_PORTAL_SKY;
+			} else if ( !token.Icmp( "opaque" ) ) {
+				sort = SS_OPAQUE;
+			} else if ( !token.Icmp( "decal" ) ) {
+				sort = SS_DECAL;
+			} else if ( !token.Icmp( "seeThrough" ) ) {
+				sort = SS_FAR;
+			} else if ( !token.Icmp( "banner" ) ) {
+				sort = SS_CLOSE;
+			} else if ( !token.Icmp( "additive" ) ) {
+				sort = SS_ALMOST_NEAREST;
+			} else if ( !token.Icmp( "nearest" ) ) {
+				sort = SS_NEAREST;
+			} else if ( !token.Icmp( "underwater" ) ) {
+				sort = SS_CLOSE;
+			} else {
+				sort = atof( token );
+			}
+			continue;
+		}
+
+		// vertex deforms
+		if ( !token.Icmp( "deformVertexes" ) ) {
+			if ( !src.ReadTokenOnLine( &token ) ) {
+				src.Warning( "missing deform type" );
+				continue;
+			}
+			if ( !token.Icmp( "autosprite" ) ) {
+				deform = DFRM_SPRITE;
+				cullType = CT_TWO_SIDED;
+				SetMaterialFlag( MF_NOSHADOWS );
+			} else {
+				// the other Q3 deforms have no matching Doom 3 deform code
+				src.Warning( "unsupported deformVertexes '%s'", token.c_str() );
+				src.SkipRestOfLine();
+			}
+			continue;
+		}
+
+		// implicit material generation
+		if ( !token.Icmp( "implicitMap" ) || !token.Icmp( "implicitBlend" ) || !token.Icmp( "implicitMask" ) ) {
+			if ( !token.Icmp( "implicitMap" ) ) {
+				implicit = LEGACY_IMPLICIT_MAP;
+			} else if ( !token.Icmp( "implicitBlend" ) ) {
+				implicit = LEGACY_IMPLICIT_BLEND;
+			} else {
+				implicit = LEGACY_IMPLICIT_MASK;
+			}
+			// without an image the shader itself is the image
+			if ( src.ReadTokenOnLine( &token ) ) {
+				implicitImageName = token.c_str();
+			} else {
+				implicitImageName = GetName();
+			}
+			continue;
+		}
+
+		// keywords that would need new systems: global fog, sky stages, sun flares, light grid
+		if ( !token.Icmp( "fogParms" ) || !token.Icmp( "fogvars" ) || !token.Icmp( "skyfogvars" ) ||
+			!token.Icmp( "waterfogvars" ) || !token.Icmp( "skyparms" ) || !token.Icmp( "sunshader" ) ||
+			!token.Icmp( "portal" ) || !token.Icmp( "lightgridmulamb" ) || !token.Icmp( "lightgridmuldir" ) ) {
+			src.Warning( "unsupported shader keyword '%s' in legacy shader, ignored", token.c_str() );
+			src.SkipRestOfLine();
+			continue;
+		}
+
+		src.Warning( "unknown shader keyword '%s' in legacy shader, ignored", token.c_str() );
+		src.SkipRestOfLine();
+	}
+
+	if ( legacyNoDraw && numStages > 0 ) {
+		// Q3 nodraw surfaces have no stages, an image carrying nodraw shader
+		// still draws here because the stages say so
+		src.Warning( "surfaceparm nodraw ignored, the shader has stages" );
+	}
+	// with nodraw and no stages the material stays at zero stages, so it is never drawn
+
+	// like Q3, a legacy shader without stages defaults to a single stage
+	// with the image named like the shader
+	if ( numStages == 0 && implicit == LEGACY_IMPLICIT_NONE && !legacyNoDraw ) {
+		implicit = LEGACY_IMPLICIT_MAP;
+		implicitImageName = GetName();
+	}
+
+	// build the default stage for the implicit material keywords
+	if ( implicit != LEGACY_IMPLICIT_NONE && numStages == 0 ) {
+		const char *implicitImage = implicitImageName.Length() ? implicitImageName.c_str() : GetName();
+		switch ( implicit ) {
+		case LEGACY_IMPLICIT_BLEND:
+			idStr::snPrintf( buffer, sizeof( buffer ), "blend blend\nmap %s\n}\n", implicitImage );
+			break;
+		case LEGACY_IMPLICIT_MASK:
+			// Q3 masks with alphaFunc GT0
+			idStr::snPrintf( buffer, sizeof( buffer ), "alphaTest 0.01\nmap %s\n}\n", implicitImage );
+			break;
+		default:
+			idStr::snPrintf( buffer, sizeof( buffer ), "map %s\n}\n", implicitImage );
+			break;
+		}
+		newSrc.LoadMemory( buffer, strlen( buffer ), "implicitMap" );
+		newSrc.SetFlags( LEXFL_NOFATALERRORS | LEXFL_NOSTRINGCONCAT | LEXFL_NOSTRINGESCAPECHARS | LEXFL_ALLOWPATHNAMES );
+		ParseStage( newSrc, TR_REPEAT );
+		newSrc.FreeSource();
+	}
+
+	// the legacy stages are all ambient, so AddImplicitStages and
+	// SortInteractionStages have nothing to do
+
+	// if we need to do anything with normals (lighting or environment mapping)
+	// and two sided lighting was asked for, flag
+	// shouldCreateBackSides() and change culling back to single sided,
+	// so we get proper tangent vectors on both sides
+	if ( cullType == CT_TWO_SIDED ) {
+		for ( int i = 0 ; i < numStages ; i++ ) {
+			if ( pd->parseStages[i].lighting != SL_AMBIENT || pd->parseStages[i].texture.texgen != TG_EXPLICIT ) {
+				cullType = CT_FRONT_SIDED;
+				shouldCreateBackSides = true;
+				break;
+			}
+		}
+	}
+
+	// currently a surface can only have one unique texgen for all the stages
+	texgen_t firstGen = TG_EXPLICIT;
+	for ( int i = 0; i < numStages; i++ ) {
+		if ( pd->parseStages[i].texture.texgen != TG_EXPLICIT ) {
+			if ( firstGen == TG_EXPLICIT ) {
+				firstGen = pd->parseStages[i].texture.texgen;
+			} else if ( firstGen != pd->parseStages[i].texture.texgen ) {
+				src.Warning( "multiple stages with a texgen in legacy shader" );
+				break;
+			}
+		}
+	}
+}
+
+/*
 =========================
 idMaterial::SetGui
 =========================
@@ -2297,7 +3159,11 @@ bool idMaterial::Parse( const char *text, const int textLength, bool allowBinary
 			pStage->drawStateBits |= GLS_DEPTHFUNC_LESS;
 		} else if ( coverage == MC_TRANSLUCENT || pStage->ignoreAlphaTest ) {
 			// translucent surfaces can extend past the exactly marked depth buffer
-			pStage->drawStateBits |= GLS_DEPTHFUNC_LESS | GLS_DEPTHMASK;
+			pStage->drawStateBits |= GLS_DEPTHFUNC_LESS;
+			// legacy Q3 depthwrite keeps depth writes on blended stages
+			if ( !pStage->depthWrite ) {
+				pStage->drawStateBits |= GLS_DEPTHMASK;
+			}
 		} else {
 			// opaque and perforated surfaces must exactly match the depth buffer,
 			// which gets alpha test correct
@@ -2389,7 +3255,15 @@ char *opNames[] = {
 	"OP_TYPE_EQ",
 	"OP_TYPE_NE",
 	"OP_TYPE_AND",
-	"OP_TYPE_OR"
+	"OP_TYPE_OR",
+	"OP_TYPE_SOUND",
+	// legacy Q3 waveform functions
+	"OP_TYPE_WAVE_SIN",
+	"OP_TYPE_WAVE_SQUARE",
+	"OP_TYPE_WAVE_TRIANGLE",
+	"OP_TYPE_WAVE_SAWTOOTH",
+	"OP_TYPE_WAVE_INVERSE_SAWTOOTH",
+	"OP_TYPE_WAVE_NOISE"
 };
 
 void idMaterial::Print() const {
@@ -2433,6 +3307,21 @@ void idMaterial::AddReference() {
 			s->texture.image->AddReference();
 		}
 	}
+}
+
+/*
+=================
+LegacyWaveNoise
+
+Cheap deterministic noise in the -1 to 1 range for the legacy Q3
+"noise" waveform. This approximates Q3's R_NoiseGet4f sampling.
+=================
+*/
+static float LegacyWaveNoise( float x ) {
+	int h = idMath::Ftoi( x * 256.0f );
+	h = ( h << 13 ) ^ h;
+	h = h * ( h * h * 15731 + 789221 ) + 1376312589;
+	return ( ( float )( h & 0x7fffffff ) / 1073741824.0f ) - 1.0f;
 }
 
 /*
@@ -2516,6 +3405,38 @@ void idMaterial::EvaluateRegisters(
 			} else {
 				registers[op->c] = 0;
 			}
+			break;
+		case OP_TYPE_WAVE_SIN:
+			registers[op->c] = idMath::Sin( registers[op->a] * ( 2.0f * idMath::PI ) );
+			break;
+		case OP_TYPE_WAVE_SQUARE: {
+			// square wave, 1 for the first half of the cycle, -1 for the second
+			const float waveX = registers[op->a] - idMath::Floor( registers[op->a] );
+			registers[op->c] = ( waveX < 0.5f ) ? 1.0f : -1.0f;
+			break;
+		}
+		case OP_TYPE_WAVE_TRIANGLE: {
+			// triangle wave, rising to 1 at a quarter cycle, falling through zero to -1 and back
+			const float waveX = registers[op->a] - idMath::Floor( registers[op->a] );
+			if ( waveX < 0.25f ) {
+				registers[op->c] = waveX * 4.0f;
+			} else if ( waveX < 0.5f ) {
+				registers[op->c] = 2.0f - waveX * 4.0f;
+			} else if ( waveX < 0.75f ) {
+				registers[op->c] = 2.0f - waveX * 4.0f;
+			} else {
+				registers[op->c] = waveX * 4.0f - 4.0f;
+			}
+			break;
+		}
+		case OP_TYPE_WAVE_SAWTOOTH:
+			registers[op->c] = registers[op->a] - idMath::Floor( registers[op->a] );
+			break;
+		case OP_TYPE_WAVE_INVERSE_SAWTOOTH:
+			registers[op->c] = 1.0f - ( registers[op->a] - idMath::Floor( registers[op->a] ) );
+			break;
+		case OP_TYPE_WAVE_NOISE:
+			registers[op->c] = LegacyWaveNoise( registers[op->a] );
 			break;
 		case OP_TYPE_GT:
 			registers[op->c] = registers[ op->a ] > registers[op->b];

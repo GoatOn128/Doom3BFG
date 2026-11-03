@@ -100,7 +100,16 @@ typedef enum {
 	OP_TYPE_NE,
 	OP_TYPE_AND,
 	OP_TYPE_OR,
-	OP_TYPE_SOUND
+	OP_TYPE_SOUND,
+
+	// legacy Q3 waveform functions, the operand register is in cycles
+	// (keep opNames[] in Material.cpp in sync with these)
+	OP_TYPE_WAVE_SIN,
+	OP_TYPE_WAVE_SQUARE,
+	OP_TYPE_WAVE_TRIANGLE,
+	OP_TYPE_WAVE_SAWTOOTH,
+	OP_TYPE_WAVE_INVERSE_SAWTOOTH,
+	OP_TYPE_WAVE_NOISE
 } expOpType_t;
 
 typedef enum {
@@ -162,6 +171,11 @@ typedef struct {
 	dynamicidImage_t	dynamic;
 	int					width, height;
 	int					dynamicFrameCount;
+
+	// legacy Q3 animMap: frame list played at animMapFps, selected by the shader time
+	idImage **			animMapFrames;
+	int					numAnimMapFrames;
+	float				animMapFps;
 } textureStage_t;
 
 // the order BUMP / DIFFUSE / SPECULAR is necessary for interactions to draw correctly on low end cards
@@ -207,6 +221,7 @@ typedef struct {
 	bool				ignoreAlphaTest;	// this stage should act as translucent, even
 											// if the surface is alpha tested
 	float				privatePolygonOffset;	// a per-stage polygon offset
+	bool				depthWrite;		// legacy Q3 depthwrite: keep depth writes on this blended stage
 
 	newShaderStage_t	*newStage;			// vertex / fragment program based stage
 } shaderStage_t;
@@ -247,6 +262,8 @@ typedef enum {
 
 // these don't effect per-material storage, so they can be very large
 const int MAX_SHADER_STAGES			= 256;
+// legacy Q3 animMap frame lists
+const int MAX_LEGACY_ANIM_FRAMES		= 32;
 
 const int MAX_TEXGEN_REGISTERS		= 4;
 
@@ -609,6 +626,12 @@ private:
 	void				ParseVertexParm2( idLexer &src, newShaderStage_t *newStage );
 	void				ParseFragmentMap( idLexer &src, newShaderStage_t *newStage );
 	void				ParseStage( idLexer &src, const textureRepeat_t trpDefault = TR_REPEAT );
+	// td is a textureUsage_t and cubeMap a cubeFiles_t (Image.h); they are passed
+	// as plain ints here so this header does not need to include Image.h
+	void				FinishStage( shaderStage_t *ss, const newShaderStage_t &newStage, const char *imageName, textureFilter_t tf, textureRepeat_t trp, int td, int cubeMap );
+	void				ParseLegacyMaterial( idLexer &src );
+	void				ParseLegacyStage( idLexer &src, const textureRepeat_t trpDefault );
+	int					ParseLegacyWaveform( idLexer &src );
 	void				ParseDeform( idLexer &src );
 	void				ParseDecalInfo( idLexer &src );
 	bool				CheckSurfaceParm( idToken *token );
