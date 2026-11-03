@@ -259,6 +259,7 @@ struct q3Stage_t {
 	idStr		dropComment;	// set when the stage is dropped entirely
 	idStr		mapName;		// texture of a plain map directive
 	idStr		deformText;	// material level deform line collected from a stage
+	idStr		promoteNote;	// comment emitted above the diffusemap promotion
 	bool		plainMap;		// the stage is nothing but a single map line
 };
 
@@ -403,9 +404,20 @@ static void Q3ParseStage( idLexer &src, const char *shaderName, q3Stage_t &stage
 			if ( !genTok.Icmp( "identity" ) || !genTok.Icmp( "identityLighting" ) ) {
 				continue;	// the Doom 3 default
 			}
+			if ( !genTok.Icmp( "lightingDiffuse" ) && stage.plainMap ) {
+				// a plain map stage with rgbGen lightingDiffuse is exactly what
+				// the Doom 3 interaction pass lights, so the stage promotes to
+				// the material diffusemap instead of rendering unlit
+				stage.promoteNote = "//rgbGen lightingDiffuse is lit by the interaction pass";
+				continue;
+			}
 			stage.plainMap = false;
 			if ( !genTok.Icmp( "vertex" ) || !genTok.Icmp( "exactVertex" ) ) {
 				stage.text += "\t\tvertexColor\n";
+				continue;
+			}
+			if ( !genTok.Icmp( "oneMinusVertex" ) ) {
+				stage.text += "\t\tinverseVertexColor\n";
 				continue;
 			}
 			if ( !genTok.Icmp( "entity" ) || !genTok.Icmp( "oneMinusEntity" ) || !genTok.Icmp( "lightingDiffuse" ) ) {
@@ -483,6 +495,14 @@ static void Q3ParseStage( idLexer &src, const char *shaderName, q3Stage_t &stage
 			if ( !genTok.Icmp( "const" ) ) {
 				float v = src.ParseFloat();
 				stage.text += Q3Str( "\t\talpha %s\n", Q3Float( v ).c_str() ).c_str();
+				continue;
+			}
+			if ( !genTok.Icmp( "vertex" ) ) {
+				stage.text += "\t\tvertexColor\n";
+				continue;
+			}
+			if ( !genTok.Icmp( "oneMinusVertex" ) ) {
+				stage.text += "\t\tinverseVertexColor\n";
 				continue;
 			}
 			stage.text += Q3Str( "\t\t//alphaGen %s\n", genTok.c_str() ).c_str();
@@ -866,9 +886,21 @@ static idStr Q3ParseShader( idLexer &src, const char *shaderName, Q3ShaderConver
 				continue;
 			}
 			if ( havePending ) {
-				// a second real stage: the held map stage stays a stage
-				stages += Q3StageBlock( pending ).c_str();
-				conv->numStages++;
+				// a second real stage: the held map stage stays a stage, unless
+				// it is a diffuse lighting stage that promotes to the material
+				// diffusemap
+				if ( pending.promoteNote.Length() > 0 ) {
+					body += "\t";
+					body += pending.promoteNote.c_str();
+					body += "\n";
+					body += "\tdiffusemap ";
+					body += pending.mapName.c_str();
+					body += "\n";
+					conv->numStages++;
+				} else {
+					stages += Q3StageBlock( pending ).c_str();
+					conv->numStages++;
+				}
 				havePending = false;
 			} else if ( stage.plainMap ) {
 				pending = stage;
@@ -883,6 +915,11 @@ static idStr Q3ParseShader( idLexer &src, const char *shaderName, Q3ShaderConver
 	}
 
 	if ( havePending ) {
+		if ( pending.promoteNote.Length() > 0 ) {
+			body += "\t";
+			body += pending.promoteNote.c_str();
+			body += "\n";
+		}
 		body += "\tdiffusemap ";
 		body += pending.mapName.c_str();
 		body += "\n";
