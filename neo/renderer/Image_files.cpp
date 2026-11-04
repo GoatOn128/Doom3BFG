@@ -52,6 +52,15 @@ static const char *axisSides[6] = {
 	"_pz", "_nz"
 };
 
+// Quake 2 sky sets are six pcx or tga files named <name>rt, <name>lf,
+// <name>bk, <name>ft, <name>up and <name>dn.  Quake 2 binds rt to +x, lf
+// to -x, bk to +y and ft to -y, so the order here follows the cube faces
+// (+x, -x, +y, -y, +z, -z), not the Quake 2 suffix list.
+static const char *quake2Sides[6] = {
+	"rt", "lf", "bk", "ft",
+	"up", "dn"
+};
+
 /*
 ================
 R_WriteImage
@@ -478,24 +487,25 @@ void R_LoadImage( const char *cname, byte **pic, int *width, int *height, ID_TIM
 }
 
 
+// the per-face fixups a set of cube faces needs
+enum cubeFixup_t {
+	CUBE_FIXUP_NONE,		// already in native cube map orientation
+	CUBE_FIXUP_CAMERA,		// six camera photos
+	CUBE_FIXUP_QUAKE2		// Quake 2 sky set
+};
+
 /*
 =======================
-R_LoadCubeImages
+R_LoadCubeSideSet
 
-Loads six files with proper extensions
+Loads one set of six cube face files and applies the per-face fixups
+the set needs.
 =======================
 */
-bool R_LoadCubeImages( const char *imgName, cubeFiles_t extensions, byte *pics[6], int *outSize, ID_TIME_T *timestamp ) {
+static bool R_LoadCubeSideSet( const char *imgName, const char * const *sides, cubeFixup_t fixups, byte *pics[6], int *outSize, ID_TIME_T *timestamp ) {
 	int		i, j;
-	const char **sides;
 	char	fullName[MAX_IMAGE_NAME];
 	int		width, height, size = 0;
-
-	if ( extensions == CF_CAMERA ) {
-		sides = cameraSides;
-	} else {
-		sides = axisSides;
-	}
 
 	// FIXME: precompressed cube map files
 	if ( pics ) {
@@ -530,7 +540,7 @@ bool R_LoadCubeImages( const char *imgName, cubeFiles_t extensions, byte *pics[6
 				*timestamp = thisTime;
 			}
 		}
-		if ( pics && extensions == CF_CAMERA ) {
+		if ( pics && fixups == CUBE_FIXUP_CAMERA ) {
 			// convert from "camera" images to native cube map images
 			switch( i ) {
 			case 0:	// forward
@@ -552,6 +562,34 @@ bool R_LoadCubeImages( const char *imgName, cubeFiles_t extensions, byte *pics[6
 				break;
 			case 5: // down
 				R_RotatePic( pics[i], width);
+				break;
+			}
+		} else if ( pics && fixups == CUBE_FIXUP_QUAKE2 ) {
+			// Quake 2 sky sets: env/<name>rt|lf|bk|ft|up|dn, bound to the
+			// cube faces by the Quake 2 skytexorder table (rt +x, lf -x,
+			// bk +y, ft -y, up +z, dn -z).  The pcx rows arrive bottom up
+			// like every other image the engine loads, so the rt, lf, up
+			// and dn faces need a quarter turn to line up with the cube
+			// map axes.
+			switch( i ) {
+			case 0:	// rt (+x)
+				R_RotatePic( pics[i], width);
+				R_HorizontalFlip( pics[i], width, height );
+				break;
+			case 1:	// lf (-x)
+				R_RotatePic( pics[i], width);
+				R_VerticalFlip( pics[i], width, height );
+				break;
+			case 2:	// bk (+y)
+			case 3:	// ft (-y)
+				break;
+			case 4:	// up (+z)
+				R_RotatePic( pics[i], width);
+				R_HorizontalFlip( pics[i], width, height );
+				break;
+			case 5:	// dn (-z)
+				R_RotatePic( pics[i], width);
+				R_HorizontalFlip( pics[i], width, height );
 				break;
 			}
 		}
@@ -579,3 +617,22 @@ bool R_LoadCubeImages( const char *imgName, cubeFiles_t extensions, byte *pics[6
 	}
 	return true;
 }
+
+/*
+=======================
+R_LoadCubeImages
+
+Loads six files with proper extensions.  A name without native
+_px/_nx/... faces is retried as a Quake 2 sky set before failing.
+=======================
+*/
+bool R_LoadCubeImages( const char *imgName, cubeFiles_t extensions, byte *pics[6], int *outSize, ID_TIME_T *timestamp ) {
+	if ( extensions == CF_CAMERA ) {
+		return R_LoadCubeSideSet( imgName, cameraSides, CUBE_FIXUP_CAMERA, pics, outSize, timestamp );
+	}
+	if ( R_LoadCubeSideSet( imgName, axisSides, CUBE_FIXUP_NONE, pics, outSize, timestamp ) ) {
+		return true;
+	}
+	return R_LoadCubeSideSet( imgName, quake2Sides, CUBE_FIXUP_QUAKE2, pics, outSize, timestamp );
+}
+
