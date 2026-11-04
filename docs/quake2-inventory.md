@@ -129,9 +129,11 @@ Decision needed, same as Q3: a Q2 BSP loader in the renderer, or an offline conv
 
 ## 6. Video (.cin)
 
+Status: implemented. `.cin` plays since `cfa9f412` through `idCinematicCin` (`neo/renderer/CinematicCin.h/.cpp`), a dedicated `idCinematic` subclass following the `idCinematicRoQ`/`idCinematicBink` pattern, dispatched from `idCinematic::Alloc` after `.bik` and `.roq`. The order-1 Huffman decoder is ported from `references/quake2/client/cl_cin.c` (GPLv2-or-later, attribution comment in the source). Per frame audio plays through the same XAudio2 cinematic voice the bink player uses (`s_playCinematicAudio` gates it, 8-bit chunks are widened to 16-bit). `AnimationLength` reports a large constant because the format stores no duration.
+
 - Engine today: `idCinematic::InitFromFile` (`neo/renderer/Cinematic.cpp`, lines ~64-70) dispatches `.bik` to Bink and `.roq` to `idCinematicRoQ`.
 - Q2 `.cin` (`references/quake2/client/cl_cin.c`) is NOT RoQ. It is a 14 fps 8-bit paletted format: a five-int header (`width`, `height`, `s_rate`, `s_width`, `s_channels`), then per frame a command word (2 = end, 1 = a 256-color palette chunk follows), a size-prefixed order-1 Huffman block (`Huff1Decompress`, per-file codebook) decoding the full frame, and raw interleaved audio samples for the frame at `s_rate/14`.
-- Gap: `idCinematicRoQ` cannot read it - different container and different codec. Options: a dedicated `idCinematic` subclass (the Q2 decoder is ~300 lines in `cl_cin.c`, GPLv2+, portable), or offline conversion to `.roq`/`.bik`. Q2's intro/endgame videos are `.cin`.
+- Gap: `idCinematicRoQ` cannot read it - different container and different codec. Options: a dedicated `idCinematic` subclass (the Q2 decoder is ~300 lines in `cl_cin.c`, GPLv2+, portable), or offline conversion to `.roq`/`.bik`. Q2's intro/endgame videos are `.cin`. - DONE in `cfa9f412` (the dedicated subclass option).
 
 ## 7. Sound
 
@@ -143,6 +145,7 @@ Q2 uses plain RIFF `.wav` (`references/quake2/client/snd_mem.c`; 8/16-bit, mono/
 - WAL world textures (since `65450a37`, mip 0 through the `pics/colormap.pcx` palette; `animname` animation not implemented).
 - MD2 models (since `75825add`, frame lerping through the MD3 frame channel, first skin as the material).
 - SP2 sprites (since `a8295107`, frame quads, frame materials resolved by .pcx name).
+- Q2 `.cin` videos (since `cfa9f412`, `idCinematicCin` with per frame audio through the cinematic XAudio2 voice).
 - `.pak` archives (since `3df000b`: `idPackContainer` mounts them alongside `.pk4`/`.pk3`).
 - TGA images (stb), including Q2 replacement tgas.
 - WAV sound.
@@ -156,7 +159,7 @@ Q2 uses plain RIFF `.wav` (`references/quake2/client/snd_mem.c`; 8/16-bit, mono/
 2. PCX + WAL loaders + `colormap.pcx` palette (section 2). - DONE: PCX in `1973186e`, WAL + palette in `65450a37` (plus the PCX bottom-up row fix).
 3. Implicit materials from WAL flags/animname + Q2 flag tables (section 3).
 4. MD2 (+SP2) through the MD3 path machinery (section 4). - DONE in `75825add` (MD2) and `a8295107` (SP2).
-5. `.cin` player (section 6).
+5. `.cin` player (section 6). - DONE in `cfa9f412`.
 6. BSP v38 decision (loader vs offline converter), coupled to the Q3 lightmap provider decision (section 5).
 
 ## Licensing note
