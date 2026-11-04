@@ -31,6 +31,8 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "tr_local.h"
 
+#include "CinematicCin.h"
+
 extern idCVar s_noSound;
 
 /*
@@ -68,6 +70,10 @@ idCinematic * idCinematic::Alloc( idStr &qpath ) {
 	qpath.SetFileExtension( ".roq" );
 	if( fileSystem->FindFile( qpath.c_str() ) == FIND_YES ) {
 		return new idCinematicRoQ();
+	}
+	qpath.SetFileExtension( ".cin" );
+	if( fileSystem->FindFile( qpath.c_str() ) == FIND_YES ) {
+		return new idCinematicCin();
 	}
 
 	return new idCinematic();
