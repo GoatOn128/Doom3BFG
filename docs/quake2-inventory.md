@@ -37,12 +37,12 @@ Original analysis, kept for reference:
 
 ## 2. Image formats
 
-Status: PCX images load since `1973186e` (independent decoder via the vendored `external/libpcx` single header in the image loader table; image rows are flipped to bottom-up at load since `65450a37`, matching the other loaders). WAL world textures load since `65450a37`: mip 0 is decoded to RGBA through the `pics/colormap.pcx` palette; the baked mip levels and the `animname`/`nexttexinfo` animation chains are not implemented. Gap items 1-3 below are closed, item 4 is partially covered by the engine default-material generation for bare image names, items 5-6 remain open.
+Status: PCX images load since `1973186e` (independent decoder via the vendored `external/libpcx` single header in the image loader table; image rows are flipped to bottom-up at load since `65450a37`, matching the other loaders). WAL world textures load since `65450a37`: mip 0 is decoded to RGBA through the `pics/colormap.pcx` palette; the baked mip levels and the `animname`/`nexttexinfo` animation chains are not implemented. Gap items 1-3 below are closed, item 4 is partially covered by the engine default-material generation for bare image names, and items 5-6 are closed too: Q2 sky sets load as cube maps since `7bcf0fcc`, MD2 skins are flood filled against mip halos since `01475007`.
 
 ### 2.1 What the engine has today (`neo/renderer/Image_files.cpp`)
 
 - `imageLoaders[]` (line 46) is `tga`, `bmp`, `png`, `jpg`, all through stb_image (`RB_LoadImage`); stb_image has no PCX and no WAL. Screenshots are written by stb (`tga`/`bmp`/`png`/`jpg`).
-- `R_LoadCubeImages` (line 278) only tries `.tga` cube sides with the D3/Q3 suffixes (`_px/_nx/_py/_ny/_pz/_nz` or camera `_forward/_back/_left/_right/_up/_down`).
+- `R_LoadCubeImages` tries the D3/Q3 cube sides (`_px/_nx/_py/_ny/_pz/_nz` or camera `_forward/_back/_left/_right/_up/_down`) and, since `7bcf0fcc`, retries the Q2 sky suffixes (`rt/lf/bk/ft/up/dn`) before failing; the sides load through `R_LoadImage`, so `.pcx` works.
 - The engine uploads RGBA and generates its own mipmaps; there is no paletted-texture path (Q2's `GL_COLOR_INDEX8_EXT`/`pics/16to8.dat` 3dfx machinery has no equivalent and is not needed).
 
 ### 2.2 What Q2 uses
@@ -62,8 +62,8 @@ Missing, in load order:
 2. `pics/colormap.pcx` palette load (needed by 2 and 3; index 255 -> alpha 0). - DONE in `65450a37` (loaded inside the WAL loader as the Q2 palette).
 3. WAL loader: decode 8-bit -> RGBA through the palette at load time. The baked mip levels can be ignored (mip 0 only); `flags`/`contents`/`value`/`animname` feed the implicit material (section 3). - DONE in `65450a37` (mip 0 only; the flag-to-material mapping of section 3 is still open).
 4. Pics as materials: Q2 UI references pics by bare name with `pics/` and `.pcx` implied (`ref_gl/gl_draw.c` `Draw_FindPic`); D3 GUIs need material decls. The implicit material generation (same mechanism as the Q3 `implicitMap` work) should synthesize a material for `pics/<name>.pcx` once `.pcx` is a known image extension. `conchars.pcx` is replaceable by an `idFont` or a dedicated unfiltered material. - PARTIAL: bare `.pcx` names now resolve through the engine default-material generation (opaque `blend blend`); a dedicated `conchars` material or `idFont` is still open.
-5. Sky adapter: `R_LoadCubeImages` hardcodes `.tga` and the D3/Q3 suffixes; Q2 skies are six `.pcx` files with `rt/bk/lf/ft/up/dn` suffixes. Either a Q2 suffix adapter feeding the cubemap path, or a synthetic skysphere material (same decision as the Q3 `skyparms` gap).
-6. Skin flood fill: optional port of `R_FloodFillSkin` if skins show mip halo artifacts.
+5. Sky adapter: `R_LoadCubeImages` hardcodes `.tga` and the D3/Q3 suffixes; Q2 skies are six `.pcx` files with `rt/bk/lf/ft/up/dn` suffixes. Either a Q2 suffix adapter feeding the cubemap path, or a synthetic skysphere material (same decision as the Q3 `skyparms` gap). - DONE in `7bcf0fcc` (the suffix adapter option: a native-set miss is retried as `<name>rt|lf|bk|ft|up|dn`, with the rt/lf/up/dn faces quarter-turned onto the cube axes and bk/ft used as they are; a material only says `cubeMap env/<name>`. The face turns assume the engine cube axes match the Q2 world axes, the same convention the BSP v38 work has to pick.)
+6. Skin flood fill: optional port of `R_FloodFillSkin` if skins show mip halo artifacts. - DONE in `01475007` (RGBA port of `R_FloodFillSkin` in the MD2 loader, mirroring the MDL embedded-image registry; opaque black is the fill target, a separate visited array replaces the 255 index marker, the 8-bit condition is dropped because everything loads as RGBA here, and the 0x1000 fifo of the original is kept; only MD2 skins are filled, matching the skins-only call site of the original - sprites and world textures are untouched).
 
 No new upload/render machinery is needed anywhere: the engine takes RGBA and does its own mipmapping.
 
@@ -81,7 +81,7 @@ Mapping onto the existing material machinery (adapter work, no new systems beyon
 |---|---|---|
 | `SURF_TRANS33` / `SURF_TRANS66` | `blend` + alpha (0.33/0.66) | translucent stage in the implicit material |
 | `SURF_WARP` | `deform turbulent` / water material | Q2 warps texcoords; D3 deforms verts, visually close |
-| `SURF_SKY` | sky material + section 2.3 item 5 | |
+| `SURF_SKY` | sky material + section 2.3 item 5 | closed in `7bcf0fcc` (`cubeMap env/<name>` feeds the sky material) |
 | `SURF_FLOWING` | `translate` stage (scroll) | |
 | `SURF_NODRAW` | `nodraw` | |
 | `SURF_LIGHT` + `value` | none | parse and ignore; surface lights need entities (conversion-time or game side) |
@@ -146,6 +146,8 @@ Q2 uses plain RIFF `.wav` (`references/quake2/client/snd_mem.c`; 8/16-bit, mono/
 - MD2 models (since `75825add`, frame lerping through the MD3 frame channel, first skin as the material).
 - SP2 sprites (since `a8295107`, frame quads, frame materials resolved by .pcx name).
 - Q2 `.cin` videos (since `cfa9f412`, `idCinematicCin` with per frame audio through the cinematic XAudio2 voice).
+- Q2 sky sets (since `7bcf0fcc`, `env/<name>` faces load as cube maps through `cubeMap env/<name>`, the native `_px` set is tried first).
+- MD2 skin flood fill (since `01475007`, against mip halos on skin backgrounds).
 - `.pak` archives (since `3df000b`: `idPackContainer` mounts them alongside `.pk4`/`.pk3`).
 - TGA images (stb), including Q2 replacement tgas.
 - WAV sound.
