@@ -108,7 +108,7 @@ idRenderModelSP2::LoadSP2File
 */
 bool idRenderModelSP2::LoadSP2File() {
 	byte *buffer = NULL;
-	int len = fileSystem->ReadFile( name, &buffer, &timeStamp );
+	int len = fileSystem->ReadFile( name, ( void ** )&buffer, &timeStamp );
 	if ( buffer == NULL || len < 12 ) {
 		common->Warning( "SP2 loader was unable to load model %s\n", name.c_str() );
 		fileSystem->FreeFile( buffer );

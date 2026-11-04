@@ -80,7 +80,7 @@ static bool SPR_LoadQ1Palette( byte palette[768] ) {
 	if ( !checked ) {
 		checked = true;
 		byte *buffer = NULL;
-		int len = fileSystem->ReadFile( "gfx/palette.lmp", &buffer );
+		int len = fileSystem->ReadFile( "gfx/palette.lmp", ( void ** )&buffer );
 		if ( buffer != NULL && len >= 768 ) {
 			memcpy( cachedPalette, buffer, 768 );
 			valid = true;
@@ -207,7 +207,7 @@ idRenderModelSPR::LoadSPRFile
 */
 bool idRenderModelSPR::LoadSPRFile() {
 	byte *buffer = NULL;
-	int len = fileSystem->ReadFile( name, &buffer, &timeStamp );
+	int len = fileSystem->ReadFile( name, ( void ** )&buffer, &timeStamp );
 	if ( buffer == NULL || len < 36 ) {
 		common->Warning( "SPR loader was unable to load model %s\n", name.c_str() );
 		fileSystem->FreeFile( buffer );

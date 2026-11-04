@@ -290,7 +290,7 @@ idRenderModelMD2::LoadMD2File
 */
 bool idRenderModelMD2::LoadMD2File() {
 	byte *buffer = NULL;
-	int len = fileSystem->ReadFile( name, &buffer, &timeStamp );
+	int len = fileSystem->ReadFile( name, ( void ** )&buffer, &timeStamp );
 	if ( buffer == NULL || len < 60 ) {
 		common->Warning( "MD2 loader was unable to load model %s\n", name.c_str() );
 		fileSystem->FreeFile( buffer );

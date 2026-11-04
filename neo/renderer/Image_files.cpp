@@ -233,7 +233,7 @@ static bool LoadQ2Palette( byte palette[768] ) {
 	if ( !checked ) {
 		checked = true;
 		byte *buffer = NULL;
-		int len = fileSystem->ReadFile( "pics/colormap.pcx", &buffer );
+		int len = fileSystem->ReadFile( "pics/colormap.pcx", ( void ** )&buffer );
 		if ( buffer != NULL && len > 0 ) {
 			PCXImage image;
 			if ( pcx_parse( ( const uint8_t * )buffer, ( size_t )len, &image ) == PCX_OK && image.vga_pal != NULL ) {
