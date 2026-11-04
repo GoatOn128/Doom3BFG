@@ -36,6 +36,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "Model_mdm.h"
 #include "Model_md4.h"
 #include "Model_spr.h"
+#include "Model_sp2.h"
 
 #include "tr_local.h"	// just for R_FreeWorldInteractions and R_CreateWorldInteractions
 
@@ -328,6 +329,8 @@ idRenderModel *idRenderModelManagerLocal::GetModel( const char *_modelName, bool
 		model = new (TAG_MODEL) idRenderModelMD4;
 	} else if ( extension.Icmp( "spr" ) == 0 ) {
 		model = new (TAG_MODEL) idRenderModelSPR;
+	} else if ( extension.Icmp( "sp2" ) == 0 ) {
+		model = new (TAG_MODEL) idRenderModelSP2;
 	} else if ( extension.Icmp( "prt" ) == 0  ) {
 		model = new (TAG_MODEL) idRenderModelPrt;
 	} else if ( extension.Icmp( "liquid" ) == 0  ) {
