@@ -189,13 +189,174 @@ void LoadPCX( const char *filename, byte **pic, int *width, int *height, ID_TIME
 	}
 
 	// *pic must be allocated with R_StaticAlloc(), but the pcx loader
-	// allocates with malloc(), so the decoded data is copied once
-	int size = (int)w * (int)h * 4;
-	*pic = ( byte * )R_StaticAlloc( size );
-	memcpy( *pic, decodedImageData, size );
-	*width = (int)w;
-	*height = (int)h;
+	// allocates with malloc(), so the decoded data is copied once.
+	// The pcx loader returns rows top down while the image manager
+	// expects them bottom up, so the rows are flipped during the copy.
+	int wInt = (int)w;
+	int hInt = (int)h;
+	*pic = ( byte * )R_StaticAlloc( wInt * hInt * 4 );
+	for ( int y = 0; y < hInt; y++ ) {
+		memcpy( *pic + y * wInt * 4, decodedImageData + ( hInt - 1 - y ) * wInt * 4, wInt * 4 );
+	}
+	*width = wInt;
+	*height = hInt;
 	pcx_free( decodedImageData );
+}
+
+//===================================================================
+
+/*
+=============
+WALInt
+
+miptex_t fields are little endian in the file, read them without
+depending on the host byte order.
+=============
+*/
+static int WALInt( const byte *p ) {
+	return ( int )p[0] | ( ( int )p[1] << 8 ) | ( ( int )p[2] << 16 ) | ( ( int )p[3] << 24 );
+}
+
+/*
+=============
+LoadQ2Palette
+
+The Quake 2 palette lives in the 256 color trailer of
+pics/colormap.pcx. It is parsed once and cached for all WAL loads.
+=============
+*/
+static bool LoadQ2Palette( byte palette[768] ) {
+	static byte		cachedPalette[768];
+	static bool		checked = false;
+	static bool		valid = false;
+
+	if ( !checked ) {
+		checked = true;
+		byte *buffer = NULL;
+		int len = fileSystem->ReadFile( "pics/colormap.pcx", &buffer );
+		if ( buffer != NULL && len > 0 ) {
+			PCXImage image;
+			if ( pcx_parse( ( const uint8_t * )buffer, ( size_t )len, &image ) == PCX_OK && image.vga_pal != NULL ) {
+				PCXColor pal[256];
+				pcx_palette( &image, pal );
+				for ( int i = 0; i < 256; i++ ) {
+					cachedPalette[i*3+0] = pal[i].r;
+					cachedPalette[i*3+1] = pal[i].g;
+					cachedPalette[i*3+2] = pal[i].b;
+				}
+				valid = true;
+			}
+		}
+		fileSystem->FreeFile( buffer );
+		if ( !valid ) {
+			common->Warning( "WAL loader couldn't get the Quake 2 palette from pics/colormap.pcx\n" );
+		}
+	}
+
+	if ( valid ) {
+		memcpy( palette, cachedPalette, 768 );
+	}
+	return valid;
+}
+
+/*
+=============
+LoadWAL
+
+Quake 2 miptex texture. Only the first mip level is expanded, through
+the Quake 2 palette; index 255 is transparent. The rows are flipped to
+the bottom up order the image manager expects.
+=============
+*/
+void LoadWAL( const char *filename, byte **pic, int *width, int *height, ID_TIME_T *timestamp ) {
+	if ( pic ) {
+		*pic = NULL;		// until proven otherwise
+	}
+
+	idFile *f = fileSystem->OpenFileRead( filename );
+	if ( !f ) {
+		return;
+	}
+	int len = f->Length();
+	if ( timestamp ) {
+		*timestamp = f->Timestamp();
+	}
+	if ( !pic ) {
+		fileSystem->CloseFile( f );
+		return;	// just getting the timestamp
+	}
+	byte *fbuffer = ( byte * )Mem_ClearedAlloc( len, TAG_IMAGE );
+	f->Read( fbuffer, len );
+	fileSystem->CloseFile( f );
+
+	// miptex_t: name[32], width, height, offsets[4], animname[32],
+	// flags, contents, value; the header is 100 bytes
+	int w = WALInt( fbuffer + 32 );
+	int h = WALInt( fbuffer + 36 );
+	int mipOffset = WALInt( fbuffer + 40 );
+
+	if ( len < 100 || w <= 0 || h <= 0 || mipOffset < 0 || mipOffset + w * h > len ) {
+		common->Warning( "wal loader was unable to load image %s : bad miptex header\n", filename );
+		Mem_Free( fbuffer );
+		return;
+	}
+
+	byte palette[768];
+	if ( !LoadQ2Palette( palette ) ) {
+		Mem_Free( fbuffer );
+		return;
+	}
+
+	const byte *mip0 = fbuffer + mipOffset;
+	*pic = ( byte * )R_StaticAlloc( w * h * 4 );
+	// expand through the palette, bottom up; index 255 is transparent
+	for ( int y = 0; y < h; y++ ) {
+		const byte *inRow = mip0 + y * w;
+		byte *outRow = *pic + ( h - 1 - y ) * w * 4;
+		for ( int x = 0; x < w; x++ ) {
+			byte index = inRow[x];
+			byte *out = outRow + x * 4;
+			if ( index == 255 ) {
+				out[0] = out[1] = out[2] = out[3] = 0;
+			} else {
+				out[0] = palette[index*3+0];
+				out[1] = palette[index*3+1];
+				out[2] = palette[index*3+2];
+				out[3] = 255;
+			}
+		}
+	}
+	// give transparent pixels the color of an opaque neighbor so mipmaps
+	// don't smear black into the edges of grates and fences
+	for ( int y = 0; y < h; y++ ) {
+		for ( int x = 0; x < w; x++ ) {
+			byte *out = *pic + ( y * w + x ) * 4;
+			if ( out[3] != 0 ) {
+				continue;
+			}
+			const byte *neighbor = NULL;
+			if ( x > 0 ) {
+				neighbor = out - 4;
+			} else if ( x < w - 1 ) {
+				neighbor = out + 4;
+			}
+			if ( neighbor == NULL || neighbor[3] == 0 ) {
+				if ( y > 0 ) {
+					neighbor = out - w * 4;
+				} else if ( y < h - 1 ) {
+					neighbor = out + w * 4;
+				}
+			}
+			if ( neighbor != NULL && neighbor[3] != 0 ) {
+				out[0] = neighbor[0];
+				out[1] = neighbor[1];
+				out[2] = neighbor[2];
+			}
+		}
+	}
+	*width = w;
+	*height = h;
+	Mem_Free( fbuffer );
 }
 
 //===================================================================
