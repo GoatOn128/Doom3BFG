@@ -232,6 +232,171 @@ static float MD2Float( const byte *p ) {
 
 /*
 =================
+MD2 skin images
+
+The skin names from the file are loaded as plain images, flood filled
+against the mip halo their background color would cause at distance,
+and handed to the image manager under the skin's own name, so the
+implicit material of the skin picks up the filled image instead of the
+plain file.  The registry keeps the RGBA data for the life of the
+process, entries with the same name are replaced when a model reloads.
+=================
+*/
+struct md2SkinImage_t {
+	idStr		name;
+	byte *		pic;
+	int			width;
+	int			height;
+};
+
+struct md2FloodFillEntry_t {
+	short		x;
+	short		y;
+};
+
+static idList<md2SkinImage_t, TAG_MODEL> md2SkinImages;
+
+static md2SkinImage_t *MD2_FindSkinImage( const char *name ) {
+	for ( int i = 0; i < md2SkinImages.Num(); i++ ) {
+		if ( md2SkinImages[i].name.Icmp( name ) == 0 ) {
+			return &md2SkinImages[i];
+		}
+	}
+	return NULL;
+}
+
+static void MD2_RegisterSkinImage( const char *name, byte *pic, int width, int height ) {
+	md2SkinImage_t *existing = MD2_FindSkinImage( name );
+	if ( existing != NULL ) {
+		Mem_Free( existing->pic );
+		existing->pic = pic;
+		existing->width = width;
+		existing->height = height;
+		return;
+	}
+	md2SkinImage_t &entry = md2SkinImages.Alloc();
+	entry.name = name;
+	entry.pic = pic;
+	entry.width = width;
+	entry.height = height;
+}
+
+// the sampler parameters must match what an implicit material asks for, or
+// the image manager would create a second, empty file image with the same name
+static void MD2_GenerateSkinImage( idImage *image ) {
+	const md2SkinImage_t *src = MD2_FindSkinImage( image->GetName() );
+	if ( src == NULL ) {
+		common->Warning( "MD2 generator missing the pixels for %s\n", image->GetName() );
+		image->MakeDefault();
+		return;
+	}
+	image->GenerateImage( src->pic, src->width, src->height, TF_DEFAULT, TR_CLAMP, TD_DEFAULT );
+}
+
+/*
+=================
+MD2_FloodFillSkin
+
+Port of R_FloodFillSkin from the Quake 2 source code (ref_gl/gl_image.c,
+Quake II 3.21, Id Software, GPLv2 or later, which is compatible with this
+GPLv3 code base), adapted from palette indices to RGBA pixels.  The fill
+color is the RGB of the first pixel, opaque black is the fill target like
+the filledcolor of the original, a separate visited array replaces the
+255 index marker, and fully transparent neighbors are neither fill
+targets nor color sources.  The original only filled 8 bit skins, every
+image loads as RGBA here, so that condition is gone.
+=================
+*/
+#define MD2_FLOODFILL_FIFO_SIZE		0x1000
+#define MD2_FLOODFILL_FIFO_MASK		( MD2_FLOODFILL_FIFO_SIZE - 1 )
+
+static void MD2_FloodFillSkin( byte *pic, int width, int height ) {
+	const byte *fillColor = pic;	// the RGB of pixel (0,0) is the border color
+	if ( fillColor[0] == 0 && fillColor[1] == 0 && fillColor[2] == 0 ) {
+		return;	// the first pixel is already the fill target
+	}
+
+	bool *visited = ( bool * )Mem_Alloc( width * height * sizeof( bool ), TAG_IMAGE );
+	memset( visited, 0, width * height * sizeof( bool ) );
+
+	static const int steps[4][2] = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } };
+
+	// like the original, the fifo only holds 0x1000 entries and drops the
+	// rest, which can leave spots unfilled on very large borders
+	md2FloodFillEntry_t fifo[MD2_FLOODFILL_FIFO_SIZE];
+	int inpt = 0;
+	int outpt = 0;
+
+	fifo[inpt].x = 0;
+	fifo[inpt].y = 0;
+	inpt = ( inpt + 1 ) & MD2_FLOODFILL_FIFO_MASK;
+	visited[0] = true;
+
+	while ( outpt != inpt ) {
+		int x = fifo[outpt].x;
+		int y = fifo[outpt].y;
+		outpt = ( outpt + 1 ) & MD2_FLOODFILL_FIFO_MASK;
+
+		// the color the border is filled with, opaque black by default
+		byte fillWith[3] = { 0, 0, 0 };
+
+		for ( int s = 0; s < 4; s++ ) {
+			int nx = x + steps[s][0];
+			int ny = y + steps[s][1];
+			if ( nx < 0 || nx >= width || ny < 0 || ny >= height ) {
+				continue;
+			}
+			int nidx = ny * width + nx;
+			const byte *np = pic + nidx * 4;
+			bool isFill = np[3] != 0 &&
+				np[0] == fillColor[0] && np[1] == fillColor[1] && np[2] == fillColor[2];
+			if ( isFill && !visited[nidx] ) {
+				visited[nidx] = true;
+				fifo[inpt].x = ( short )nx;
+				fifo[inpt].y = ( short )ny;
+				inpt = ( inpt + 1 ) & MD2_FLOODFILL_FIFO_MASK;
+				if ( outpt == inpt ) {
+					// fifo overrun, the rest of the border stays as it is
+					break;
+				}
+			} else if ( !isFill && !visited[nidx] && np[3] != 0 ) {
+				fillWith[0] = np[0];
+				fillWith[1] = np[1];
+				fillWith[2] = np[2];
+			}
+		}
+
+		byte *p = pic + ( y * width + x ) * 4;
+		p[0] = fillWith[0];
+		p[1] = fillWith[1];
+		p[2] = fillWith[2];
+		p[3] = 255;
+	}
+
+	Mem_Free( visited );
+}
+
+/*
+=================
+MD2_LoadSkinImage
+=================
+*/
+static void MD2_LoadSkinImage( const char *skinName ) {
+	byte *pic = NULL;
+	int width = 0;
+	int height = 0;
+	R_LoadImage( skinName, &pic, &width, &height, NULL, false );
+	if ( pic == NULL ) {
+		// the plain file or the default image will be used as is
+		return;
+	}
+	MD2_FloodFillSkin( pic, width, height );
+	MD2_RegisterSkinImage( skinName, pic, width, height );
+	globalImages->ImageFromFunction( skinName, MD2_GenerateSkinImage );
+}
+
+/*
+=================
 idRenderModelMD2::idRenderModelMD2
 =================
 */
@@ -337,13 +502,24 @@ bool idRenderModelMD2::LoadMD2File() {
 		return false;
 	}
 
-	// the skins are name records, the first one is used as the surface
-	// material, any additional skin names are ignored
-	if ( nSkins > 0 ) {
+	// the skins are name records, each one is loaded and flood filled
+	// here against the mip halo its background color would cause at
+	// distance, and is handed to the image manager under its own name.
+	// The first skin stays the surface material, the rest are only
+	// registered so their materials can pick them up.
+	char firstSkinName[65];
+	firstSkinName[0] = '\0';
+	for ( int i = 0; i < nSkins; i++ ) {
 		char skinName[65];
-		memcpy( skinName, buffer + ofsSkins, 64 );
+		memcpy( skinName, buffer + ofsSkins + i * 64, 64 );
 		skinName[64] = '\0';
-		shader = declManager->FindMaterial( skinName );
+		MD2_LoadSkinImage( skinName );
+		if ( i == 0 ) {
+			memcpy( firstSkinName, skinName, sizeof( firstSkinName ) );
+		}
+	}
+	if ( firstSkinName[0] != '\0' ) {
+		shader = declManager->FindMaterial( firstSkinName );
 	} else {
 		shader = declManager->FindMaterial( "_default" );
 	}
