@@ -37,6 +37,8 @@ Original analysis, kept for reference:
 
 ## 2. Image formats
 
+Status: PCX images load since `1973186e` (independent decoder via the vendored `external/libpcx` single header in the image loader table; image rows are flipped to bottom-up at load since `65450a37`, matching the other loaders). WAL world textures load since `65450a37`: mip 0 is decoded to RGBA through the `pics/colormap.pcx` palette; the baked mip levels and the `animname`/`nexttexinfo` animation chains are not implemented. Gap items 1-3 below are closed, item 4 is partially covered by the engine default-material generation for bare image names, items 5-6 remain open.
+
 ### 2.1 What the engine has today (`neo/renderer/Image_files.cpp`)
 
 - `imageLoaders[]` (line 46) is `tga`, `bmp`, `png`, `jpg`, all through stb_image (`RB_LoadImage`); stb_image has no PCX and no WAL. Screenshots are written by stb (`tga`/`bmp`/`png`/`jpg`).
@@ -56,10 +58,10 @@ Original analysis, kept for reference:
 
 Missing, in load order:
 
-1. PCX loader (8-bit paletted + palette extraction). Port from `LoadPCX` (GPLv2+, attribution note in the port commit) or an independent decoder. Relax the 640x480 rejection to a warning for oversized mod content.
-2. `pics/colormap.pcx` palette load (needed by 2 and 3; index 255 -> alpha 0).
-3. WAL loader: decode 8-bit -> RGBA through the palette at load time. The baked mip levels can be ignored (mip 0 only); `flags`/`contents`/`value`/`animname` feed the implicit material (section 3).
-4. Pics as materials: Q2 UI references pics by bare name with `pics/` and `.pcx` implied (`ref_gl/gl_draw.c` `Draw_FindPic`); D3 GUIs need material decls. The implicit material generation (same mechanism as the Q3 `implicitMap` work) should synthesize a material for `pics/<name>.pcx` once `.pcx` is a known image extension. `conchars.pcx` is replaceable by an `idFont` or a dedicated unfiltered material.
+1. PCX loader (8-bit paletted + palette extraction). Port from `LoadPCX` (GPLv2+, attribution note in the port commit) or an independent decoder. Relax the 640x480 rejection to a warning for oversized mod content. - DONE in `1973186e` (independent decoder via the vendored `external/libpcx` single header).
+2. `pics/colormap.pcx` palette load (needed by 2 and 3; index 255 -> alpha 0). - DONE in `65450a37` (loaded inside the WAL loader as the Q2 palette).
+3. WAL loader: decode 8-bit -> RGBA through the palette at load time. The baked mip levels can be ignored (mip 0 only); `flags`/`contents`/`value`/`animname` feed the implicit material (section 3). - DONE in `65450a37` (mip 0 only; the flag-to-material mapping of section 3 is still open).
+4. Pics as materials: Q2 UI references pics by bare name with `pics/` and `.pcx` implied (`ref_gl/gl_draw.c` `Draw_FindPic`); D3 GUIs need material decls. The implicit material generation (same mechanism as the Q3 `implicitMap` work) should synthesize a material for `pics/<name>.pcx` once `.pcx` is a known image extension. `conchars.pcx` is replaceable by an `idFont` or a dedicated unfiltered material. - PARTIAL: bare `.pcx` names now resolve through the engine default-material generation (opaque `blend blend`); a dedicated `conchars` material or `idFont` is still open.
 5. Sky adapter: `R_LoadCubeImages` hardcodes `.tga` and the D3/Q3 suffixes; Q2 skies are six `.pcx` files with `rt/bk/lf/ft/up/dn` suffixes. Either a Q2 suffix adapter feeding the cubemap path, or a synthetic skysphere material (same decision as the Q3 `skyparms` gap).
 6. Skin flood fill: optional port of `R_FloodFillSkin` if skins show mip halo artifacts.
 
@@ -91,6 +93,8 @@ Where Q3 needed a legacy parser, Q2 needs a generator: the implicit material for
 
 ## 4. Model formats
 
+Status: MD2 loads since `75825add` and SP2 since `a8295107` (`neo/renderer/Model_md2.h/.cpp`, `neo/renderer/Model_sp2.h/.cpp`), both dispatched from `ModelManager::GetModel` on the lowercased extension. Gap closed; see 4.3 for what landed.
+
 ### 4.1 What loads today
 
 Dispatch in `neo/renderer/ModelManager.cpp` (`GetModel`, lines ~314-330): `ase`/`lwo`/`flt`/`ma` (static source formats), `md3`, `mdc`, `mds`, `mdm`, `md4`, `prt`, `liquid`, world `.proc`/`.bmodel`; MD5 handled separately (`MD5_MESH_EXT`). No MD2, no SP2.
@@ -100,12 +104,17 @@ Dispatch in `neo/renderer/ModelManager.cpp` (`GetModel`, lines ~314-330): `ase`/
 - MD2 (`references/quake2/ref_gl/gl_model.c` `Mod_LoadAliasModel`, draw code in `ref_gl/gl_mesh.c`): `IDP2` version 8 (`dmdl_t` in `qfiles.h`). Up to 32 skins (`.pcx` names), `skinwidth`/`skinheight`, an ST array (`dstvert_t`), triangle lists (`dtriangle_t` with `index_xyz`/`index_st`), a strip/fan `glcmds` list, and frames of `daliasframe_t` (per-frame `scale[3]`/`translate[3]`/`name[16]` plus `dtrivertx_t { byte v[3]; byte lightnormalindex; }` verts). Normals come from the 162-entry `anorms.h` table.
 - SP2 (`gl_model.c` `Mod_LoadSpriteModel`): `IDS2` version 2, frames of `{ width, height, origin_x, origin_y, pcx name }`; the renderer just binds the frame's image as a billboard.
 
-### 4.3 The gap
+### 4.3 The gap (closed in `75825add` for MD2, `a8295107` for SP2)
 
 Both loaders are missing. Implementation notes:
 
 - MD2 can ride the MD3 parity machinery: two-frame vertex lerp through the `SHADERPARM_MD3_*` frame channel, per-frame bounds (`translate .. translate + scale*255`), skins resolved through `FindMaterial` by the skin name once `.pcx` materials exist (section 2.3 item 4), `glcmds` ignorable (rebuild triangles from `index_st` + `index_xyz`), `lightnormalindex` -> `anorms` table -> normals, tangents derived like the MD3 fix (`R_DeriveTangentsWithoutNormals`). MD2 has no tags; Q2's game code offsets weapon/screen models by frame hardcoding, so nothing renderer-side is needed for that.
 - SP2 is trivial: synthesize a per-frame two-triangle quad (or particle-style) model honoring `origin_x`/`origin_y`, with the frame channel for animation. Only a few game entities use sprites.
+
+As implemented:
+
+- MD2 (`75825add`): `glcmds` ignored; the mesh is rebuilt as a per-frame triangle soup from `index_st` + `index_xyz` (the two index lists differ at seams, so per-corner UVs are required); two-frame lerp through the `SHADERPARM_MD3_*` frame channel; per-frame bounds; the first skin .pcx name becomes the surface material, further skins load as images only; normals from the 162-entry `anorms.h` table (embedded with an origin comment, GPLv2-or-later, compatible with this GPLv3 repo).
+- SP2 (`a8295107`): per-frame quad honoring `origin_x`/`origin_y`; frame materials resolved by the RAW frame image name, the same lookup Q2 GL_FindImage does, so .pcx names flow through the landed PCX loader; game code drives frame timing through the frame parms. Caveat: the engine implicit materials are opaque (`blend blend`); a glowing sprite needs an explicit material named after the frame image (blend add + clamp).
 
 ## 5. Map format (BSP v38) - flagged, coupled to the lighting decision
 
@@ -130,6 +139,10 @@ Q2 uses plain RIFF `.wav` (`references/quake2/client/snd_mem.c`; 8/16-bit, mono/
 
 ## 8. What already works
 
+- PCX images (since `1973186e`, via the vendored `external/libpcx` single header; bottom-up row order since `65450a37`).
+- WAL world textures (since `65450a37`, mip 0 through the `pics/colormap.pcx` palette; `animname` animation not implemented).
+- MD2 models (since `75825add`, frame lerping through the MD3 frame channel, first skin as the material).
+- SP2 sprites (since `a8295107`, frame quads, frame materials resolved by .pcx name).
 - `.pak` archives (since `3df000b`: `idPackContainer` mounts them alongside `.pk4`/`.pk3`).
 - TGA images (stb), including Q2 replacement tgas.
 - WAV sound.
@@ -140,9 +153,9 @@ Q2 uses plain RIFF `.wav` (`references/quake2/client/snd_mem.c`; 8/16-bit, mono/
 ## 9. Recommended implementation order
 
 1. `.pak` container - DONE in `3df000b` (`idPackContainer`). All base Q2 data in `pak0.pak` is now reachable.
-2. PCX + WAL loaders + `colormap.pcx` palette (section 2).
+2. PCX + WAL loaders + `colormap.pcx` palette (section 2). - DONE: PCX in `1973186e`, WAL + palette in `65450a37` (plus the PCX bottom-up row fix).
 3. Implicit materials from WAL flags/animname + Q2 flag tables (section 3).
-4. MD2 (+SP2) through the MD3 path machinery (section 4).
+4. MD2 (+SP2) through the MD3 path machinery (section 4). - DONE in `75825add` (MD2) and `a8295107` (SP2).
 5. `.cin` player (section 6).
 6. BSP v38 decision (loader vs offline converter), coupled to the Q3 lightmap provider decision (section 5).
 

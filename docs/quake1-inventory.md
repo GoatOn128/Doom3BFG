@@ -27,6 +27,8 @@ Original analysis, kept for reference:
 
 ## 2. Images
 
+Status: `gfx/palette.lmp` is loaded (768 raw bytes) inside the SPR and MDL model loaders (commits `2aa9c25c`, `0b2538e5`) to decode their embedded bitmaps; the general image loaders of section 2.2 (lmp/qpic, WAD2, miptex) remain open. The model loaders decode MDL skins as fully opaque RGBA (no 255 transparency on model skins).
+
 ### 2.1 What Q1 uses
 
 Q1 has no image files on disk in the Q2 sense: almost everything 8-bit is either a loose `.lmp`, a lump inside `gfx.wad`, a miptex embedded in the BSP (section 5), or a bitmap inside a model/sprite file. The common substrate is a global 256-color palette.
@@ -69,6 +71,8 @@ Mapping onto D3 materials (same implicit-material generator as the Q2 inventory 
 
 ## 4. Model formats
 
+Status: MDL loads since `0b2538e5` and SPR since `2aa9c25c` (`neo/renderer/Model_mdl.h/.cpp`, `neo/renderer/Model_spr.h/.cpp`), both dispatched from `ModelManager::GetModel` on the lowercased extension. Gap closed; see 4.3 for what landed.
+
 ### 4.1 What loads today
 
 Same dispatch as the Q2 audit (`neo/renderer/ModelManager.cpp`): no MDL, no SPR. MD2/MD3-style machinery exists and is the porting target.
@@ -79,10 +83,15 @@ Same dispatch as the Q2 audit (`neo/renderer/ModelManager.cpp`): no MDL, no SPR.
 - SPR (`Mod_LoadSpriteModel`, `gl_model.c`; structs `spritegn.h`): `IDSPRITEHEADER` "IDSP", `SPRITE_VERSION` 1, five orientation types (`SPR_VP_PARALLEL_UPRIGHT`..`SPR_VP_PARALLEL_ORIENTED`), frames of `dspriteframe_t { origin[2], width, height }` plus an embedded 8-bit bitmap (255 transparent), single or groups with intervals.
 - Brush submodels: doors/plats are `*N` models inside the map BSP (`dmodel_t` with `headnode[4]`) - part of the map decision (section 5).
 
-### 4.3 The gap and implementation notes
+### 4.3 The gap and implementation notes (closed in `0b2538e5` for MDL, `2aa9c25c` for SPR)
 
 - MDL loader: same MD3-parity machinery as the MD2 plan in the Q2 inventory - frame-channel lerp, per-frame bounds from `bboxmin/bboxmax`, skins decoded through the Q1 palette into RGBA textures (one material per skin, resolved by name), `lightnormalindex` -> `anorms` -> normals, tangents derived like the MD3 fix. Q1-specific work: materialize the onseam backskin (split verts at the seam so backfaces sample the duplicate half of the skin), and group frames (interval lists) beyond the two-frame lerp.
 - SPR loader: same synthesized-quad approach as the Q2 SP2 item; embedded bitmaps instead of pcx references, plus the orientation type on the entity (game-side glue).
+
+As implemented:
+
+- MDL (`0b2538e5`): onseam handled without vertex splitting - per-corner final UVs with `s + skinwidth/2` applied when `!facesfront && onseam` (the shift depends on the triangle, so UVs are stored per corner); skins decoded opaque RGBA through `gfx/palette.lmp`, the first skin becomes the material, the rest register as images a material can reference by name; skin and frame groups flattened, game code drives timing through the `SHADERPARM_MD3_*` frame parms; per-frame bounds scanned from the vertices (Q1 bboxmin/bboxmax records ignored); normals from the 162-entry anorms table (same table as the MD2 loader).
+- SPR (`2aa9c25c`): per-frame quads from the embedded bitmaps through the same palette. The orientation-type billboard glue is not automatic: `deform sprite` in a user material or `ent->customShader` on the entity.
 
 ## 5. Map format (BSP v29) - flagged, coupled to the lighting decision
 
@@ -106,6 +115,7 @@ Q1's entire game ships as `progs.dat`, QuakeC bytecode executed by the engine's 
 
 ## 8. What already works
 
+- MDL models (since `0b2538e5`) and SPR sprites (since `2aa9c25c`), embedded skins and frames decoded through `gfx/palette.lmp`.
 - `.pak` archives (since `3df000b`: `idPackContainer` mounts `id1` paks).
 - WAV sound.
 - Loose-directory content: `id1` as an `fs_game` directory needs no filesystem change (same as `baseq2`/`etmain`).
@@ -116,9 +126,9 @@ Q1's entire game ships as `progs.dat`, QuakeC bytecode executed by the engine's 
 ## 9. Recommended implementation order
 
 1. `.pak` container - DONE in `3df000b` (shared `idPackContainer`); stock Q1 data in `id1/pak0.pak` is now reachable.
-2. `palette.lmp` + lmp + WAD2 loaders (section 2.2).
+2. `palette.lmp` + lmp + WAD2 loaders (section 2.2). - PARTIAL: `palette.lmp` is loaded inside the SPR and MDL model loaders (`2aa9c25c`, `0b2538e5`); the lmp/qpic and WAD2 image loaders remain open.
 3. Implicit materials from the name-prefix/TEX_SPECIAL conventions (section 3).
-4. MDL (+SPR) through the MD3 path machinery (section 4).
+4. MDL (+SPR) through the MD3 path machinery (section 4). - DONE in `0b2538e5` (MDL) and `2aa9c25c` (SPR).
 5. BSP v29 decision, piggybacking on sections 2-3 and sharing the lightmap provider question (section 5).
 6. QuakeC VM decision only when "playing" (not just rendering) becomes the goal (section 7).
 
