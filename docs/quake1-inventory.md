@@ -36,7 +36,7 @@ Q1 has no image files on disk in the Q2 sense: almost everything 8-bit is either
 - Global palette: `gfx/palette.lmp` (768 raw bytes, no header), loaded in `Host_Init` (`host.c`) into `host_basepal`; `VID_SetPalette` (`gl_vidnt.c`) builds `d_8to24table`, and entry 255 is masked to transparent. `Check_Gamma` applies `pow((pal+1)/256, gamma)` with a 0.7 default before the table is built - decode-time gamma shaping that the stock look depends on.
 - `gfx/colormap.lmp`: the software renderer's light-to-dark colormap plus the fullbright count (`vid.fullbright = 256 - value read at int index 2048` in `VID_Init`). GL uses only that fullbright count. Palette colors `256-fullbright .. 255` (248-255 in stock) are never darkened by lighting in the software renderer; stock GLQuake has no per-texel fullbright handling on world surfaces at all (known limitation - the lightmap modulates every texel; `r_fullbright` only forces lighting off globally). A convention decision for the D3 side: match GLQuake (ignore) or match software (honor).
 - lmp pics (`qpic_t { int width; int height; byte data[]; }`, `wad.h`): `gfx/*.lmp` (conback, vidmodes, etc.), 8-bit, index 255 transparent (`Draw_TransPic` skips 255).
-- WAD2: `gfx.wad`, loaded at startup (`W_LoadWadFile` in `Host_Init`). A lump container (`wadinfo_t` header, `lumpinfo_t` entries with `filepos/disksize/size/type/compression/name[16]`), lump types `TYP_QPIC` (menu/HUD pics), `TYP_MIPTEX`, `TYP_PALETTE`, `TYP_SOUND`, with an LZSS compression flag. `W_CleanupName` UPPERCASES every lump name - all wad lookups are uppercase by convention. The console font is the `conchars` lump from gfx.wad (128x128, zeros remapped to 255, uploaded unfiltered, `gl_draw.c` `Draw_Init`).
+- WAD2: `gfx.wad`, loaded at startup (`W_LoadWadFile` in `Host_Init`). A lump container (`wadinfo_t` header, `lumpinfo_t` entries with `filepos/disksize/size/type/compression/name[16]`), lump types `TYP_QPIC` (menu/HUD pics), `TYP_MIPTEX`, `TYP_PALETTE`, `TYP_SOUND`, with an LZSS compression flag. `W_CleanupName` LOWERCASES every lump name (per `wad.c`) - all wad lookups are lowercase by convention. The console font is the `conchars` lump from gfx.wad (128x128, zeros remapped to 255, uploaded unfiltered, `gl_draw.c` `Draw_Init`).
 - Model/sprite bitmaps: raw 8-bit, palette-indexed, 255 transparent (uploaded through `GL_LoadTexture` with alpha).
 - World textures: miptex embedded in the BSP - `miptex_t { char name[16]; unsigned width, height; unsigned offsets[4]; }` (16-aligned sizes, four baked mip levels, indexed pixels after the header). Textures with `dataofs == -1` (not embedded) are skipped by stock GLQuake - external-texture-wad maps are a later-engine convention, not required for stock content.
 
@@ -126,10 +126,10 @@ Q1's entire game ships as `progs.dat`, QuakeC bytecode executed by the engine's 
 ## 9. Recommended implementation order
 
 1. `.pak` container - DONE in `3df000b` (shared `idPackContainer`); stock Q1 data in `id1/pak0.pak` is now reachable.
-2. `palette.lmp` + lmp + WAD2 loaders (section 2.2). - PARTIAL: `palette.lmp` is loaded inside the SPR and MDL model loaders (`2aa9c25c`, `0b2538e5`); the lmp/qpic and WAD2 image loaders remain open.
+2. `palette.lmp` + lmp + WAD2 loaders (section 2.2). - PARTIAL: `palette.lmp` is loaded inside the SPR and MDL model loaders (`2aa9c25c`, `0b2538e5`); `idWad2` / `idWad2MipTexLump` (`neo/framework/Wad2.*`) read WAD2 containers and miptex and decode them through the palette (used by dmap for BSP textures); the lmp/qpic loader and runtime `gfx.wad` use remain open.
 3. Implicit materials from the name-prefix/TEX_SPECIAL conventions (section 3).
 4. MDL (+SPR) through the MD3 path machinery (section 4). - DONE in `0b2538e5` (MDL) and `2aa9c25c` (SPR).
-5. BSP v29 decision, piggybacking on sections 2-3 and sharing the lightmap provider question (section 5).
+5. BSP v29 decision, piggybacking on sections 2-3 and sharing the lightmap provider question (section 5). - PARTIAL: `idBsp29` (`neo/framework/Bsp29.*`) loads/writes v29 with the clipnodes and lighting lumps skipped and the BSPX lumps `D3_CM`, `D3_LIGHTING`, `D3_VIS` appended; `dmap maps/x.bsp` converts the node tree to brushes and writes `.proc`/`.cm`. No runtime BSP loading yet.
 6. QuakeC VM decision only when "playing" (not just rendering) becomes the goal (section 7).
 
 ## Licensing note

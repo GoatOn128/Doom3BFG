@@ -153,6 +153,7 @@ void DmapHelp() {
 	"noCurves          = don't process curves\n"
 	"noCM              = don't create collision map\n"
 	"noAAS             = don't create AAS files\n"
+	"noQ1Textures      = don't export the textures of a Quake 1 .bsp (give the .bsp extension)\n"
 
 	);
 }
@@ -183,6 +184,8 @@ void ResetDmapGlobals() {
 	dmapGlobals.noClipSides = false;
 	dmapGlobals.noLightCarve = false;
 	dmapGlobals.noShadow = false;
+	dmapGlobals.bspInput = false;
+	dmapGlobals.noQ1Textures = false;
 	dmapGlobals.shadowOptLevel = SO_NONE;
 	dmapGlobals.drawBounds.Clear();
 	dmapGlobals.drawflag = false;
@@ -283,6 +286,9 @@ void Dmap( const idCmdArgs &args ) {
 		} else if ( !idStr::Icmp( s, "noAAS" ) ) {
 			noAAS = true;
 			common->Printf( "noAAS = true\n" );
+		} else if ( !idStr::Icmp( s, "noQ1Textures" ) ) {
+			dmapGlobals.noQ1Textures = true;
+			common->Printf( "noQ1Textures = true\n" );
 		} else if ( !idStr::Icmp( s, "editorOutput" ) ) {
 #ifdef _WIN32
 			com_outputMsg = true;
@@ -301,6 +307,9 @@ void Dmap( const idCmdArgs &args ) {
 	if ( passedName.Icmpn( "maps/", 4 ) != 0 ) {
 		passedName = "maps/" + passedName;
 	}
+
+	// a Quake 1 BSP is only taken when the extension is given
+	dmapGlobals.bspInput = ( passedName.Right( 4 ).Icmp( ".bsp" ) == 0 );
 
 	idStr stripped = passedName;
 	stripped.StripFileExtension();
@@ -378,10 +387,15 @@ void Dmap( const idCmdArgs &args ) {
 			common->Printf( "%5.0f seconds to create collision map\n", ( end - start ) * 0.001f );
 		}
 
-		if ( !noAAS && !region ) {
+		if ( !noAAS && !region && !dmapGlobals.bspInput ) {
 			// create AAS files
 			RunAAS_f( args );
 		}
+	}
+
+	if ( !leaked && dmapGlobals.bspInput ) {
+		// the .proc and .cm are done, let the BSP point to them
+		WriteBspExtensionRefs( dmapGlobals.mapFileBase );
 	}
 
 	// free the common .map representation

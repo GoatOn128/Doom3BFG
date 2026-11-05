@@ -264,6 +264,8 @@ typedef struct {
 	bool	noLightCarve;		// extra triangle subdivision by light frustums
 	shadowOptLevel_t	shadowOptLevel;
 	bool	noShadow;			// don't create optimized shadow volumes
+	bool	bspInput;			// the input is a Quake 1 .bsp, converted to brushes instead of parsing a .map
+	bool	noQ1Textures;		// don't export the wad2 textures of a Quake 1 .bsp
 
 	idBounds	drawBounds;
 	bool	drawflag;
@@ -314,6 +316,10 @@ node_t *AllocNode();
 // map.cpp
 
 bool		LoadDMapFile( const char *filename );
+
+// bsp2map.cpp
+bool		ConvertBspToMapFile( const char *name );
+bool		WriteBspExtensionRefs( const char *mapFileBase );
 void		FreeOptimizeGroupList( optimizeGroup_t *groups );
 void		FreeDMapFile();
 

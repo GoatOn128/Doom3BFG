@@ -528,6 +528,12 @@ bool LoadDMapFile( const char *filename ) {
 	common->Printf( "--- LoadDMapFile ---\n" );
 	common->Printf( "loading %s\n", filename );
 
+	// a Quake 1 BSP is converted into a .map first, which is then loaded like any other map
+	if ( dmapGlobals.bspInput && !ConvertBspToMapFile( filename ) ) {
+		common->Warning( "Couldn't convert the BSP: '%s'", filename );
+		return false;
+	}
+
 	// load and parse the map file into canonical form
 	dmapGlobals.dmapFile = new( TAG_DMAP ) idMapFile();
 	if ( !dmapGlobals.dmapFile->Parse(filename) ) {
